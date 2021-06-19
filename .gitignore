@@ -1,0 +1,11 @@
+cpkb/
+16mm-kb.c
+16mm-kb.h
+cpkb.c
+cpkb.h
+.*
+!.gitignore
+16mm/s140/ses/Output/*
+*.jlink
+16mm/s140/dust/
+*.emSession
