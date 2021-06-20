@@ -271,10 +271,10 @@ void cache_pop_central(void) {
         uint8_t j = (keypress_cache_head+i)%KEYPRESS_PERIPHERAL_CACHE_LEN;
         
         if( keypress_peripheral_cache[j].state == 1 ) {
-            keypress(keypress_peripheral_cache[j].row, keypress_peripheral_cache[j].col+CENTRAL_COLS, false);
+            keypress(keypress_peripheral_cache[j].row, keypress_peripheral_cache[j].col+my_keyboard.split_keyboard.central_cols_count, false);
             NRF_LOG_INFO("Press");
         } else if( keypress_peripheral_cache[j].state == 0 ) {
-            keyrelease( keypress_peripheral_cache[j].row, keypress_peripheral_cache[j].col+CENTRAL_COLS, false);
+            keyrelease( keypress_peripheral_cache[j].row, keypress_peripheral_cache[j].col+my_keyboard.split_keyboard.central_cols_count, false);
             NRF_LOG_INFO("Release");
         } else {
             NRF_LOG_INFO("N/A");

@@ -1,6 +1,7 @@
+#include "keyboard_generic.h"
 
 #ifdef KEYBOARD_CENTRAL
-#define CENTRAL_COLS 6
+//#define CENTRAL_COLS 6
 
 #endif
 

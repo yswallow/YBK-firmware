@@ -188,12 +188,12 @@ void save_keymap(void) {
     
     ret_code_t ret;
     
-    ret = fds_record_update(&setting_desc, &m_eeprom_record);
+    ret = fds_record_update(&eeprom_desc, &m_eeprom_record);
     if ((ret != NRF_SUCCESS) && (ret == FDS_ERR_NO_SPACE_IN_FLASH))
     {
         ret = fds_gc();
         wait_for_fds_gc_complete();
-        ret = fds_record_update(&setting_desc, &m_eeprom_record);
+        ret = fds_record_update(&eeprom_desc, &m_eeprom_record);
         if(ret!=NRF_SUCCESS) {
             NRF_LOG_INFO("No space in flash, delete some records to update the config file.");
         }
@@ -207,10 +207,19 @@ void save_keymap(void) {
 
 void apply_kbd_setting(void) {
     matrix_keyboard_t* definision = my_keyboard.keyboard_definision;
+    my_keyboard.kbd_cols_count = kbd_setting[0x41];
+    my_keyboard.kbd_rows_count = kbd_setting[0x40];
+    my_keyboard.split_keyboard.central_cols_count = kbd_setting[0x42];
+    
     definision->col_pins = &kbd_setting[0];
     definision->row_pins = &kbd_setting[0x20];
     definision->row_pins_count = kbd_setting[0x40];
-    definision->col_pins_count = kbd_setting[0x41];
+    if(kbd_setting[0x42]) {
+        // split keyboard
+        definision->col_pins_count = kbd_setting[0x42];
+    } else {
+        definision->col_pins_count = kbd_setting[0x41];
+    }
 }
 
 void via_fds_init(void) {
@@ -252,18 +261,20 @@ void via_fds_init(void) {
         wait_for_fds_gc_complete();
         NRF_LOG_INFO("Writing config file...");
         if(ret==NRF_SUCCESS) {
-          ret = fds_record_write(&eeprom_desc, &m_eeprom_record);
-          if ((ret != NRF_SUCCESS) && (ret == FDS_ERR_NO_SPACE_IN_FLASH))
-          {
-              NRF_LOG_INFO("No space in flash, delete some records to update the config file.");
-          }
-          else
-          {
-              APP_ERROR_CHECK(ret);
-          }
-       } else {
-          APP_ERROR_CHECK(ret);
-       }
+            ret = fds_record_write(&eeprom_desc, &m_eeprom_record);
+            if ((ret != NRF_SUCCESS) && (ret == FDS_ERR_NO_SPACE_IN_FLASH))
+            {
+                NRF_LOG_INFO("No space in flash, delete some records to update the config file.");
+            }
+            else
+            {
+                APP_ERROR_CHECK(ret);
+            }
+         } else {
+            APP_ERROR_CHECK(ret);
+         }
+         ret=fds_record_find(CONFIG_FILE, CONFIG_REC_KEY, &eeprom_desc, &tok);
+         APP_ERROR_CHECK(ret);
     }
 
     ret = fds_record_find(KBD_SETTING_FILE, KBD_SETTING_REC_KEY, &setting_desc, &tok);
@@ -283,11 +294,11 @@ void via_fds_init(void) {
     else
     {
         /* System config not found; write a new one. */
-        ret = fds_gc();
-        wait_for_fds_gc_complete();
+
         NRF_LOG_INFO("Writing config file...");
+        ret = fds_record_write(&setting_desc, &m_kbd_setting_record);
         if(ret==NRF_SUCCESS) {
-            ret = fds_record_write(&setting_desc, &m_kbd_setting_record);
+            
             if ((ret != NRF_SUCCESS) && (ret == FDS_ERR_NO_SPACE_IN_FLASH))
             {
                 NRF_LOG_INFO("No space in flash, delete some records to update the config file.");
@@ -296,9 +307,12 @@ void via_fds_init(void) {
             {
                 APP_ERROR_CHECK(ret);
             }
+            APP_ERROR_CHECK(ret);
        } else {
             APP_ERROR_CHECK(ret);
        }
+       ret = fds_record_find(KBD_SETTING_FILE, KBD_SETTING_REC_KEY, &setting_desc, &tok);
+            
     }
 }
 
@@ -348,6 +362,7 @@ void raw_hid_receive_kb(uint8_t *data, uint8_t length) {
         case KBD_SETTING_ID_PINS_COUNT:
             *(data+2) = *(kbd_setting+0x40);
             *(data+3) = *(kbd_setting+0x41);
+            *(data+4) = *(kbd_setting+0x42);
             break;
         case KBD_SETTING_ID_ADDITIONAL:
             memcpy(data+2, kbd_setting+0x50, KBD_SETTING_ADDITIONAL_LEN );
@@ -370,6 +385,7 @@ void raw_hid_receive_kb(uint8_t *data, uint8_t length) {
         case KBD_SETTING_ID_PINS_COUNT:
             *(kbd_setting+0x40) = *(data+2);
             *(kbd_setting+0x41) = *(data+3);
+            *(kbd_setting+0x42) = *(data+4);
             kbd_setting_updated = true;
             break;
         case KBD_SETTING_ID_ADDITIONAL:

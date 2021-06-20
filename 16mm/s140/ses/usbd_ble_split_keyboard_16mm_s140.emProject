@@ -23,7 +23,7 @@
       debug_target_connection="J-Link"
       gcc_debugging_level="Level 3"
       gcc_entry_point="Reset_Handler"
-      linker_output_format="hex"
+      linker_output_format="bin"
       linker_printf_fmt_level="long"
       linker_printf_width_precision_supported="Yes"
       linker_scanf_fmt_level="long"
@@ -221,7 +221,7 @@
     </folder>
     <configuration
       Name="CentralDebug"
-      c_preprocessor_definitions="KEYBOARD_CENTRAL" />
+      c_preprocessor_definitions="KEYBOARD_CENTRAL;DEBUG" />
     <configuration
       Name="PeripheralDebug"
       c_preprocessor_definitions="KEYBOARD_PERIPH;DEBUG" />

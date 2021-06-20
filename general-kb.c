@@ -8,6 +8,7 @@ matrix_keyboard_t definision = {
 keyboard_t my_keyboard = {
     .keyboard_type = KEYBOARD_TYPE_MATRIX,
     .keyboard_definision = &definision,
+    .split_keyboard = (split_keyboard_t) { .central_cols_count = 0 },
     .scan_method = matrix_scan,
     .init_method = matrix_init,
     .sleep_prepare = matrix_sleep_prepare

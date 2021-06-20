@@ -44,8 +44,15 @@ typedef struct {
 typedef void* keyboard_definision_t;
 
 typedef struct {
+    uint8_t central_cols_count;
+} split_keyboard_t;
+
+typedef struct {
     keyboard_type_t keyboard_type;
     keyboard_definision_t keyboard_definision;
+    split_keyboard_t split_keyboard;
+    uint8_t kbd_cols_count;
+    uint8_t kbd_rows_count;
     void (*scan_method)(keyboard_type_t, keyboard_definision_t);
     void (*init_method)(keyboard_type_t, keyboard_definision_t);
     ret_code_t (*sleep_prepare)(keyboard_type_t, keyboard_definision_t);

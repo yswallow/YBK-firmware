@@ -16,8 +16,7 @@ void eeprom_update_byte(uint8_t* addr, uint8_t val) {
 }
 
 uint8_t* dynamic_keymap_key_to_eeprom_address(uint8_t layer, uint8_t row, uint8_t column) {
-    matrix_keyboard_t def = *((matrix_keyboard_t *) my_keyboard.keyboard_definision);
-    return via_fds_get_eeprom_addr() + ( layer * def.row_pins_count * def.col_pins_count * 2 ) + (row * def.col_pins_count * 2) + (column * 2);
+    return via_fds_get_eeprom_addr() + ( layer * my_keyboard.kbd_rows_count * my_keyboard.kbd_cols_count * 2 ) + (row * my_keyboard.kbd_cols_count * 2) + (column * 2);
 }
 
 uint16_t dynamic_keymap_get_keycode(uint8_t layer, uint8_t row, uint8_t column) {
@@ -49,8 +48,7 @@ void dynamic_keymap_reset(void) {
 }
 */
 void dynamic_keymap_get_buffer(uint16_t offset, uint16_t size, uint8_t *data) {
-    matrix_keyboard_t def = *((matrix_keyboard_t *) my_keyboard.keyboard_definision);
-    uint16_t dynamic_keymap_eeprom_size = DYNAMIC_KEYMAP_LAYER_COUNT * def.row_pins_count * def.col_pins_count * 2;
+    uint16_t dynamic_keymap_eeprom_size = DYNAMIC_KEYMAP_LAYER_COUNT * my_keyboard.kbd_rows_count * my_keyboard.kbd_cols_count * 2;
     uint8_t *   source                     = (via_fds_get_eeprom_addr() + offset);
     uint8_t *target                     = data;
     for (uint16_t i = 0; i < size; i++) {
@@ -65,8 +63,7 @@ void dynamic_keymap_get_buffer(uint16_t offset, uint16_t size, uint8_t *data) {
 }
 
 void dynamic_keymap_set_buffer(uint16_t offset, uint16_t size, uint8_t *data) {
-    matrix_keyboard_t def = *((matrix_keyboard_t *) my_keyboard.keyboard_definision);
-    uint16_t dynamic_keymap_eeprom_size = DYNAMIC_KEYMAP_LAYER_COUNT * def.row_pins_count * def.col_pins_count * 2;
+    uint16_t dynamic_keymap_eeprom_size = DYNAMIC_KEYMAP_LAYER_COUNT * my_keyboard.kbd_rows_count * my_keyboard.kbd_cols_count * 2;
     uint8_t *   target                     = (via_fds_get_eeprom_addr() + offset);
     uint8_t *source                     = data;
     for (uint16_t i = 0; i < size; i++) {

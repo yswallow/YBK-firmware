@@ -82,18 +82,18 @@ void raw_hid_receive(uint8_t *data, uint8_t length) {
                     break;
                 }
                 case id_switch_matrix_state: {
-                    matrix_keyboard_t def = *((matrix_keyboard_t*) my_keyboard.keyboard_definision);
-                    if ((def.col_pins_count / 8 + 1) * def.row_pins_count <= 28) {
+                    
+                    if ((my_keyboard.kbd_cols_count / 8 + 1) * my_keyboard.kbd_rows_count <= 28) {
                         uint8_t i = 1;
-                        for (uint8_t row = 0; row < def.row_pins_count; row++) {
+                        for (uint8_t row = 0; row < my_keyboard.kbd_rows_count; row++) {
                             matrix_row_t value = 8;//matrix_get_row(row);
-                            if (def.col_pins_count > 24){
+                            if (my_keyboard.kbd_cols_count > 24){
                               command_data[i++] = (value >> 24) & 0xFF;
                             }
-                            if (def.col_pins_count > 16){
+                            if (my_keyboard.kbd_cols_count > 16){
                               command_data[i++] = (value >> 16) & 0xFF;
                             }
-                            if (def.col_pins_count > 8){
+                            if (my_keyboard.kbd_cols_count > 8){
                               command_data[i++] = (value >> 8) & 0xFF;
                             }
                             command_data[i++] = value & 0xFF;
