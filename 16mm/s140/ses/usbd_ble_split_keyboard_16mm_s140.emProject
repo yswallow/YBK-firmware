@@ -156,6 +156,8 @@
       <file file_name="../../../keyboard_config.h" />
       <file file_name="../../../ble_peripheral.c" />
       <file file_name="../../../ble_peripheral.h" />
+      <file file_name="../../../heatmap.c" />
+      <file file_name="../../../heatmap.h" />
     </folder>
     <folder Name="nRF_Segger_RTT">
       <file file_name="../../../../../../external/segger_rtt/SEGGER_RTT.c" />

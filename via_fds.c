@@ -45,6 +45,7 @@
 #include "nrf_log.h"
 #include "via.h"
 #include "keyboard_config.h"
+#include "heatmap.h"
 
 static fds_record_desc_t eeprom_desc = {0};
 static fds_record_desc_t setting_desc = {0};
@@ -71,6 +72,8 @@ enum {
     KBD_SETTING_ID_PINS_COUNT,
     KBD_SETTING_ID_ADDITIONAL
 };
+
+#define KBD_SETTING_ID_HEATMAP 0x80
 
 static void wait_for_fds_ready(void)
 {
@@ -366,6 +369,9 @@ void raw_hid_receive_kb(uint8_t *data, uint8_t length) {
             break;
         case KBD_SETTING_ID_ADDITIONAL:
             memcpy(data+2, kbd_setting+0x50, KBD_SETTING_ADDITIONAL_LEN );
+            break;
+        case KBD_SETTING_ID_HEATMAP:
+            response_heatmap(data, length);
             break;
         default:
             *command_id         = id_unhandled;

@@ -9,6 +9,7 @@
 #include "usb_mouse.h"
 #include "via_fds.h"
 
+#include "heatmap.h"
 #ifdef KEYBOARD_PERIPH
 #define KEYCODE_PERIPH 0xFFFF
 #include "ble_peripheral.h"
@@ -153,7 +154,7 @@ void keypress(uint8_t row, uint8_t col, bool debouncing) {
 #endif
     }
     // new press
-
+    m_heatmap[row][col]++;
     keypress_status[i].row = row;
     keypress_status[i].col = col;
     keypress_status[i].tick = 0;
@@ -303,6 +304,7 @@ void keyboard_init(keyboard_t keyboard) {
     memset(keypress_status, 0, sizeof(keypress_status));
     memset(layer_history, 255, sizeof(uint8_t)*DYNAMIC_KEYMAP_LAYER_COUNT);
     memset(keypress_bitmap, 0, sizeof(keypress_bitmap));
+    heatmap_init();
     layer_history[0] = 0;
     
     app_timer_create(&m_tick_kbd, APP_TIMER_MODE_REPEATED, kbd_tick_handler);
