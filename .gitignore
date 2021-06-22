@@ -5,7 +5,7 @@ cpkb.c
 cpkb.h
 .*
 !.gitignore
-16mm/s140/ses/Output/*
+keyboard/s140/ses/Output/*
 *.jlink
-16mm/s140/dust/
+keyboard/s140/dust/
 *.emSession

@@ -1,6 +1,6 @@
 <!DOCTYPE CrossStudio_Project_File>
-<solution Name="usbd_ble_split_keyboard_16mm_s140" target="8" version="2">
-  <project Name="usbd_ble_split_keyboard_16mm_s140">
+<solution Name="usbd_ble_split_keyboard_s140" target="8" version="2">
+  <project Name="usbd_ble_split_keyboard_s140">
     <configuration
       Name="Common"
       arm_architecture="v7EM"
