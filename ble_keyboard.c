@@ -200,11 +200,17 @@ void advertising_start(void)
         if( ret != NRF_SUCCESS && ret != NRF_ERROR_INVALID_STATE ) {
             APP_ERROR_CHECK(ret);
         }
+        NRF_LOG_INFO("Start Advertising...");
     }
 #ifdef KEYBOARD_CENTRAL
-    if( ble_conn_state_central_conn_count()==0 ) {
-        ble_central_start();
+    ble_conn_state_conn_handle_list_t connections = ble_conn_state_central_handles();
+    if( connections.len > 0 ) {
+       sd_ble_gap_disconnect(connections.conn_handles[0], BLE_HCI_REMOTE_USER_TERMINATED_CONNECTION);
     }
+    //if( ble_conn_state_central_conn_count()==0 ) {
+        ble_central_start();
+        NRF_LOG_INFO("Start Scanning...");
+    //}
 #endif
 }
 

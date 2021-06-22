@@ -64,6 +64,7 @@
 #include "nrf_log_ctrl.h"
 #include "nrf_log_default_backends.h"
 #include "ble_conn_state.h"
+#include "app_timer.h"
 
 #include "keyboard_generic.h"
 #include "ble_central.h"
@@ -81,6 +82,8 @@
 
 #define ECHOBACK_BLE_UART_DATA  1                                       /**< Echo the UART data that is received over the Nordic UART Service (NUS) back to the sender. */
 
+#define PAIRING_TIMEOUT_TICKS APP_TIMER_TICKS(2000)
+
 BLE_NUS_C_DEF(m_ble_nus_c);                                             /**< BLE Nordic UART Service (NUS) client instance. */
 NRF_BLE_GATT_DEF(m_gatt_c);                                               /**< GATT module instance. */
 BLE_DB_DISCOVERY_DEF(m_db_disc);                                        /**< Database discovery module instance. */
@@ -88,6 +91,7 @@ NRF_BLE_SCAN_DEF(m_scan);                                               /**< Sca
 NRF_BLE_GQ_DEF(m_ble_gatt_queue,                                        /**< BLE GATT Queue instance. */
                NRF_SDH_BLE_CENTRAL_LINK_COUNT,
                NRF_BLE_GQ_QUEUE_SIZE);
+APP_TIMER_DEF(m_pairing_timer);
 
 static uint16_t m_ble_nus_max_data_len = BLE_GATT_ATT_MTU_DEFAULT - OPCODE_LENGTH - HANDLE_LENGTH; /**< Maximum length of data (in bytes) that can be transmitted to the peer by the Nordic UART service module. */
 
@@ -186,6 +190,11 @@ static void scan_evt_handler(scan_evt_t const * p_scan_evt)
     }
 }
 
+static void cancel_pairing(void* ptr) {
+    sd_ble_gap_connect_cancel();
+    NRF_LOG_INFO("Pairing Canceled");
+    scan_start();
+}
 
 /**@brief Function for initializing the scanning and setting the filters.
  */
@@ -211,6 +220,9 @@ static void scan_init(void)
     APP_ERROR_CHECK(err_code);
 
     err_code = nrf_ble_scan_filters_enable(&m_scan, NRF_BLE_SCAN_NAME_FILTER, false);
+    APP_ERROR_CHECK(err_code);
+
+    err_code = app_timer_create(&m_pairing_timer, APP_TIMER_MODE_SINGLE_SHOT, cancel_pairing);
     APP_ERROR_CHECK(err_code);
 }
 
@@ -473,6 +485,8 @@ void ble_c_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
             APP_ERROR_CHECK(err_code);
             ble_c_connected = true;
             NRF_LOG_INFO("Connected: Central");
+            err_code = app_timer_stop(m_pairing_timer);
+            APP_ERROR_CHECK(err_code);
             break;
 
         case BLE_GAP_EVT_DISCONNECTED:
@@ -500,6 +514,8 @@ void ble_c_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
                 err_code = sd_ble_gap_connect(&(p_gap_evt->params.adv_report.peer_addr), &gap_c_scan_params, &gap_conn_params, 1);
                 APP_ERROR_CHECK(err_code);
                 NRF_LOG_INFO("Connection Request...");
+                err_code = app_timer_start(m_pairing_timer, PAIRING_TIMEOUT_TICKS, NULL);
+                APP_ERROR_CHECK(err_code);
             }
             break;
         case BLE_GAP_EVT_CONN_PARAM_UPDATE_REQUEST:
