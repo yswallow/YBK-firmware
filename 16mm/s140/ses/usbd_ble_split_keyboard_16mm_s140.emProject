@@ -212,12 +212,6 @@
     </folder>
     <configuration Name="Debug" linker_section_placement_macros="" />
     <folder Name="Keyboard Definision">
-      <file file_name="../../../16mm-kb.h">
-        <configuration Name="CentralDebug" build_exclude_from_build="Yes" />
-      </file>
-      <file file_name="../../../16mm-kb.c">
-        <configuration Name="CentralDebug" build_exclude_from_build="Yes" />
-      </file>
       <file file_name="../../../general-kb.c" />
       <file file_name="../../../general-kb.h" />
     </folder>
@@ -227,6 +221,19 @@
     <configuration
       Name="PeripheralDebug"
       c_preprocessor_definitions="KEYBOARD_PERIPH;DEBUG" />
+    <configuration
+      Name="PeripheralRelease"
+      c_preprocessor_definitions="KEYBOARD_PERIPH"
+      linker_output_format="bin"
+      linker_section_placement_macros="FLASH_START=0x26000;FLASH_SIZE=0xCD000"
+      post_build_command="python $(ProjectDir)/../../../uf2/utils/uf2conv.py $(ProjectDir)/$(OutDir)/$(ProjectName).bin -c -b 0x26000 -o $(OutDir)/$(ProjectName)-$(Configuration).uf2 -f 0xADA52840 "
+      post_build_command_control="Always Run" />
+    <configuration
+      Name="CentralRelease"
+      c_preprocessor_definitions="KEYBOARD_CENTRAL"
+      linker_section_placement_macros="FLASH_START=0x26000;FLASH_SIZE=0xCD000"
+      post_build_command="python $(ProjectDir)/../../../uf2/utils/uf2conv.py $(ProjectDir)/$(OutDir)/$(ProjectName).bin -c -b 0x26000 -o $(OutDir)/$(ProjectName)-$(Configuration).uf2 -f 0xADA52840 "
+      post_build_command_control="Always Run" />
   </project>
   <configuration
     Name="Release"
@@ -239,4 +246,6 @@
     gcc_optimization_level="None" />
   <configuration Name="CentralDebug" />
   <configuration Name="PeripheralDebug" />
+  <configuration Name="PeripheralRelease" />
+  <configuration Name="CentralRelease" />
 </solution>
