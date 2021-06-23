@@ -134,15 +134,15 @@ ret_code_t keycode_remove_usb(uint8_t kc) {
     }
     else {
         for(uint8_t i = USB_HID_KBD_KEYS_START; i<USB_HID_KBD_REP_LEN; i++) {
+            if(usb_keyboard_rep_buffer[i]==0x00) {
+                break;
+            }
+            
             if(after_kc) {
                 usb_keyboard_rep_buffer[i-1] = usb_keyboard_rep_buffer[i];
                 usb_keyboard_rep_buffer[i] = 0x00;
             }
 
-            if(usb_keyboard_rep_buffer[i]==0x00) {
-                break;
-            }
-            
             if(usb_keyboard_rep_buffer[i]==kc) {
                 after_kc = true;
                 updated = true;

@@ -1038,15 +1038,15 @@ ret_code_t keycode_remove_ble(uint8_t kc) {
     }
     else {
         for(uint8_t i = BLE_HID_KBD_KEYS_START; i<BLE_HID_KBD_REP_LEN; i++) {
+            if(ble_keyboard_rep_buffer[i]==0x00) {
+                break;
+            }
+
             if(after_kc) {
                 ble_keyboard_rep_buffer[i-1] = ble_keyboard_rep_buffer[i];
                 ble_keyboard_rep_buffer[i] = 0x00;
             }
 
-            if(ble_keyboard_rep_buffer[i]==0x00) {
-                break;
-            }
-            
             if(ble_keyboard_rep_buffer[i]==kc) {
                 after_kc = true;
                 updated = true;
