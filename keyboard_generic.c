@@ -197,6 +197,12 @@ void keypress(uint8_t row, uint8_t col, bool debouncing) {
             hid_functions.keycode_append(keypress_status[i].kc);
             break;
         case 0x50:
+            if( action == 0x0C && keypress_status[i].kc == 0x00 ) {
+                // RESET
+                keyboard_init(my_keyboard);
+                hid_functions.reset();
+                break;
+            }
             layer_history_append(keypress_status[i].kc);
             break;
         }
