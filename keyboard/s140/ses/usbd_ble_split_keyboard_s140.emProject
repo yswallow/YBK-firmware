@@ -158,6 +158,8 @@
       <file file_name="../../../ble_peripheral.h" />
       <file file_name="../../../heatmap.c" />
       <file file_name="../../../heatmap.h" />
+      <file file_name="../../../debug_message_hid.c" />
+      <file file_name="../../../debug_message_hid.h" />
     </folder>
     <folder Name="nRF_Segger_RTT">
       <file file_name="../../../../../../external/segger_rtt/SEGGER_RTT.c" />

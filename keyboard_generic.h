@@ -2,6 +2,7 @@
 #include "sdk_errors.h"
 #include "keyboard_config.h"
 #include "via_fds.h"
+#include "dynamic_keymap.h"
 
 #ifndef __KEYBOARD_H
 #define __KEYBOARD_H
@@ -64,6 +65,7 @@ ret_code_t keyboard_sleep_prepare(void);
 
 void keypress(uint8_t row, uint8_t col, bool debouncing);
 void keyrelease(uint8_t row, uint8_t col, bool debouncing);
+uint8_t get_active_layer(void);
 
 #define PRESS_KEYS_MAX 10
 #define DEBOUNCING_DELAY_MS 30
@@ -72,4 +74,7 @@ void keyrelease(uint8_t row, uint8_t col, bool debouncing);
 
 extern keyboard_hid_functions_t hid_functions;
 extern uint32_t keypress_bitmap[KBD_SETTING_ROW_PINS_MAX];
+extern keys_t keypress_status[PRESS_KEYS_MAX];
+extern uint8_t layer_history[DYNAMIC_KEYMAP_LAYER_COUNT];
+
 #endif //__KEYBOARD_H

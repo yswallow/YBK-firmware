@@ -20,3 +20,4 @@ void usb_keyboard_init(void);
 extern const app_usbd_hid_generic_t m_app_hid_kbd;
 
 extern keyboard_hid_functions_t usb_hid_functions;
+extern uint8_t usb_keyboard_rep_buffer[USB_HID_KBD_REP_LEN];

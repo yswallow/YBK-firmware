@@ -146,3 +146,4 @@ ret_code_t handle_keycode_ble(uint16_t keycode, bool press);
 
 extern keyboard_hid_functions_t ble_hid_functions;
 extern ble_gap_conn_params_t   gap_conn_params;
+extern uint8_t ble_keyboard_rep_buffer[BLE_HID_KBD_REP_LEN];

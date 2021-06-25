@@ -99,7 +99,7 @@
 #include "app_usbd_hid_kbd_desc.h"
 
 #include "via_fds.h"
-
+#include "debug_message_hid.h"
 
 #ifdef ENABLE_USB_CDC_ACM
 #define LED_CDC_ACM_CONN (BSP_BOARD_LED_2)
@@ -389,6 +389,7 @@ int main(void)
     ret = app_usbd_power_events_enable();
     APP_ERROR_CHECK(ret);
     keyboard_init(my_keyboard);
+    KEYBOARD_DEBUG_HID_INIT();
     // initialize indicator
     nrf_gpio_cfg_output(KEYBOARD_POWER_LED);
     nrf_gpio_pin_set(KEYBOARD_POWER_LED);

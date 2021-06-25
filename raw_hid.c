@@ -65,6 +65,7 @@ app_usbd_hid_generic_t * get_raw_inst(void) {
 }
 */
 void raw_hid_send(uint8_t *data, uint8_t length) {
+
     app_usbd_hid_generic_in_report_set(
         &m_app_hid_raw,
         data,

@@ -965,7 +965,7 @@ void timeout_timer_init(void) {
     APP_ERROR_CHECK(err_code);
 }
 
-static uint8_t ble_keyboard_rep_buffer[BLE_HID_KBD_REP_LEN];
+uint8_t ble_keyboard_rep_buffer[BLE_HID_KBD_REP_LEN];
 
 
 void ble_keyboard_init(void) {

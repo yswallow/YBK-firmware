@@ -66,7 +66,7 @@ void hid_raw_ev_handler(app_usbd_class_inst_t const * p_inst,
 APP_USBD_HID_GENERIC_SUBCLASS_REPORT_DESC(raw_desc, RAW_REPORT_DSC());
 
 static const app_usbd_hid_subclass_desc_t * raw_reps[] = {&raw_desc};
-extern bool m_pending_report_raw;
+//extern bool m_pending_report_raw;
 
 
 
