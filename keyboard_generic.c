@@ -8,6 +8,7 @@
 #include "nrf_delay.h"
 #include "usb_mouse.h"
 #include "via_fds.h"
+#include "nrf_log.h"
 
 #include "heatmap.h"
 #ifdef KEYBOARD_PERIPH
@@ -116,12 +117,16 @@ void kbd_tick_handler(void* p_context) {
 
 void layer_history_remove(uint8_t layer) {
     uint8_t backword_count = 0;
+    NRF_LOG_INFO("removing layer:");
+    NRF_LOG_HEXDUMP_INFO(&layer, 1);
+
     for(uint8_t i=1;i<DYNAMIC_KEYMAP_LAYER_COUNT;i++) {
         if(layer_history[i]==255) {
             break;
         }
 
         if( layer_history[i] == layer ) {
+            NRF_LOG_INFO("layer removed.");
             backword_count++;
         }
         
@@ -294,7 +299,7 @@ void keyrelease(uint8_t row, uint8_t col, bool debouncing) {
         if(removes_count) {
             if( (removes_count + i) < PRESS_KEYS_MAX ) {
                 memcpy(keypress_status+i, keypress_status+i+removes_count, sizeof(keys_t));
-                memset(keypress_status+i+removes_count, 0, sizeof(keys_t));
+                //memset(keypress_status+i+removes_count, 0, sizeof(keys_t));
             } else {
                 memset(keypress_status+i, 0, sizeof(keys_t));
             }
