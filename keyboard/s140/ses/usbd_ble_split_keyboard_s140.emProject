@@ -140,6 +140,7 @@
       </file>
       <file file_name="../../../ble_keyboard.c">
         <configuration Name="Debug" build_exclude_from_build="No" />
+        <configuration Name="CentralDebug" build_exclude_from_build="No" />
       </file>
       <file file_name="../../../ble_keyboard.h" />
       <file file_name="../../../usb_keyboard.c">
@@ -219,7 +220,7 @@
     </folder>
     <configuration
       Name="CentralDebug"
-      c_preprocessor_definitions="KEYBOARD_CENTRAL;DEBUG" />
+      c_preprocessor_definitions="KEYBOARD_CENTRAL;DEBUG;BLE_RAW_HID" />
     <configuration
       Name="PeripheralDebug"
       c_preprocessor_definitions="KEYBOARD_PERIPH;DEBUG" />
@@ -236,6 +237,9 @@
       linker_section_placement_macros="FLASH_START=0x26000;FLASH_SIZE=0xCD000"
       post_build_command="python $(ProjectDir)/../../../uf2/utils/uf2conv.py $(ProjectDir)/$(OutDir)/$(ProjectName).bin -c -b 0x26000 -o $(OutDir)/$(ProjectName)-$(Configuration).uf2 -f 0xADA52840 "
       post_build_command_control="Always Run" />
+    <configuration
+      Name="IntegratedDebug"
+      c_preprocessor_definitions="DEBUG;BLE_RAW_HID" />
   </project>
   <configuration
     Name="Release"
@@ -250,4 +254,5 @@
   <configuration Name="PeripheralDebug" />
   <configuration Name="PeripheralRelease" />
   <configuration Name="CentralRelease" />
+  <configuration Name="IntegratedDebug" />
 </solution>

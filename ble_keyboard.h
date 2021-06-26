@@ -101,15 +101,22 @@
 #define SEC_PARAM_MIN_KEY_SIZE              7                                          /**< Minimum encryption key size. */
 #define SEC_PARAM_MAX_KEY_SIZE              16                                         /**< Maximum encryption key size. */
 
-#define OUTPUT_REPORT_INDEX                 0                                          /**< Index of Output Report. */
+#define OUTPUT_REPORT_KEYS_INDEX                 0                                          /**< Index of Output Report. */
 #define OUTPUT_REPORT_MAX_LEN               1                                          /**< Maximum length of Output Report. */
 #define INPUT_REPORT_KEYS_INDEX             0                                          /**< Index of Input Report. */
 //#define OUTPUT_REPORT_BIT_MASK_CAPS_LOCK    0x02                                       /**< CAPS LOCK bit in Output Report (based on 'LED Page (0x08)' of the Universal Serial Bus HID Usage Tables). */
-#define INPUT_REP_REF_ID                    0                                          /**< Id of reference to Keyboard Input Report. */
-#define OUTPUT_REP_REF_ID                   0                                          /**< Id of reference to Keyboard Output Report. */
-#define FEATURE_REP_REF_ID                  0                                          /**< ID of reference to Keyboard Feature Report. */
+#define INPUT_REP_REF_ID                    1                                          /**< Id of reference to Keyboard Input Report. */
+#define OUTPUT_REP_REF_ID                   INPUT_REP_REF_ID                                           /**< Id of reference to Keyboard Output Report. */
+#define FEATURE_REP_REF_ID                  INPUT_REP_REF_ID                                         /**< ID of reference to Keyboard Feature Report. */
 #define FEATURE_REPORT_MAX_LEN              2                                          /**< Maximum length of Feature Report. */
 #define FEATURE_REPORT_INDEX                0                                          /**< Index of Feature Report. */
+
+#define INPUT_REPORT_RAW_INDEX 1
+#define OUTPUT_REPORT_RAW_INDEX 1
+#define INPUT_REP_REF_RAW_ID 2
+#define OUTPUT_REP_REF_RAW_ID 2
+#define INPUT_REPORT_RAW_MAX_LEN 32
+#define OUTPUT_REPORT_RAW_MAX_LEN 32
 
 #define MAX_BUFFER_ENTRIES                  5                                          /**< Number of elements that can be enqueued */
 
@@ -143,6 +150,7 @@ ret_code_t keycode_append_ble(uint8_t kc);
 ret_code_t keycode_remove_ble(uint8_t kc);
 ret_code_t keyboard_reset_ble(void);
 ret_code_t handle_keycode_ble(uint16_t keycode, bool press);
+ret_code_t raw_hid_send_ble(uint8_t *data, uint8_t length);
 
 extern keyboard_hid_functions_t ble_hid_functions;
 extern ble_gap_conn_params_t   gap_conn_params;

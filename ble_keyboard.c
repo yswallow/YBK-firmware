@@ -76,11 +76,14 @@
 #ifdef KEYBOARD_CENTRAL
 #include "ble_central.h"
 #else
+#ifdef KEYBOARD_PERIPH
 #include "ble_nus.h"
 #include "ble_peripheral.h"
 #endif
+#endif
 
 #include "usb_mouse.h"
+#include "via.h"
 
 APP_TIMER_DEF(m_ble_timeout);
 
@@ -90,8 +93,8 @@ BLE_HIDS_DEF(m_hids,                                                /**< Structu
              OUTPUT_REPORT_MAX_LEN,
              FEATURE_REPORT_MAX_LEN);
 NRF_BLE_GATT_DEF(m_gatt);                                           /**< GATT module instance. */
-NRF_BLE_QWR_DEF(m_qwr);                                             /**< Context for the Queued Write module.*/
 BLE_ADVERTISING_DEF(m_advertising);                                 /**< Advertising module instance. */
+NRF_BLE_QWR_DEF(m_qwr);                                             /**< Context for the Queued Write module.*/
 
 keyboard_hid_functions_t ble_hid_functions = {
     .keycode_append = keycode_append_ble,
@@ -107,11 +110,12 @@ uint16_t          m_conn_handle  = BLE_CONN_HANDLE_INVALID;  /**< Handle of the 
 static pm_peer_id_t      m_peer_id;                                 /**< Device reference handle to the current bonded central. */
 
 static ble_uuid_t m_adv_uuids[] = {
-#ifdef KEYBOARD_CENTRAL
-    {BLE_UUID_HUMAN_INTERFACE_DEVICE_SERVICE, BLE_UUID_TYPE_BLE},
-    {BLE_UUID_DEVICE_INFORMATION_SERVICE, BLE_UUID_TYPE_BLE}
-#else
+#ifdef KEYBOARD_PERIPH
     {BLE_UUID_NUS_SERVICE, NUS_SERVICE_UUID_TYPE}
+#else
+    {BLE_UUID_HUMAN_INTERFACE_DEVICE_SERVICE, BLE_UUID_TYPE_BLE}
+//,    {BLE_UUID_DEVICE_INFORMATION_SERVICE, BLE_UUID_TYPE_BLE}
+    
 #endif
 };
 
@@ -303,22 +307,36 @@ static void on_hid_rep_char_write(ble_hids_evt_t * p_evt)
     if (p_evt->params.char_write.char_id.rep_type == BLE_HIDS_REP_TYPE_OUTPUT)
     {
         ret_code_t err_code;
-        uint8_t  report_val;
+        uint8_t  report_val[32];
         uint8_t  report_index = p_evt->params.char_write.char_id.rep_index;
-
-        if (report_index == OUTPUT_REPORT_INDEX)
+        
+        STATIC_ASSERT( OUTPUT_REPORT_MAX_LEN == 1 );
+        switch(report_index)
         {
+        case OUTPUT_REPORT_KEYS_INDEX:
             // This code assumes that the output report is one byte long. Hence the following
             // static assert is made.
-            STATIC_ASSERT(OUTPUT_REPORT_MAX_LEN == 1);
+            
 
             err_code = ble_hids_outp_rep_get(&m_hids,
                                              report_index,
                                              OUTPUT_REPORT_MAX_LEN,
                                              0,
                                              m_conn_handle,
-                                             &report_val);
+                                             report_val);
             APP_ERROR_CHECK(err_code);
+            break;
+
+        case OUTPUT_REPORT_RAW_INDEX:
+            err_code = ble_hids_outp_rep_get(&m_hids,
+                                             OUTPUT_REPORT_RAW_INDEX,
+                                             OUTPUT_REPORT_RAW_MAX_LEN,
+                                             0,
+                                             m_conn_handle,
+                                             report_val);
+            APP_ERROR_CHECK(err_code);
+            raw_hid_receive(report_val, OUTPUT_REPORT_RAW_MAX_LEN);
+            break;
         }
     }
 }
@@ -716,14 +734,15 @@ static void hids_init(void)
     ble_hids_feature_rep_init_t * p_feature_report;
     uint8_t                       hid_info_flags;
 
-    static ble_hids_inp_rep_init_t     input_report_array[1];
-    static ble_hids_outp_rep_init_t    output_report_array[1];
+    static ble_hids_inp_rep_init_t     input_report_array[2];
+    static ble_hids_outp_rep_init_t    output_report_array[2];
     static ble_hids_feature_rep_init_t feature_report_array[1];
     static uint8_t                     report_map_data[] =
     {
         0x05, 0x01,       // Usage Page (Generic Desktop)
         0x09, 0x06,       // Usage (Keyboard)
         0xA1, 0x01,       // Collection (Application)
+        0x85, INPUT_REP_REF_ID,
         0x05, 0x07,       // Usage Page (Key Codes)
         0x19, 0xe0,       // Usage Minimum (224)
         0x29, 0xe7,       // Usage Maximum (231)
@@ -755,12 +774,39 @@ static void hids_init(void)
         0x19, 0x00,       // Usage Minimum (0)
         0x29, 0x65,       // Usage Maximum (101)
         0x81, 0x00,       // Input (Data, Array) Key array(6 bytes)
+        
+        
+        0xC0
+#if 1
+        ,
+        0x06, 0x60, 0xFF,
+        0x09, 0x61,
+        0xa1, 0x01,
+        0x85, INPUT_REP_REF_RAW_ID,
+        
+        0x09, 0x62, 
+        0x15, 0x00, 
+        0x26, 0xFF, 0x00, 
+        0x95, 0x20, 
+        0x75, 0x08, 
+        0x81, 0x06, 
+      
+        0x09, 0x63, 
+        0x15, 0x00, 
+        0x26, 0xFF, 0x00, 
+        0x95, 0x20, //REPORT_COUNT(32)
+        0x75, 0x08, //REPORT_SIZE(8)
+        0x91, 0x06, 
+        0xC0             // End Collection (Application)
 
-        0xC0              // End Collection (Application)
+        // RAW HID
+#endif
+        
+        
     };
 
-    memset((void *)input_report_array, 0, sizeof(ble_hids_inp_rep_init_t));
-    memset((void *)output_report_array, 0, sizeof(ble_hids_outp_rep_init_t));
+    memset((void *)input_report_array, 0, sizeof(input_report_array));
+    memset((void *)output_report_array, 0, sizeof(output_report_array));
     memset((void *)feature_report_array, 0, sizeof(ble_hids_feature_rep_init_t));
 
     // Initialize HID Service
@@ -773,13 +819,32 @@ static void hids_init(void)
     p_input_report->sec.wr      = SEC_JUST_WORKS;
     p_input_report->sec.rd      = SEC_JUST_WORKS;
 
-    p_output_report                      = &output_report_array[OUTPUT_REPORT_INDEX];
+    p_output_report                      = &output_report_array[OUTPUT_REPORT_KEYS_INDEX];
     p_output_report->max_len             = OUTPUT_REPORT_MAX_LEN;
     p_output_report->rep_ref.report_id   = OUTPUT_REP_REF_ID;
     p_output_report->rep_ref.report_type = BLE_HIDS_REP_TYPE_OUTPUT;
 
     p_output_report->sec.wr = SEC_JUST_WORKS;
     p_output_report->sec.rd = SEC_JUST_WORKS;
+    
+    // RAW Setting
+    p_input_report                      = &input_report_array[INPUT_REPORT_RAW_INDEX];
+    p_input_report->max_len             = INPUT_REPORT_RAW_MAX_LEN;
+    p_input_report->rep_ref.report_id   = INPUT_REP_REF_RAW_ID;
+    p_input_report->rep_ref.report_type = BLE_HIDS_REP_TYPE_INPUT;
+
+    p_input_report->sec.cccd_wr = SEC_JUST_WORKS;
+    p_input_report->sec.wr      = SEC_JUST_WORKS;
+    p_input_report->sec.rd      = SEC_JUST_WORKS;
+
+    p_output_report                      = &output_report_array[OUTPUT_REPORT_RAW_INDEX];
+    p_output_report->max_len             = OUTPUT_REPORT_RAW_MAX_LEN;
+    p_output_report->rep_ref.report_id   = OUTPUT_REP_REF_RAW_ID;
+    p_output_report->rep_ref.report_type = BLE_HIDS_REP_TYPE_OUTPUT;
+
+    p_output_report->sec.wr = SEC_JUST_WORKS;
+    p_output_report->sec.rd = SEC_JUST_WORKS;
+    // RAW Setting end
 
     p_feature_report                      = &feature_report_array[FEATURE_REPORT_INDEX];
     p_feature_report->max_len             = FEATURE_REPORT_MAX_LEN;
@@ -797,9 +862,14 @@ static void hids_init(void)
     hids_init_obj.error_handler                  = service_error_handler;
     hids_init_obj.is_kb                          = true;
     hids_init_obj.is_mouse                       = false;
+#if 1
+    hids_init_obj.inp_rep_count                  = 2;
+    hids_init_obj.outp_rep_count                 = 2;
+#else
     hids_init_obj.inp_rep_count                  = 1;
-    hids_init_obj.p_inp_rep_array                = input_report_array;
     hids_init_obj.outp_rep_count                 = 1;
+#endif
+    hids_init_obj.p_inp_rep_array                = input_report_array;
     hids_init_obj.p_outp_rep_array               = output_report_array;
     hids_init_obj.feature_rep_count              = 1;
     hids_init_obj.p_feature_rep_array            = feature_report_array;
@@ -985,7 +1055,13 @@ void ble_keyboard_init(void) {
     memset(ble_keyboard_rep_buffer, 0, sizeof(ble_keyboard_rep_buffer));
 }
 
-
+ret_code_t raw_hid_send_ble(uint8_t *data, uint8_t length) {
+    return ble_hids_inp_rep_send(&m_hids,
+                                 INPUT_REPORT_RAW_INDEX,
+                                 OUTPUT_REPORT_RAW_MAX_LEN,
+                                 data,
+                                 m_conn_handle);
+}
 
 ret_code_t keyboard_report_send_ble(void) {
     return ble_hids_inp_rep_send(&m_hids,

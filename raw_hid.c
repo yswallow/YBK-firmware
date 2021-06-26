@@ -4,6 +4,10 @@
 #include "raw_hid.h"
 #include "main.h"
 
+#ifdef BLE_RAW_HID
+#include "ble_keyboard.h"
+#endif
+
 APP_USBD_HID_GENERIC_GLOBAL_DEF(m_app_hid_raw,
                                 HID_RAW_INTERFACE,
                                 hid_raw_ev_handler,
@@ -65,7 +69,9 @@ app_usbd_hid_generic_t * get_raw_inst(void) {
 }
 */
 void raw_hid_send(uint8_t *data, uint8_t length) {
-
+#ifdef BLE_RAW_HID
+    raw_hid_send_ble(data, length);
+#endif
     app_usbd_hid_generic_in_report_set(
         &m_app_hid_raw,
         data,
