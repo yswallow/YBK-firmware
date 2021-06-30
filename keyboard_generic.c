@@ -9,6 +9,7 @@
 #include "usb_mouse.h"
 #include "via_fds.h"
 #include "nrf_log.h"
+#include "nrf_power.h"
 
 #include "heatmap.h"
 #ifdef KEYBOARD_PERIPH
@@ -17,6 +18,7 @@
 #endif
 
 APP_TIMER_DEF(m_tick_kbd);
+APP_TIMER_DEF(m_keyboard_timeout);
 
 uint32_t keypress_bitmap[KBD_SETTING_ROW_PINS_MAX];
 keys_t keypress_status[PRESS_KEYS_MAX];
@@ -30,6 +32,44 @@ keyboard_hid_functions_t hid_functions = {
     .handle_mouse = handle_keycode_mouse_usb,
     .tick_handler_mouse = tick_handler_mouse_usb
 };
+
+
+/**@brief Function for putting the chip into sleep mode.
+ *
+ * @note This function will not return.
+ */
+void sleep_mode_enter(void *ptr)
+{
+    ret_code_t err_code;
+    if(! ( NRF_POWER_USBREGSTATUS_VBUSDETECT_MASK & nrf_power_usbregstatus_get() ) ) {
+        hid_functions.reset();
+        // Prepare wakeup buttons.
+        err_code = keyboard_sleep_prepare();
+        APP_ERROR_CHECK(err_code);
+
+        // Go to system-off mode (this function will not return; wakeup will cause a reset).
+        err_code = sd_power_system_off();
+        APP_ERROR_CHECK(err_code);
+    }
+}
+
+void restart_timeout_timer(void) {
+    ret_code_t err_code;
+    err_code = app_timer_stop(m_keyboard_timeout);
+    APP_ERROR_CHECK(err_code);
+    
+    err_code = app_timer_start(m_keyboard_timeout, KEYBOARD_TIMEOUT_TICKS, NULL);
+    APP_ERROR_CHECK(err_code);
+    
+}
+
+void timeout_timer_init(void) {
+    ret_code_t err_code;
+    err_code = app_timer_create(&m_keyboard_timeout, APP_TIMER_MODE_SINGLE_SHOT, sleep_mode_enter);
+    APP_ERROR_CHECK(err_code);
+    err_code = app_timer_start(m_keyboard_timeout, KEYBOARD_TIMEOUT_TICKS, NULL);
+    APP_ERROR_CHECK(err_code);
+}
 
 void layer_history_append(uint8_t layer) {
     uint8_t i=1;
@@ -167,6 +207,7 @@ void keypress(uint8_t row, uint8_t col, bool debouncing) {
 #ifdef KEYBOARD_PERIPH
     send_place_ble(row,col,true);
 #endif
+    restart_timeout_timer();
     if(debouncing) {
         nrf_delay_ms(DEBOUNCING_DELAY_MS);
     }
@@ -321,6 +362,7 @@ void keyboard_init(keyboard_t keyboard) {
     app_timer_create(&m_tick_kbd, APP_TIMER_MODE_REPEATED, kbd_tick_handler);
     app_timer_start(m_tick_kbd, APP_TIMER_TICKS(TAPPING_TERM_TICK_MS),NULL);
     (keyboard.init_method)(keyboard.keyboard_type,keyboard.keyboard_definision);
+    timeout_timer_init();
 }
 
 #if 0

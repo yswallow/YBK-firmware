@@ -131,13 +131,14 @@
 #define MAX_KEYS_IN_ONE_REPORT              (INPUT_REPORT_KEYS_MAX_LEN - SCAN_CODE_POS)/**< Maximum number of key presses that can be sent in one Input Report. */
 
 // BLE DEFINES END
-#define KEYBOARD_TIMEOUT_TICKS APP_TIMER_TICKS(600000)
+
 // functions
 
 void ble_common_init(void);
 
 void ble_keyboard_init(void);
 void advertising_start(void);
+void restart_timeout_timer(void);
 
 ret_code_t keycode_append_ble(uint8_t kc);
 ret_code_t keycode_remove_ble(uint8_t kc);
