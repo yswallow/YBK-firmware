@@ -63,7 +63,6 @@
 #include "nrf_ble_qwr.h"
 #include "nrf_pwr_mgmt.h"
 #include "peer_manager_handler.h"
-#include "nrf_power.h"
 
 #include "nrf_log.h"
 #include "nrf_log_ctrl.h"
@@ -85,7 +84,7 @@
 #include "usb_mouse.h"
 #include "via.h"
 
-APP_TIMER_DEF(m_ble_timeout);
+
 
 BLE_HIDS_DEF(m_hids,                                                /**< Structure used to identify the HID service. */
              NRF_SDH_BLE_TOTAL_LINK_COUNT,
@@ -339,25 +338,6 @@ static void on_hid_rep_char_write(ble_hids_evt_t * p_evt)
     }
 }
 
-
-/**@brief Function for putting the chip into sleep mode.
- *
- * @note This function will not return.
- */
-static void sleep_mode_enter(void *ptr)
-{
-    ret_code_t err_code;
-    if(! ( NRF_POWER_USBREGSTATUS_VBUSDETECT_MASK & nrf_power_usbregstatus_get() ) ) {
-        keyboard_reset_ble();
-        // Prepare wakeup buttons.
-        err_code = keyboard_sleep_prepare();
-        APP_ERROR_CHECK(err_code);
-
-        // Go to system-off mode (this function will not return; wakeup will cause a reset).
-        err_code = sd_power_system_off();
-        APP_ERROR_CHECK(err_code);
-    }
-}
 
 
 /**@brief Function for handling HID events.
@@ -1015,24 +995,6 @@ static void conn_params_init(void)
     APP_ERROR_CHECK(err_code);
 }
 
-void restart_timeout_timer(void) {
-    ret_code_t err_code;
-    err_code = app_timer_stop(m_ble_timeout);
-    APP_ERROR_CHECK(err_code);
-    
-    err_code = app_timer_start(m_ble_timeout, KEYBOARD_TIMEOUT_TICKS, NULL);
-    APP_ERROR_CHECK(err_code);
-    
-}
-
-void timeout_timer_init(void) {
-    ret_code_t err_code;
-    err_code = app_timer_create(&m_ble_timeout, APP_TIMER_MODE_SINGLE_SHOT, sleep_mode_enter);
-    APP_ERROR_CHECK(err_code);
-    err_code = app_timer_start(m_ble_timeout, KEYBOARD_TIMEOUT_TICKS, NULL);
-    APP_ERROR_CHECK(err_code);
-}
-
 uint8_t ble_keyboard_rep_buffer[BLE_HID_KBD_REP_LEN];
 
 
@@ -1048,7 +1010,6 @@ void ble_keyboard_init(void) {
     services_init();
     conn_params_init();
     advertising_init();
-    timeout_timer_init();
 
     memset(ble_keyboard_rep_buffer, 0, sizeof(ble_keyboard_rep_buffer));
 }

@@ -46,9 +46,10 @@
 #include "via.h"
 #include "keyboard_config.h"
 #include "heatmap.h"
+#include "debug_message_hid.h"
 
-static fds_record_desc_t eeprom_desc = {0};
-static fds_record_desc_t setting_desc = {0};
+fds_record_desc_t eeprom_desc;
+fds_record_desc_t setting_desc;
 /*
 static fds_find_token_t  tok  = {0};
 static fds_flash_record_t config = {0};
@@ -74,6 +75,8 @@ enum {
 };
 
 #define KBD_SETTING_ID_HEATMAP 0x80
+#define KBD_SETTING_ID_DEBUG_SETTING 0x88
+#define KBD_SETTING_ID_DEBUG_RECEIVED 0x89
 
 static void wait_for_fds_ready(void)
 {
@@ -173,14 +176,14 @@ static void fds_evt_handler(fds_evt_t const * p_evt)
     }
 }
 
-static fds_record_t const m_eeprom_record = {
+fds_record_t const m_eeprom_record = {
     .file_id = CONFIG_FILE,
     .key = CONFIG_REC_KEY,
     .data.p_data = eeprom,
     .data.length_words = (EEPROM_SIZE*sizeof(uint8_t) + 3)/sizeof(uint32_t)
 };
 
-static fds_record_t const m_kbd_setting_record = {
+fds_record_t const m_kbd_setting_record = {
     .file_id = KBD_SETTING_FILE,
     .key = KBD_SETTING_REC_KEY,
     .data.p_data = kbd_setting,
@@ -190,7 +193,16 @@ static fds_record_t const m_kbd_setting_record = {
 void save_keymap(void) {
     
     ret_code_t ret;
-    
+    fds_find_token_t tok;
+    if( eeprom_desc.p_record = 0 ) {
+        ret=fds_record_find(CONFIG_FILE, CONFIG_REC_KEY, &eeprom_desc, &tok);
+        if( ret == FDS_ERR_NOT_FOUND ) {
+            NRF_LOG_ERROR("EEPROM record Not Found.");
+        }
+        
+        APP_ERROR_CHECK(ret);
+    }
+    memset(&tok, 0, sizeof(fds_find_token_t));
     ret = fds_record_update(&eeprom_desc, &m_eeprom_record);
     if ((ret != NRF_SUCCESS) && (ret == FDS_ERR_NO_SPACE_IN_FLASH))
     {
@@ -276,10 +288,8 @@ void via_fds_init(void) {
          } else {
             APP_ERROR_CHECK(ret);
          }
-         ret=fds_record_find(CONFIG_FILE, CONFIG_REC_KEY, &eeprom_desc, &tok);
-         APP_ERROR_CHECK(ret);
     }
-
+    memset(&tok, 0, sizeof(fds_find_token_t));
     ret = fds_record_find(KBD_SETTING_FILE, KBD_SETTING_REC_KEY, &setting_desc, &tok);
 
     if (ret == NRF_SUCCESS)
@@ -314,13 +324,22 @@ void via_fds_init(void) {
        } else {
             APP_ERROR_CHECK(ret);
        }
-       ret = fds_record_find(KBD_SETTING_FILE, KBD_SETTING_REC_KEY, &setting_desc, &tok);
+       //ret = fds_record_find(KBD_SETTING_FILE, KBD_SETTING_REC_KEY, &setting_desc, &tok);
             
     }
 }
 
 void save_kbd_setting(void) {
     ret_code_t ret;
+    if(setting_desc.p_record==0) {
+        fds_find_token_t tok;
+        memset(&tok, 0, sizeof(fds_find_token_t));
+        ret = fds_record_find(KBD_SETTING_FILE, KBD_SETTING_REC_KEY, &setting_desc, &tok);
+        if(ret==FDS_ERR_NOT_FOUND) {
+            NRF_LOG_ERROR("Setting Record Not Found.");
+        }
+        APP_ERROR_CHECK(ret);
+    }
     
     ret = fds_record_update(&setting_desc, &m_kbd_setting_record);
     if ((ret != NRF_SUCCESS) && (ret == FDS_ERR_NO_SPACE_IN_FLASH))
@@ -372,6 +391,12 @@ void raw_hid_receive_kb(uint8_t *data, uint8_t length) {
             break;
         case KBD_SETTING_ID_HEATMAP:
             response_heatmap(data, length);
+            break;
+        case KBD_SETTING_ID_DEBUG_SETTING:
+            KEYBOARD_DEBUG_HID_SET(data, length);
+            break;
+        case KBD_SETTING_ID_DEBUG_RECEIVED:
+            KEYBOARD_DEBUG_HID_RESPONSE(data, length);
             break;
         default:
             *command_id         = id_unhandled;

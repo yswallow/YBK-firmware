@@ -220,7 +220,7 @@
     </folder>
     <configuration
       Name="CentralDebug"
-      c_preprocessor_definitions="KEYBOARD_CENTRAL;DEBUG;BLE_RAW_HID" />
+      c_preprocessor_definitions="KEYBOARD_CENTRAL;DEBUG;KEYBOARD_DEBUG_HID;BLE_RAW_HID" />
     <configuration
       Name="PeripheralDebug"
       c_preprocessor_definitions="KEYBOARD_PERIPH;DEBUG" />

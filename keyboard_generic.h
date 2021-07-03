@@ -3,6 +3,7 @@
 #include "keyboard_config.h"
 #include "via_fds.h"
 #include "dynamic_keymap.h"
+#include "app_timer.h"
 
 #ifndef __KEYBOARD_H
 #define __KEYBOARD_H
@@ -67,10 +68,13 @@ void keypress(uint8_t row, uint8_t col, bool debouncing);
 void keyrelease(uint8_t row, uint8_t col, bool debouncing);
 uint8_t get_active_layer(void);
 
+void sleep_mode_enter(void *ptr);
+
 #define PRESS_KEYS_MAX 10
 #define DEBOUNCING_DELAY_MS 30
 #define TAPPING_TERM_TICK_MS 50
 #define MOUSE_MOVE_INTERVAL_TICKS ( MOUSE_MOVE_INTERVAL / TAPPING_TERM_TICK_MS )
+#define KEYBOARD_TIMEOUT_TICKS APP_TIMER_TICKS(600000)
 
 extern keyboard_hid_functions_t hid_functions;
 extern uint32_t keypress_bitmap[KBD_SETTING_ROW_PINS_MAX];
