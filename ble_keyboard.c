@@ -88,7 +88,7 @@
 
 BLE_HIDS_DEF(m_hids,                                                /**< Structure used to identify the HID service. */
              NRF_SDH_BLE_TOTAL_LINK_COUNT,
-             INPUT_REPORT_RAW_MAX_LEN+1,OUTPUT_REPORT_RAW_MAX_LEN+1);
+             INPUT_REPORT_RAW_MAX_LEN+1,OUTPUT_REPORT_RAW_MAX_LEN+1, FEATURE_REPORT_MAX_LEN);
 NRF_BLE_GATT_DEF(m_gatt);                                           /**< GATT module instance. */
 BLE_ADVERTISING_DEF(m_advertising);                                 /**< Advertising module instance. */
 NRF_BLE_QWR_DEF(m_qwr);                                             /**< Context for the Queued Write module.*/
