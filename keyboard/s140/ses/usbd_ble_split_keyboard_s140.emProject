@@ -219,7 +219,7 @@
     </folder>
     <configuration
       Name="CentralDebug"
-      c_preprocessor_definitions="KEYBOARD_CENTRAL;DEBUG" />
+      c_preprocessor_definitions="KEYBOARD_CENTRAL;DEBUG;KEYBOARD_DEBUG_HID" />
     <configuration
       Name="PeripheralDebug"
       c_preprocessor_definitions="KEYBOARD_PERIPH;DEBUG" />

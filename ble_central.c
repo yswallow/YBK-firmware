@@ -71,6 +71,7 @@
 #include "ble_keyboard.h"
 
 #include "keyboard_config.h"
+#include "debug_message_hid.h"
 
 #define APP_BLE_CONN_CFG_TAG    1                                       /**< Tag that refers to the BLE stack configuration set with @ref sd_ble_cfg_set. The default tag is @ref BLE_CONN_CFG_TAG_DEFAULT. */
 #define APP_BLE_OBSERVER_PRIO   3                                       /**< BLE observer priority of the application. There is no need to modify this value. */
@@ -381,6 +382,7 @@ static void ble_nus_c_evt_handler(ble_nus_c_t * p_ble_nus_c, ble_nus_c_evt_t con
 
         case BLE_NUS_C_EVT_DISCONNECTED:
             NRF_LOG_INFO("Disconnected.");
+            KEYBOARD_DEBUG_HID_REGISTER_STRING("NUS Disconnected.", 14);
             scan_start();
             break;
     }

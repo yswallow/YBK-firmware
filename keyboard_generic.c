@@ -12,6 +12,7 @@
 #include "nrf_power.h"
 
 #include "heatmap.h"
+#include "debug_message_hid.h"
 #ifdef KEYBOARD_PERIPH
 #define KEYCODE_PERIPH 0xFFFF
 #include "ble_peripheral.h"
@@ -167,6 +168,7 @@ void layer_history_remove(uint8_t layer) {
 
         if( layer_history[i] == layer ) {
             NRF_LOG_INFO("layer removed.");
+            KEYBOARD_DEBUG_HID_REGISTER_STRING("layer removed.", 15);
             backword_count++;
         }
         

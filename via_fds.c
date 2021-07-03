@@ -46,6 +46,7 @@
 #include "via.h"
 #include "keyboard_config.h"
 #include "heatmap.h"
+#include "debug_message_hid.h"
 
 fds_record_desc_t eeprom_desc;
 fds_record_desc_t setting_desc;
@@ -74,6 +75,8 @@ enum {
 };
 
 #define KBD_SETTING_ID_HEATMAP 0x80
+#define KBD_SETTING_ID_DEBUG_SETTING 0x88
+#define KBD_SETTING_ID_DEBUG_RECEIVED 0x89
 
 static void wait_for_fds_ready(void)
 {
@@ -388,6 +391,12 @@ void raw_hid_receive_kb(uint8_t *data, uint8_t length) {
             break;
         case KBD_SETTING_ID_HEATMAP:
             response_heatmap(data, length);
+            break;
+        case KBD_SETTING_ID_DEBUG_SETTING:
+            KEYBOARD_DEBUG_HID_SET(data, length);
+            break;
+        case KBD_SETTING_ID_DEBUG_RECEIVED:
+            KEYBOARD_DEBUG_HID_RESPONSE(data, length);
             break;
         default:
             *command_id         = id_unhandled;
