@@ -89,9 +89,7 @@ APP_TIMER_DEF(m_ble_timeout);
 
 BLE_HIDS_DEF(m_hids,                                                /**< Structure used to identify the HID service. */
              NRF_SDH_BLE_TOTAL_LINK_COUNT,
-             INPUT_REPORT_KEYS_MAX_LEN,
-             OUTPUT_REPORT_MAX_LEN,
-             FEATURE_REPORT_MAX_LEN);
+             INPUT_REPORT_RAW_MAX_LEN+1,OUTPUT_REPORT_RAW_MAX_LEN+1);
 NRF_BLE_GATT_DEF(m_gatt);                                           /**< GATT module instance. */
 BLE_ADVERTISING_DEF(m_advertising);                                 /**< Advertising module instance. */
 NRF_BLE_QWR_DEF(m_qwr);                                             /**< Context for the Queued Write module.*/
@@ -787,16 +785,16 @@ static void hids_init(void)
         0x09, 0x62, 
         0x15, 0x00, 
         0x26, 0xFF, 0x00, 
-        0x95, 0x20, 
+        0x95, INPUT_REPORT_RAW_MAX_LEN,
         0x75, 0x08, 
         0x81, 0x06, 
       
         0x09, 0x63, 
         0x15, 0x00, 
         0x26, 0xFF, 0x00, 
-        0x95, 0x20, //REPORT_COUNT(32)
+        0x95, OUTPUT_REPORT_RAW_MAX_LEN, //REPORT_COUNT(32)
         0x75, 0x08, //REPORT_SIZE(8)
-        0x91, 0x06, 
+        0x91, 0x83, 
         0xC0             // End Collection (Application)
 
         // RAW HID
