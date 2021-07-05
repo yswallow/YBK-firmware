@@ -19,7 +19,10 @@
 #endif
 
 APP_TIMER_DEF(m_tick_kbd);
+#ifndef KEYBOARD_PERIPH
 APP_TIMER_DEF(m_keyboard_timeout);
+#endif
+
 
 uint32_t keypress_bitmap[KBD_SETTING_ROW_PINS_MAX];
 keys_t keypress_status[PRESS_KEYS_MAX];
@@ -53,7 +56,7 @@ void sleep_mode_enter(void *ptr)
         APP_ERROR_CHECK(err_code);
     }
 }
-
+#ifndef KEYBOARD_PERIPH
 void restart_timeout_timer(void) {
     ret_code_t err_code;
     err_code = app_timer_stop(m_keyboard_timeout);
@@ -71,6 +74,8 @@ void timeout_timer_init(void) {
     err_code = app_timer_start(m_keyboard_timeout, KEYBOARD_TIMEOUT_TICKS, NULL);
     APP_ERROR_CHECK(err_code);
 }
+#endif
+
 
 void layer_history_append(uint8_t layer) {
     uint8_t i=1;
@@ -209,7 +214,9 @@ void keypress(uint8_t row, uint8_t col, bool debouncing) {
 #ifdef KEYBOARD_PERIPH
     send_place_ble(row,col,true);
 #endif
+#ifndef KEYBOARD_PERIPH
     restart_timeout_timer();
+#endif
     if(debouncing) {
         nrf_delay_ms(DEBOUNCING_DELAY_MS);
     }
@@ -364,7 +371,9 @@ void keyboard_init(keyboard_t keyboard) {
     app_timer_create(&m_tick_kbd, APP_TIMER_MODE_REPEATED, kbd_tick_handler);
     app_timer_start(m_tick_kbd, APP_TIMER_TICKS(TAPPING_TERM_TICK_MS),NULL);
     (keyboard.init_method)(keyboard.keyboard_type,keyboard.keyboard_definision);
+#ifndef KEYBOARD_PERIPH
     timeout_timer_init();
+#endif
 }
 
 #if 0

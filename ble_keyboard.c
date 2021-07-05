@@ -953,12 +953,14 @@ static void gatt_init(void)
 /**@brief Function for initializing services that will be used by the application.
  */
 static void services_init(void)
-{
+{ 
     qwr_init();
+#ifdef KEYBOARD_PERIPH
+    periph_nus_init();
+#else
+    
     dis_init();
     hids_init();
-#ifdef KEYBOARD_PERIPH
-    nus_init();
 #endif
 }
 
@@ -1091,7 +1093,7 @@ ret_code_t keycode_remove_ble(uint8_t kc) {
     }
     if(updated) {
         keyboard_report_send_ble();
-        restart_timeout_timer();
+        //restart_timeout_timer();
     }
     return NRF_SUCCESS;
 }

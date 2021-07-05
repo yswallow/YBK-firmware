@@ -21,7 +21,8 @@ static void nus_data_handler(ble_nus_evt_t * p_evt)
 }
 /**@snippet [Handling the data received over BLE] */
 
-void nus_init(void) {
+
+void periph_nus_init(void) {
     ret_code_t ret;
     ble_nus_init_t     nus_init;
     
