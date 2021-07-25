@@ -111,6 +111,10 @@
 #define FEATURE_REPORT_MAX_LEN              2                                          /**< Maximum length of Feature Report. */
 #define FEATURE_REPORT_INDEX                0                                          /**< Index of Feature Report. */
 
+#define INPUT_REPORT_MOUSE_INDEX 2
+#define INPUT_REP_REF_MOUSE_ID 2
+#define INPUT_REPORT_MOUSE_MAX_LEN 4
+
 #define INPUT_REPORT_RAW_INDEX 1
 #define OUTPUT_REPORT_RAW_INDEX 1
 #define INPUT_REP_REF_RAW_ID 8
@@ -156,3 +160,15 @@ ret_code_t raw_hid_send_ble(uint8_t *data, uint8_t length);
 extern keyboard_hid_functions_t ble_hid_functions;
 extern ble_gap_conn_params_t   gap_conn_params;
 extern uint8_t ble_keyboard_rep_buffer[BLE_HID_KBD_REP_LEN];
+
+typedef struct {
+    uint8_t buttons;
+    int8_t x;
+    int8_t y;
+    int8_t wheel;
+} mouse_report_ble_t;
+
+ret_code_t mouse_reset_ble(void);
+ret_code_t handle_keycode_mouse_ble(uint16_t keycode, bool press);
+ret_code_t tick_handler_mouse_ble(keys_t *p_key);
+ret_code_t ble_mouse_init(void);

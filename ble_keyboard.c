@@ -98,8 +98,8 @@ keyboard_hid_functions_t ble_hid_functions = {
     .keycode_remove = keycode_remove_ble,
     .handle_keycode = handle_keycode_ble,
     .reset = keyboard_reset_ble,
-    .handle_mouse = handle_keycode_mouse_usb,
-    .tick_handler_mouse = tick_handler_mouse_usb
+    .handle_mouse = handle_keycode_mouse_ble,
+    .tick_handler_mouse = tick_handler_mouse_ble
 };
 
 static bool              m_in_boot_mode = false;                    /**< Current protocol mode. */
@@ -116,6 +116,7 @@ static ble_uuid_t m_adv_uuids[] = {
 #endif
 };
 
+mouse_report_ble_t mouse_report_ble;
 
 static void on_hids_evt(ble_hids_t * p_hids, ble_hids_evt_t * p_evt);
 
@@ -712,7 +713,7 @@ static void hids_init(void)
     ble_hids_feature_rep_init_t * p_feature_report;
     uint8_t                       hid_info_flags;
 
-    static ble_hids_inp_rep_init_t     input_report_array[2];
+    static ble_hids_inp_rep_init_t     input_report_array[3];
     static ble_hids_outp_rep_init_t    output_report_array[2];
     static ble_hids_feature_rep_init_t feature_report_array[1];
     static uint8_t                     report_map_data[] =
@@ -755,6 +756,37 @@ static void hids_init(void)
         
         
         0xC0
+
+// Mouse Definision
+        ,
+        0x05, 0x01,       /* Usage Page (Generic Desktop),       */     
+        0x09, 0x02,       /* Usage (Mouse),                      */     
+        0xA1, 0x01,       /*  Collection (Application),          */     
+        0x85, INPUT_REP_REF_MOUSE_ID,
+        0x09, 0x01,       /*   Usage (Pointer),                  */     
+        0xA1, 0x00,       /*  Collection (Physical),             */     
+        0x05, 0x09,       /*     Usage Page (Buttons),           */     
+        0x19, 0x01,       /*     Usage Minimum (01),             */     
+        0x29, 0x03,       /*     Usage Maximum (bcnt),           */     
+        0x15, 0x00,       /*     Logical Minimum (0),            */     
+        0x25, 0x01,       /*     Logical Maximum (1),            */     
+        0x75, 0x01,       /*     Report Size (1),                */     
+        0x95, 0x03,       /*     Report Count (bcnt),            */     
+        0x81, 0x02,       /*     Input (Data, Variable, Absolute)*/     
+        0x75, 0x05,       /*     Report Size (8-(bcnt)),         */     
+        0x95, 0x01,       /*     Report Count (1),               */     
+        0x81, 0x01,       /*     Input (Constant),               */     
+        0x05, 0x01,       /*     Usage Page (Generic Desktop),   */     
+        0x09, 0x30,       /*     Usage (X),                      */     
+        0x09, 0x31,       /*     Usage (Y),                      */     
+        0x09, 0x38,       /*     Usage (Scroll),                 */     
+        0x15, 0x81,       /*     Logical Minimum (-127),         */     
+        0x25, 0x7F,       /*     Logical Maximum (127),          */     
+        0x75, 0x08,       /*     Report Size (8),                */     
+        0x95, 0x03,       /*     Report Count (3),               */     
+        0x81, 0x06,       /*     Input (Data, Variable, Relative)*/     
+        0xC0,         /*  End Collection,                        */     
+        0xC0         /* End Collection                          */     
 #if 1
         ,
         0x06, 0x60, 0xFF,
@@ -804,7 +836,16 @@ static void hids_init(void)
 
     p_output_report->sec.wr = SEC_JUST_WORKS;
     p_output_report->sec.rd = SEC_JUST_WORKS;
-    
+    // Mouse Setting
+    p_input_report                      = &input_report_array[INPUT_REPORT_MOUSE_INDEX];
+    p_input_report->max_len             = INPUT_REPORT_MOUSE_MAX_LEN;
+    p_input_report->rep_ref.report_id   = INPUT_REP_REF_MOUSE_ID;
+    p_input_report->rep_ref.report_type = BLE_HIDS_REP_TYPE_INPUT;
+
+    p_input_report->sec.cccd_wr = SEC_JUST_WORKS;
+    p_input_report->sec.wr      = SEC_JUST_WORKS;
+    p_input_report->sec.rd      = SEC_JUST_WORKS;
+
     // RAW Setting
     p_input_report                      = &input_report_array[INPUT_REPORT_RAW_INDEX];
     p_input_report->max_len             = INPUT_REPORT_RAW_MAX_LEN;
@@ -841,7 +882,7 @@ static void hids_init(void)
     hids_init_obj.is_kb                          = true;
     hids_init_obj.is_mouse                       = false;
 #if 1
-    hids_init_obj.inp_rep_count                  = 2;
+    hids_init_obj.inp_rep_count                  = 3;
     hids_init_obj.outp_rep_count                 = 2;
 #else
     hids_init_obj.inp_rep_count                  = 1;
@@ -997,8 +1038,12 @@ static void conn_params_init(void)
     APP_ERROR_CHECK(err_code);
 }
 
-uint8_t ble_keyboard_rep_buffer[BLE_HID_KBD_REP_LEN];
+ret_code_t ble_mouse_init(void) {
+    memset(&mouse_report_ble, 0, sizeof(mouse_report_ble));
+    return NRF_SUCCESS;
+}
 
+uint8_t ble_keyboard_rep_buffer[BLE_HID_KBD_REP_LEN];
 
 void ble_keyboard_init(void) {
     ble_conn_state_init();
@@ -1014,12 +1059,13 @@ void ble_keyboard_init(void) {
     advertising_init();
 
     memset(ble_keyboard_rep_buffer, 0, sizeof(ble_keyboard_rep_buffer));
+    ble_mouse_init();
 }
 
 ret_code_t raw_hid_send_ble(uint8_t *data, uint8_t length) {
     return ble_hids_inp_rep_send(&m_hids,
                                  INPUT_REPORT_RAW_INDEX,
-                                 OUTPUT_REPORT_RAW_MAX_LEN,
+                                 INPUT_REPORT_RAW_MAX_LEN,
                                  data,
                                  m_conn_handle);
 }
@@ -1107,3 +1153,92 @@ ret_code_t keyboard_reset_ble(void) {
 ret_code_t handle_keycode_ble(uint16_t keycode, bool press) {
     return NRF_SUCCESS;
 }
+
+// Mouse Functions
+ret_code_t mouse_report_send_ble(void) {
+    return ble_hids_inp_rep_send(&m_hids,
+                                 INPUT_REPORT_MOUSE_INDEX,
+                                 INPUT_REPORT_MOUSE_MAX_LEN,
+                                 (uint8_t *) &mouse_report_ble,
+                                 m_conn_handle);
+}
+
+ret_code_t mouse_reset_ble(void) {
+    memset(&mouse_report_ble, 0, sizeof(mouse_report_ble));
+    mouse_report_send_ble();
+    return NRF_SUCCESS;
+}
+
+ret_code_t handle_keycode_mouse_ble(uint16_t keycode, bool press) {
+    if( (keycode&0x00F0)!=0x00F0 ) {
+        return NRF_ERROR_INVALID_PARAM;
+    }
+
+    if( press ) { 
+        switch(keycode) {
+        
+        case 0xF0:
+            mouse_report_ble.y = -(MOUSE_MOVE_DISTANCE>>1);
+            break;
+        case 0xF1:
+            mouse_report_ble.y =  MOUSE_MOVE_DISTANCE>>1;
+            break;
+        case 0xF2:
+            mouse_report_ble.x = -(MOUSE_MOVE_DISTANCE>>1);
+            break;
+        case 0xF3:
+            mouse_report_ble.x = MOUSE_MOVE_DISTANCE>>1;
+            break;
+        case 0xF4:
+        case 0xF5:
+        case 0xF6:
+        case 0xF7:
+        case 0xF8:
+            mouse_report_ble.buttons |= 1 << (keycode - 0xF4);
+            break;
+        case 0xF9:
+            mouse_report_ble.wheel = WHEEL_MOVE_DISTANCE>>1;
+            break;
+        case 0xFA:
+            mouse_report_ble.wheel = -(WHEEL_MOVE_DISTANCE>>1);
+            break;
+        }
+    } else {
+        switch(keycode) {
+        case 0xF0:
+        case 0xF1:
+            mouse_report_ble.y = 0;
+            break;
+        case 0xF2:
+        case 0xF3:
+            mouse_report_ble.x = 0;
+            break;
+        case 0xF4:
+        case 0xF5:
+        case 0xF6:
+        case 0xF7:
+        case 0xF8:
+            mouse_report_ble.buttons &= 0 << (keycode - 0xF4);
+            break;
+        case 0xF9:
+        case 0xFA:
+            mouse_report_ble.wheel = 0;
+            break;
+        }
+    }
+    return mouse_report_send_ble();
+}
+
+
+ret_code_t tick_handler_mouse_ble(keys_t *p_key) {
+    if( (p_key->kc&0x00F0)!=0x00F0 ) {
+        return NRF_ERROR_INVALID_PARAM;
+    }
+    
+    if(! (p_key->tick % MOUSE_MOVE_INTERVAL_TICKS) ) {
+        mouse_report_send_ble();
+    }
+    return NRF_SUCCESS;
+}
+
+
