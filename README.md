@@ -25,7 +25,7 @@
 ## 書き込み方法
 
 1. [Adafruit_nRF52_Bootloader](https://github.com/adafruit/Adafruit_nRF52_Bootloader)が導入されたボードをパソコンに接続し，リセットボタンを2連打する
-2. 表示されたドライブにUF2ファイルをコピーする
+2. 表示されたドライブに[Releases](https://github.com/yswallow/nRF52-keyboard-firmware/releases)のUF2ファイルをコピーする
 3. ドライブが自動で接続解除されたらリセットボタンを押し，再度ドライブとして認識されなければ書き込み成功
     
     - 書き込みに失敗する場合，ファイルが壊れている可能性があります。
@@ -70,4 +70,8 @@
 ### LinuxでWebHIDを利用できない
 
 `sudo chmod 666 /dev/hidraw*` してください
+
+## 開発者向け
+
+[ビルド方法](https://github.com/yswallow/nRF52-keyboard-firmware/blob/main/doc/How_to_Build.md)
 
