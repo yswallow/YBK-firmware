@@ -747,14 +747,17 @@ void ble_central_init(void)
     //gatt_init();
     nus_c_init();
     scan_init();
-
-    // Start execution.
-    //printf("BLE UART central example started.\r\n");
+    ble_conn_state_conn_handle_list_t connections = ble_conn_state_central_handles();
+    if( connections.len > 0 ) {
+       sd_ble_gap_disconnect(connections.conn_handles[0], BLE_HCI_REMOTE_USER_TERMINATED_CONNECTION);
+    }
+    
     NRF_LOG_INFO("BLE UART central example started.");
 }
 
 void ble_central_start(void)
 {
     scan_start();
+    NRF_LOG_INFO("Start Scanning...");
 }
 #endif //KEYBOARD_CENTRAL
