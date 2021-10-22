@@ -26,6 +26,8 @@
 
 1. [Adafruit_nRF52_Bootloader](https://github.com/adafruit/Adafruit_nRF52_Bootloader)が導入されたボードをパソコンに接続し，リセットボタンを2連打する
 2. 表示されたドライブに[Releases](https://github.com/yswallow/nRF52-keyboard-firmware/releases)のUF2ファイルをコピーする
+    - 分割キーボードの左手側は`usbd_ble_split_keyboard_s140-CentralRelease.uf2`を, 右手側は`usbd_ble_split_keyboard_s140-PeripheralRelease.uf2`を, 一体型キーボードでは `usbd_ble_split_keyboard_s140-IntegratedRelease.uf2` を書き込んでください。
+    
 3. ドライブが自動で接続解除されたらリセットボタンを押し，再度ドライブとして認識されなければ書き込み成功
     
     - 書き込みに失敗する場合，ファイルが壊れている可能性があります。
@@ -70,6 +72,10 @@
 ### LinuxでWebHIDを利用できない
 
 `sudo chmod 666 /dev/hidraw*` してください
+
+### 左右接続がうまくいかない
+
+右手側の電源を先に入れるとうまくいきやすい気がします。
 
 ## 開発者向け
 
