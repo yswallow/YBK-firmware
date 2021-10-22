@@ -105,6 +105,7 @@ keyboard_hid_functions_t ble_hid_functions = {
 static bool              m_in_boot_mode = false;                    /**< Current protocol mode. */
 uint16_t          m_conn_handle  = BLE_CONN_HANDLE_INVALID;  /**< Handle of the current connection. */
 static pm_peer_id_t      m_peer_id;                                 /**< Device reference handle to the current bonded central. */
+static bool m_ble_hid_rep_pending = false;
 
 static ble_uuid_t m_adv_uuids[] = {
 #ifdef KEYBOARD_PERIPH
@@ -508,7 +509,7 @@ static void ble_p_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
 
         case BLE_GATTS_EVT_HVN_TX_COMPLETE:
             // Send next key event
-            
+            m_ble_hid_rep_pending = false;
             break;
 
         case BLE_GATTC_EVT_TIMEOUT:
@@ -1060,6 +1061,7 @@ ret_code_t raw_hid_send_ble(uint8_t *data, uint8_t length) {
 }
 
 ret_code_t keyboard_report_send_ble(void) {
+    while(m_ble_hid_rep_pending) {};
     return ble_hids_inp_rep_send(&m_hids,
                                  INPUT_REPORT_KEYS_INDEX,
                                  BLE_HID_KBD_REP_LEN,
