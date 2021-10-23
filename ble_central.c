@@ -374,6 +374,7 @@ static void ble_nus_c_evt_handler(ble_nus_c_t * p_ble_nus_c, ble_nus_c_evt_t con
             NRF_LOG_INFO("Connected to device with Nordic UART Service.");
             err_code = ble_nus_c_string_send(p_ble_nus_c, "init", 4);
             APP_ERROR_CHECK(err_code);
+            advertising_start();
             break;
 
         case BLE_NUS_C_EVT_NUS_TX_EVT:

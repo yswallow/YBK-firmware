@@ -233,7 +233,13 @@ static void pm_evt_handler(pm_evt_t const * p_evt)
             break;
 
         case PM_EVT_PEERS_DELETE_SUCCEEDED:
+#ifdef KEYBOARD_CENTRAL
+            if(ble_conn_state_central_conn_count()) {
+#endif
             advertising_start();
+#ifdef KEYBOARD_CENTRAL
+            }
+#endif
             break;
         case PM_EVT_CONN_SEC_FAILED:
             delete_bonds();
@@ -305,7 +311,6 @@ static void on_hid_rep_char_write(ble_hids_evt_t * p_evt)
             // This code assumes that the output report is one byte long. Hence the following
             // static assert is made.
             
-
             err_code = ble_hids_outp_rep_get(&m_hids,
                                              report_index,
                                              OUTPUT_REPORT_MAX_LEN,
@@ -323,6 +328,8 @@ static void on_hid_rep_char_write(ble_hids_evt_t * p_evt)
                                              m_conn_handle,
                                              report_val);
             APP_ERROR_CHECK(err_code);
+            NRF_LOG_INFO("RAW_OUTPUT:");
+            NRF_LOG_HEXDUMP_INFO(report_val, OUTPUT_REPORT_RAW_MAX_LEN);
             raw_hid_receive(report_val, OUTPUT_REPORT_RAW_MAX_LEN);
             break;
         }
@@ -409,7 +416,7 @@ static void on_adv_evt(ble_adv_evt_t ble_adv_evt)
         case BLE_ADV_EVT_IDLE:
             sleep_mode_enter(NULL);
             break;
-/*
+
         case BLE_ADV_EVT_WHITELIST_REQUEST:
         {
             ble_gap_addr_t whitelist_addrs[BLE_GAP_WHITELIST_ADDR_MAX_COUNT];
@@ -456,7 +463,7 @@ static void on_adv_evt(ble_adv_evt_t ble_adv_evt)
                 }
             }
         } break; //BLE_ADV_EVT_PEER_ADDR_REQUEST
-*/
+
         default:
             break;
     }
