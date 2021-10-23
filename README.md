@@ -77,6 +77,10 @@
 
 右手側の電源を先に入れるとうまくいきやすい気がします。
 
+### Bluetoothが切断・再接続を無限に繰り返す
+
+キーボードの電源を切り, コンピュータやスマートフォンでペアリングを解除し, 再度ペアリングしてください。
+
 ## 開発者向け
 
 [ビルド方法](https://github.com/yswallow/nRF52-keyboard-firmware/blob/main/doc/How_to_Build.md)
