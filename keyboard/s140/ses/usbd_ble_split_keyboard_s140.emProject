@@ -239,9 +239,7 @@
       post_build_command_control="Always Run" />
     <configuration
       Name="IntegratedDebug"
-      c_preprocessor_definitions="DEBUG;BLE_RAW_HID"
-      linker_section_placement_macros="FLASH_START=0x26000;FLASH_SIZE=0xCD000"
-      post_build_command="python $(ProjectDir)/../../../uf2/utils/uf2conv.py $(ProjectDir)/$(OutDir)/$(ProjectName).bin -c -b 0x26000 -o $(OutDir)/$(ProjectName)-$(Configuration).uf2 -f 0xADA52840 " />
+      c_preprocessor_definitions="DEBUG;BLE_RAW_HID" />
     <configuration
       Name="IntegratedRelease"
       c_preprocessor_definitions="BLE_RAW_HID"
