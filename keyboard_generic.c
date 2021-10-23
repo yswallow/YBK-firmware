@@ -374,6 +374,11 @@ void keyboard_init(keyboard_t keyboard) {
 #ifndef KEYBOARD_PERIPH
     timeout_timer_init();
 #endif
+    // initialize indicator
+    if(keyboard.kbd_power_led_enable) {
+        nrf_gpio_cfg_output(keyboard.kbd_power_led);
+        nrf_gpio_pin_set(keyboard.kbd_power_led);
+    }
 }
 
 #if 0

@@ -384,18 +384,18 @@ int main(void)
     ble_central_init();
 #endif
     // Start execution.
-    advertising_start();
+    
     hid_functions = ble_hid_functions;
     ret = app_usbd_power_events_enable();
     APP_ERROR_CHECK(ret);
     keyboard_init(my_keyboard);
     KEYBOARD_DEBUG_HID_INIT();
-    // initialize indicator
-    nrf_gpio_cfg_output(KEYBOARD_POWER_LED);
-    nrf_gpio_pin_set(KEYBOARD_POWER_LED);
+    
     
 #ifdef KEYBOARD_CENTRAL
     ble_central_start();
+#else
+    advertising_start(); // in central, advertising_start() is called after peripheral connected
 #endif
     // Enter main loop.
     for (;;)

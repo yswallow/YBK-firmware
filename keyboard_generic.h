@@ -55,6 +55,8 @@ typedef struct {
     split_keyboard_t split_keyboard;
     uint8_t kbd_cols_count;
     uint8_t kbd_rows_count;
+    uint8_t kbd_power_led;
+    uint8_t kbd_power_led_enable;
     void (*scan_method)(keyboard_type_t, keyboard_definision_t);
     void (*init_method)(keyboard_type_t, keyboard_definision_t);
     ret_code_t (*sleep_prepare)(keyboard_type_t, keyboard_definision_t);

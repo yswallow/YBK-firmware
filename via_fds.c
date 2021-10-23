@@ -226,6 +226,9 @@ void apply_kbd_setting(void) {
     my_keyboard.kbd_rows_count = kbd_setting[0x40];
     my_keyboard.split_keyboard.central_cols_count = kbd_setting[0x42];
     
+    my_keyboard.kbd_power_led = kbd_setting[0x50+KBD_SETTING_ADDITIONAL_POWER_LED_PIN_INDEX];
+    my_keyboard.kbd_power_led_enable = kbd_setting[0x50+KBD_SETTING_ADDITIONAL_POWER_LED_EN_INDEX];
+
     definision->col_pins = &kbd_setting[0];
     definision->row_pins = &kbd_setting[0x20];
     definision->row_pins_count = kbd_setting[0x40];
