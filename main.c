@@ -63,7 +63,6 @@
 #include "nrf_ble_gatt.h"
 #include "app_timer.h"
 #include "ble_nus.h"
-#include "app_uart.h"
 #include "app_util_platform.h"
 
 #include "nrf_log.h"
@@ -107,18 +106,6 @@
 
 #define LED_BLINK_INTERVAL 800
 
-//APP_TIMER_DEF(m_blink_ble);
-//APP_TIMER_DEF(m_blink_cdc);
-
-/**
- * @brief App timer handler for blinking the LEDs.
- *
- * @param p_context LED to blink.
- */
-void blink_handler(void * p_context)
-{
-    bsp_board_led_invert((uint32_t) p_context);
-}
 #define ENDLINE_STRING "\r\n"
 
 
@@ -127,10 +114,6 @@ static void timers_init(void)
 {
     ret_code_t err_code = app_timer_init();
     APP_ERROR_CHECK(err_code);
-    //err_code = app_timer_create(&m_blink_ble, APP_TIMER_MODE_REPEATED, blink_handler);
-    //APP_ERROR_CHECK(err_code);
-    //err_code = app_timer_create(&m_blink_cdc, APP_TIMER_MODE_REPEATED, blink_handler);
-    //APP_ERROR_CHECK(err_code);
 }
 
 
