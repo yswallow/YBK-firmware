@@ -54,20 +54,20 @@
 
 #define APP_FEATURE_NOT_SUPPORTED       BLE_GATT_STATUS_ATTERR_APP_BEGIN + 2        /**< Reply when unsupported features are requested. */
 
-#define KEYBOARD_PERIPH_NAME "nRF52 KB BLE Prph"
+#define KEYBOARD_PERIPH_NAME            "nRF52 KB BLE Prph"
 #ifdef KEYBOARD_CENTRAL
-#define PNP_ID_PRODUCT_ID                   0xEEED                                     /**< Product ID. */
+#define PNP_ID_PRODUCT_ID               0xEEED                                     /**< Product ID. */
 #define DEVICE_NAME                     "nRF52 KB BLE Cntr"                      /**< Name of device. Will be included in the advertising data. */
 #else
 #ifdef KEYBOARD_PERIPH
-#define PNP_ID_PRODUCT_ID                   0xEEEE                                     /**< Product ID. */
-#define DEVICE_NAME KEYBOARD_PERIPH_NAME
+#define PNP_ID_PRODUCT_ID               0xEEEE                                     /**< Product ID. */
+#define DEVICE_NAME                     KEYBOARD_PERIPH_NAME
 #else
-#define DEVICE_NAME "nRF52 KB BLE Integ"
+#define DEVICE_NAME                     "nRF52 KB BLE Integ"
 #endif // KEYBOARD_PERIPH
 #endif // KEYBOARD_CENTRAL
 
-#define MANUFACTURER_NAME                   "NordicSemi"                      /**< Manufacturer. Will be passed to Device Information Service. */
+#define MANUFACTURER_NAME               "NordicSemi"                      /**< Manufacturer. Will be passed to Device Information Service. */
 
 #define NUS_SERVICE_UUID_TYPE           BLE_UUID_TYPE_VENDOR_BEGIN                  /**< UUID type for the Nordic UART Service (vendor specific). */
 
@@ -109,33 +109,31 @@
 #define SEC_PARAM_MIN_KEY_SIZE              7                                          /**< Minimum encryption key size. */
 #define SEC_PARAM_MAX_KEY_SIZE              16                                         /**< Maximum encryption key size. */
 
-#define OUTPUT_REPORT_KEYS_INDEX                 0                                          /**< Index of Output Report. */
+#define OUTPUT_REPORT_KEYS_INDEX            0                                          /**< Index of Output Report. */
 #define OUTPUT_REPORT_MAX_LEN               1                                          /**< Maximum length of Output Report. */
 #define INPUT_REPORT_KEYS_INDEX             0                                          /**< Index of Input Report. */
-//#define OUTPUT_REPORT_BIT_MASK_CAPS_LOCK    0x02                                       /**< CAPS LOCK bit in Output Report (based on 'LED Page (0x08)' of the Universal Serial Bus HID Usage Tables). */
 #define INPUT_REP_REF_ID                    1                                          /**< Id of reference to Keyboard Input Report. */
 #define OUTPUT_REP_REF_ID                   INPUT_REP_REF_ID                                           /**< Id of reference to Keyboard Output Report. */
-#define FEATURE_REP_REF_ID                  INPUT_REP_REF_ID                                         /**< ID of reference to Keyboard Feature Report. */
-#define FEATURE_REPORT_MAX_LEN              2                                          /**< Maximum length of Feature Report. */
-#define FEATURE_REPORT_INDEX                0                                          /**< Index of Feature Report. */
 
-#define INPUT_REPORT_MOUSE_INDEX 2
-#define INPUT_REP_REF_MOUSE_ID 2
-#define INPUT_REPORT_MOUSE_MAX_LEN 4
+#define FEATURE_REPORT_MAX_LEN              0 
 
-#define INPUT_REPORT_RAW_INDEX 1
-#define OUTPUT_REPORT_RAW_INDEX 1
-#define INPUT_REP_REF_RAW_ID 8
-#define OUTPUT_REP_REF_RAW_ID 8
-#define INPUT_REPORT_RAW_MAX_LEN 32
-#define OUTPUT_REPORT_RAW_MAX_LEN 32
+#define INPUT_REPORT_MOUSE_INDEX            2
+#define INPUT_REP_REF_MOUSE_ID              2
+#define INPUT_REPORT_MOUSE_MAX_LEN          4
+
+#define INPUT_REPORT_RAW_INDEX              1
+#define OUTPUT_REPORT_RAW_INDEX             1
+#define INPUT_REP_REF_RAW_ID                8
+#define OUTPUT_REP_REF_RAW_ID               8
+#define INPUT_REPORT_RAW_MAX_LEN            32
+#define OUTPUT_REPORT_RAW_MAX_LEN           32
 
 #define MAX_BUFFER_ENTRIES                  5                                          /**< Number of elements that can be enqueued */
 
 #define BASE_USB_HID_SPEC_VERSION           0x0101                                     /**< Version number of base USB HID Specification implemented by this application. */
 
-#define BLE_HID_KBD_REP_LEN           8                                          /**< Maximum length of the Input Report characteristic. */
-#define INPUT_REPORT_KEYS_MAX_LEN    BLE_HID_KBD_REP_LEN
+#define BLE_HID_KBD_REP_LEN                 8                                          /**< Maximum length of the Input Report characteristic. */
+#define INPUT_REPORT_KEYS_MAX_LEN           BLE_HID_KBD_REP_LEN
 #define SCHED_MAX_EVENT_DATA_SIZE           APP_TIMER_SCHED_EVENT_DATA_SIZE            /**< Maximum size of scheduler events. */
 #ifdef SVCALL_AS_NORMAL_FUNCTION
 #define SCHED_QUEUE_SIZE                    20                                         /**< Maximum number of events in the scheduler queue. More is needed in case of Serialization. */
@@ -143,9 +141,8 @@
 #define SCHED_QUEUE_SIZE                    10                                         /**< Maximum number of events in the scheduler queue. */
 #endif
 
-#define BLE_HID_KBD_MODS_INDEX                   0                                          /**< Position of the modifier byte in the Input Report. */
-#define BLE_HID_KBD_KEYS_START                      2                                          /**< The start position of the key scan code in a HID Report. */
-#define SHIFT_KEY_CODE                      0x02                                       /**< Key code indicating the press of the Shift Key. */
+#define BLE_HID_KBD_MODS_INDEX              0                                          /**< Position of the modifier byte in the Input Report. */
+#define BLE_HID_KBD_KEYS_START              2                                          /**< The start position of the key scan code in a HID Report. */
 
 #define MAX_KEYS_IN_ONE_REPORT              (INPUT_REPORT_KEYS_MAX_LEN - SCAN_CODE_POS)/**< Maximum number of key presses that can be sent in one Input Report. */
 
