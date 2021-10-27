@@ -209,7 +209,7 @@ void advertising_start(void)
 void delete_secure_failed_peer(uint16_t conn_handle) {
     ret_code_t err_code;
     pm_peer_id_t peer_id;
-
+    NRF_LOG_INFO("Delete bonding...");
     err_code = pm_peer_id_get(conn_handle, &peer_id);
     APP_ERROR_CHECK(err_code);
     if(peer_id == 0xFFFF) { return; }
@@ -242,7 +242,8 @@ static void pm_evt_handler(pm_evt_t const * p_evt)
 #endif
             break;
         case PM_EVT_CONN_SEC_FAILED:
-            delete_bonds();
+            //delete_bonds();
+            delete_secure_failed_peer(p_evt->conn_handle);
             break;
         case PM_EVT_CONN_SEC_CONFIG_REQ:
         {
@@ -419,6 +420,7 @@ static void on_adv_evt(ble_adv_evt_t ble_adv_evt)
 
         case BLE_ADV_EVT_WHITELIST_REQUEST:
         {
+            NRF_LOG_INFO("BLE_ADV_EVT_WHITELIST_REQUEST");
             ble_gap_addr_t whitelist_addrs[BLE_GAP_WHITELIST_ADDR_MAX_COUNT];
             ble_gap_irk_t  whitelist_irks[BLE_GAP_WHITELIST_ADDR_MAX_COUNT];
             uint32_t       addr_cnt = BLE_GAP_WHITELIST_ADDR_MAX_COUNT;
@@ -439,11 +441,13 @@ static void on_adv_evt(ble_adv_evt_t ble_adv_evt)
                                                        addr_cnt,
                                                        whitelist_irks,
                                                        irk_cnt);
+             
             APP_ERROR_CHECK(err_code);
         } break; //BLE_ADV_EVT_WHITELIST_REQUEST
 
         case BLE_ADV_EVT_PEER_ADDR_REQUEST:
         {
+            NRF_LOG_INFO("BLE_ADV_EVT_PEER_ADDR_REQUEST");
             pm_peer_data_bonding_t peer_bonding_data;
 
             // Only Give peer address if we have a handle to the bonded peer.
@@ -956,6 +960,7 @@ void ble_common_init(void) {
     gap_conn_params.slave_latency     = SLAVE_LATENCY;
     gap_conn_params.conn_sup_timeout  = CONN_SUP_TIMEOUT;
 }
+
 static void gap_params_init(void)
 {
     ret_code_t              err_code;
@@ -970,8 +975,6 @@ static void gap_params_init(void)
 
     err_code = sd_ble_gap_appearance_set(BLE_APPEARANCE_HID_KEYBOARD);
     APP_ERROR_CHECK(err_code);
-
-   
 
     err_code = sd_ble_gap_ppcp_set(&gap_conn_params);
     APP_ERROR_CHECK(err_code);
