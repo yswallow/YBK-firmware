@@ -56,10 +56,16 @@
 
 #define KEYBOARD_PERIPH_NAME "nRF52 KB BLE Prph"
 #ifdef KEYBOARD_CENTRAL
+#define PNP_ID_PRODUCT_ID                   0xEEED                                     /**< Product ID. */
 #define DEVICE_NAME                     "nRF52 KB BLE Cntr"                      /**< Name of device. Will be included in the advertising data. */
 #else
+#ifdef KEYBOARD_PERIPH
+#define PNP_ID_PRODUCT_ID                   0xEEEE                                     /**< Product ID. */
 #define DEVICE_NAME KEYBOARD_PERIPH_NAME
-#endif
+#else
+#define DEVICE_NAME "nRF52 KB BLE Integ"
+#endif // KEYBOARD_PERIPH
+#endif // KEYBOARD_CENTRAL
 
 #define MANUFACTURER_NAME                   "NordicSemi"                      /**< Manufacturer. Will be passed to Device Information Service. */
 
@@ -72,7 +78,9 @@
 
 #define PNP_ID_VENDOR_ID_SOURCE             0x02                                       /**< Vendor ID Source. */
 #define PNP_ID_VENDOR_ID                    0x1915                                     /**< Vendor ID. */
-#define PNP_ID_PRODUCT_ID                   0xEEEE                                     /**< Product ID. */
+#ifndef PNP_ID_PRODUCT_ID
+#define PNP_ID_PRODUCT_ID                   0xEEEF                                     /**< Product ID. */
+#endif
 #define PNP_ID_PRODUCT_VERSION              0x0001                                     /**< Product Version. */
 
 #define APP_ADV_FAST_INTERVAL               0x0028                                     /**< Fast advertising interval (in units of 0.625 ms. This value corresponds to 25 ms.). */
