@@ -1,7 +1,6 @@
 #include "keyboard_generic.h"
 #include "nrf_gpio.h"
 #include "main.h"
-#include "boards.h"
 #include "usb_keyboard.h"
 #include "dynamic_keymap.h"
 #include "app_timer.h"

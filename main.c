@@ -65,7 +65,6 @@
 #include "ble_nus.h"
 #include "app_uart.h"
 #include "app_util_platform.h"
-#include "bsp_btn_ble.h"
 
 #include "nrf_log.h"
 #include "nrf_log_ctrl.h"

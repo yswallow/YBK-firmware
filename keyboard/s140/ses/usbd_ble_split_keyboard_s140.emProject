@@ -96,9 +96,6 @@
       <file file_name="../../../../../../modules/nrfx/mdk/ses_startup_nrf_common.s" />
       <file file_name="../../../../../../modules/nrfx/mdk/system_nrf52840.c" />
     </folder>
-    <folder Name="Board Definition">
-      <file file_name="../../../../../../components/boards/boards.c" />
-    </folder>
     <folder Name="nRF_Drivers">
       <file file_name="../../../../../../integration/nrfx/legacy/nrf_drv_clock.c" />
       <file file_name="../../../../../../integration/nrfx/legacy/nrf_drv_power.c" />
@@ -112,10 +109,6 @@
       <file file_name="../../../../../../modules/nrfx/drivers/src/nrfx_uart.c" />
       <file file_name="../../../../../../modules/nrfx/drivers/src/nrfx_uarte.c" />
       <file file_name="../../../../../../modules/nrfx/drivers/src/nrfx_usbd.c" />
-    </folder>
-    <folder Name="Board Support">
-      <file file_name="../../../../../../components/libraries/bsp/bsp.c" />
-      <file file_name="../../../../../../components/libraries/bsp/bsp_btn_ble.c" />
     </folder>
     <folder Name="Application">
       <file file_name="../../../main.c" />
@@ -220,10 +213,13 @@
     </folder>
     <configuration
       Name="CentralDebug"
-      c_preprocessor_definitions="KEYBOARD_CENTRAL;DEBUG;KEYBOARD_DEBUG_HID;BLE_RAW_HID" />
+      c_preprocessor_definitions="KEYBOARD_CENTRAL;DEBUG;KEYBOARD_DEBUG_HID;BLE_RAW_HID"
+      linker_section_placement_macros="FLASH_START=0x27000;FLASH_SIZE=0xCC000"
+      post_build_command="python $(ProjectDir)/../../../uf2/utils/uf2conv.py $(ProjectDir)/$(OutDir)/$(ProjectName).bin -c -b 0x26000 -o $(OutDir)/$(Configuration).uf2 -f 0xADA52840 " />
     <configuration
       Name="PeripheralDebug"
-      c_preprocessor_definitions="KEYBOARD_PERIPH;DEBUG" />
+      c_preprocessor_definitions="KEYBOARD_PERIPH;DEBUG"
+      post_build_command="python $(ProjectDir)/../../../uf2/utils/uf2conv.py $(ProjectDir)/$(OutDir)/$(ProjectName).bin -c -b 0x26000 -o $(OutDir)/$(Configuration).uf2 -f 0xADA52840 " />
     <configuration
       Name="PeripheralRelease"
       c_preprocessor_definitions="KEYBOARD_PERIPH;BLE_RAW_HID"
@@ -239,7 +235,10 @@
       post_build_command_control="Always Run" />
     <configuration
       Name="IntegratedDebug"
-      c_preprocessor_definitions="DEBUG;BLE_RAW_HID" />
+      c_preprocessor_definitions="DEBUG;BLE_RAW_HID"
+      linker_section_placement_macros="FLASH_START=0x27000;FLASH_SIZE=0xCC000"
+      post_build_command="python $(ProjectDir)/../../../uf2/utils/uf2conv.py $(ProjectDir)/$(OutDir)/$(ProjectName).bin -c -b 0x27000 -o $(OutDir)/$(Configuration).uf2 -f 0xADA52840 "
+      post_build_command_control="Always Run" />
     <configuration
       Name="IntegratedRelease"
       c_preprocessor_definitions="BLE_RAW_HID"
