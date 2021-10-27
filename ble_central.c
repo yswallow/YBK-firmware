@@ -48,7 +48,6 @@
 #include "ble_db_discovery.h"
 #include "app_timer.h"
 #include "app_util.h"
-#include "bsp_btn_ble.h"
 #include "ble.h"
 #include "ble_gap.h"
 #include "ble_hci.h"
@@ -144,9 +143,6 @@ static void scan_start(void)
     ret_code_t ret;
 
     ret = nrf_ble_scan_start(&m_scan);
-    APP_ERROR_CHECK(ret);
-
-    ret = bsp_indication_set(BSP_INDICATE_SCANNING);
     APP_ERROR_CHECK(ret);
 }
 
@@ -478,9 +474,6 @@ void ble_c_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
     {
         case BLE_GAP_EVT_CONNECTED:
             err_code = ble_nus_c_handles_assign(&m_ble_nus_c, p_ble_evt->evt.gap_evt.conn_handle, NULL);
-            APP_ERROR_CHECK(err_code);
-
-            err_code = bsp_indication_set(BSP_INDICATE_CONNECTED);
             APP_ERROR_CHECK(err_code);
 
             // start discovery of services. The NUS Client waits for a discovery result
