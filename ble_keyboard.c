@@ -81,14 +81,13 @@
 #endif
 #endif
 
-#include "usb_mouse.h"
 #include "via.h"
 
 
 
 BLE_HIDS_DEF(m_hids,                                                /**< Structure used to identify the HID service. */
              NRF_SDH_BLE_TOTAL_LINK_COUNT,
-             INPUT_REPORT_RAW_MAX_LEN+1,OUTPUT_REPORT_RAW_MAX_LEN+1, FEATURE_REPORT_MAX_LEN);
+             INPUT_REPORT_RAW_MAX_LEN,OUTPUT_REPORT_RAW_MAX_LEN, FEATURE_REPORT_MAX_LEN);
 NRF_BLE_GATT_DEF(m_gatt);                                           /**< GATT module instance. */
 BLE_ADVERTISING_DEF(m_advertising);                                 /**< Advertising module instance. */
 NRF_BLE_QWR_DEF(m_qwr);                                             /**< Context for the Queued Write module.*/
@@ -102,10 +101,10 @@ keyboard_hid_functions_t ble_hid_functions = {
     .tick_handler_mouse = tick_handler_mouse_ble
 };
 
-static bool              m_in_boot_mode = false;                    /**< Current protocol mode. */
-uint16_t          m_conn_handle  = BLE_CONN_HANDLE_INVALID;  /**< Handle of the current connection. */
-static pm_peer_id_t      m_peer_id;                                 /**< Device reference handle to the current bonded central. */
-static bool m_ble_hid_rep_pending = false;
+static bool               m_in_boot_mode = false;                    /**< Current protocol mode. */
+uint16_t                  m_conn_handle  = BLE_CONN_HANDLE_INVALID;  /**< Handle of the current connection. */
+static pm_peer_id_t       m_peer_id;                                 /**< Device reference handle to the current bonded central. */
+static bool               m_ble_hid_rep_pending = false;
 
 static ble_uuid_t m_adv_uuids[] = {
 #ifdef KEYBOARD_PERIPH
@@ -113,7 +112,6 @@ static ble_uuid_t m_adv_uuids[] = {
 #else
     {BLE_UUID_HUMAN_INTERFACE_DEVICE_SERVICE, BLE_UUID_TYPE_BLE}
 //,    {BLE_UUID_DEVICE_INFORMATION_SERVICE, BLE_UUID_TYPE_BLE}
-    
 #endif
 };
 
@@ -195,7 +193,7 @@ static void delete_bonds(void)
  */
 void advertising_start(void)
 {
-    //whitelist_set(PM_PEER_ID_LIST_SKIP_NO_ID_ADDR);
+    whitelist_set(PM_PEER_ID_LIST_SKIP_NO_ID_ADDR);
     ret_code_t ret;
     if( ble_conn_state_peripheral_conn_count()==0 ) {
         ret = ble_advertising_start(&m_advertising, BLE_ADV_MODE_FAST);
@@ -417,7 +415,8 @@ static void on_adv_evt(ble_adv_evt_t ble_adv_evt)
         case BLE_ADV_EVT_IDLE:
             sleep_mode_enter(NULL);
             break;
-
+/*
+        // Uncomment this, keyboard won't work.
         case BLE_ADV_EVT_WHITELIST_REQUEST:
         {
             NRF_LOG_INFO("BLE_ADV_EVT_WHITELIST_REQUEST");
@@ -467,7 +466,7 @@ static void on_adv_evt(ble_adv_evt_t ble_adv_evt)
                 }
             }
         } break; //BLE_ADV_EVT_PEER_ADDR_REQUEST
-
+*/
         default:
             break;
     }
@@ -495,15 +494,7 @@ static void ble_p_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
 
         case BLE_GAP_EVT_DISCONNECTED:
             NRF_LOG_INFO("Disconnected");
-            // Dequeue all keys without transmission.
-            
             m_conn_handle = BLE_CONN_HANDLE_INVALID;
-
-            // Reset m_caps_on variable. Upon reconnect, the HID host will re-send the Output
-            // report containing the Caps lock state.
-            
-            //APP_ERROR_CHECK(err_code);
-
             break; // BLE_GAP_EVT_DISCONNECTED
 
         case BLE_GAP_EVT_PHY_UPDATE_REQUEST:
@@ -711,12 +702,10 @@ static void hids_init(void)
     ble_hids_init_t               hids_init_obj;
     ble_hids_inp_rep_init_t     * p_input_report;
     ble_hids_outp_rep_init_t    * p_output_report;
-    ble_hids_feature_rep_init_t * p_feature_report;
     uint8_t                       hid_info_flags;
 
     static ble_hids_inp_rep_init_t     input_report_array[3];
     static ble_hids_outp_rep_init_t    output_report_array[2];
-    static ble_hids_feature_rep_init_t feature_report_array[1];
     static uint8_t                     report_map_data[] =
     {
         0x05, 0x01,       // Usage Page (Generic Desktop)
@@ -788,7 +777,7 @@ static void hids_init(void)
         0x81, 0x06,       /*     Input (Data, Variable, Relative)*/     
         0xC0,         /*  End Collection,                        */     
         0xC0         /* End Collection                          */     
-#if 1
+#ifdef BLE_RAW_HID
         ,
         0x06, 0x60, 0xFF,
         0x09, 0x61,
@@ -810,16 +799,14 @@ static void hids_init(void)
         0x91, 0x83, 
         0xC0             // End Collection (Application)
 
-        // RAW HID
-#endif
+#endif // BLE_RAW_HID
         
         
     };
 
     memset((void *)input_report_array, 0, sizeof(input_report_array));
     memset((void *)output_report_array, 0, sizeof(output_report_array));
-    memset((void *)feature_report_array, 0, sizeof(ble_hids_feature_rep_init_t));
-
+    
     // Initialize HID Service
     p_input_report                      = &input_report_array[INPUT_REPORT_KEYS_INDEX];
     p_input_report->max_len             = INPUT_REPORT_KEYS_MAX_LEN;
@@ -866,14 +853,6 @@ static void hids_init(void)
     p_output_report->sec.rd = SEC_JUST_WORKS;
     // RAW Setting end
 
-    p_feature_report                      = &feature_report_array[FEATURE_REPORT_INDEX];
-    p_feature_report->max_len             = FEATURE_REPORT_MAX_LEN;
-    p_feature_report->rep_ref.report_id   = FEATURE_REP_REF_ID;
-    p_feature_report->rep_ref.report_type = BLE_HIDS_REP_TYPE_FEATURE;
-
-    p_feature_report->sec.rd              = SEC_JUST_WORKS;
-    p_feature_report->sec.wr              = SEC_JUST_WORKS;
-
     hid_info_flags = HID_INFO_FLAG_REMOTE_WAKE_MSK | HID_INFO_FLAG_NORMALLY_CONNECTABLE_MSK;
 
     memset(&hids_init_obj, 0, sizeof(hids_init_obj));
@@ -882,17 +861,14 @@ static void hids_init(void)
     hids_init_obj.error_handler                  = service_error_handler;
     hids_init_obj.is_kb                          = true;
     hids_init_obj.is_mouse                       = false;
-#if 1
+
     hids_init_obj.inp_rep_count                  = 3;
     hids_init_obj.outp_rep_count                 = 2;
-#else
-    hids_init_obj.inp_rep_count                  = 1;
-    hids_init_obj.outp_rep_count                 = 1;
-#endif
+
     hids_init_obj.p_inp_rep_array                = input_report_array;
     hids_init_obj.p_outp_rep_array               = output_report_array;
-    hids_init_obj.feature_rep_count              = 1;
-    hids_init_obj.p_feature_rep_array            = feature_report_array;
+    hids_init_obj.feature_rep_count              = 0;
+    hids_init_obj.p_feature_rep_array            = NULL;
     hids_init_obj.rep_map.data_len               = sizeof(report_map_data);
     hids_init_obj.rep_map.p_data                 = report_map_data;
     hids_init_obj.hid_information.bcd_hid        = BASE_USB_HID_SPEC_VERSION;
