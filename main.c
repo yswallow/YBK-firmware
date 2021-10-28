@@ -74,6 +74,7 @@
 #include "nrf_gpio.h"
 #include "nrf_delay.h"
 #include "nrf_drv_power.h"
+#include "nrf_pwr_mgmt.h"
 
 #include "app_error.h"
 #include "app_util.h"
@@ -82,6 +83,11 @@
 #include "app_usbd_string_desc.h"
 #include "app_usbd_cdc_acm.h"
 #include "app_usbd_serial_num.h"
+#include "app_scheduler.h"
+#include "app_usbd_hid.h"
+#include "app_usbd_hid_generic.h"
+#include "app_usbd_hid_kbd.h"
+#include "app_usbd_hid_kbd_desc.h"
 
 #include "raw_hid.h"
 #include "main.h"
@@ -90,12 +96,6 @@
 #include "ble_keyboard.h"
 #include "usb_mouse.h"
 #include "ble_central.h"
-
-#include "app_usbd_hid.h"
-#include "app_usbd_hid_generic.h"
-#include "app_usbd_hid_kbd.h"
-#include "app_usbd_hid_kbd_desc.h"
-
 #include "via_fds.h"
 #include "debug_message_hid.h"
 
@@ -140,10 +140,13 @@ static void power_manage(void)
  *
  * @details If there is no pending log operation, then sleep until next the next event occurs.
  */
-static void idle_state_handle(void)
+void idle_state_handle(void)
 {
-    UNUSED_RETURN_VALUE(NRF_LOG_PROCESS());
-    power_manage();
+    app_sched_execute();
+    if (NRF_LOG_PROCESS() == false)
+    {
+        nrf_pwr_mgmt_run();
+    }
 }
 
 
@@ -301,7 +304,9 @@ static void usbd_user_ev_handler(app_usbd_event_type_t event)
 #endif //ENABLE_USB_CDC_ACM
             m_usb_connected = false;
             app_usbd_stop();
+#ifndef KEYBOARD_PERIPH
             hid_functions = ble_hid_functions;
+#endif
         }
             break;
 
@@ -328,6 +333,16 @@ static void usbd_user_ev_handler(app_usbd_event_type_t event)
 
 // USB CODE END
 
+/**@brief Function for initializing power management.
+ */
+static void power_management_init(void)
+{
+    ret_code_t err_code;
+    err_code = nrf_pwr_mgmt_init();
+    APP_ERROR_CHECK(err_code);
+}
+
+
 /** @brief Application main function. */
 int main(void)
 {
@@ -340,11 +355,11 @@ int main(void)
     timers_init();
 
     //buttons_leds_init();
-
+    power_management_init();
     app_usbd_serial_num_generate();
 
-    ret = nrf_drv_clock_init();
-    APP_ERROR_CHECK(ret);
+    //ret = nrf_drv_clock_init();
+    //APP_ERROR_CHECK(ret);
 
     NRF_LOG_INFO("USBD BLE UART example started.");
 
@@ -360,14 +375,18 @@ int main(void)
     usb_hid_raw_init();
     usb_mouse_init();
     via_fds_init();
-    ble_common_init();
+    // moved into ble_keyboard_init()
+    //ble_common_init(); 
     ble_keyboard_init();
 #ifdef KEYBOARD_CENTRAL
     ble_central_init();
 #endif
     // Start execution.
-    
+#ifdef KEYBOARD_PERIPH
+    hid_functions = usb_hid_functions;
+#else    
     hid_functions = ble_hid_functions;
+#endif
     ret = app_usbd_power_events_enable();
     APP_ERROR_CHECK(ret);
     keyboard_init(my_keyboard);

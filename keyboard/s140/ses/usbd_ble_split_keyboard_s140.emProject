@@ -148,7 +148,12 @@
       <file file_name="../../../keyboard_generic.c" />
       <file file_name="../../../keyboard_generic.h" />
       <file file_name="../../../keyboard_config.h" />
-      <file file_name="../../../ble_peripheral.c" />
+      <file file_name="../../../ble_peripheral.c">
+        <configuration Name="PeripheralDebug" build_exclude_from_build="No" />
+        <configuration
+          Name="PeripheralRelease"
+          build_exclude_from_build="No" />
+      </file>
       <file file_name="../../../ble_peripheral.h" />
       <file file_name="../../../heatmap.c" />
       <file file_name="../../../heatmap.h" />
@@ -192,6 +197,7 @@
         <file file_name="../../../../../../components/ble/ble_services/ble_nus_c/ble_nus_c.c" />
         <file file_name="../../../../../../components/ble/ble_db_discovery/ble_db_discovery.c" />
       </folder>
+      <file file_name="../../../../../../components/ble/ble_services/ble_bas/ble_bas.c" />
     </folder>
     <folder Name="UTF8/UTF16 converter">
       <file file_name="../../../../../../external/utf_converter/utf.c" />
@@ -222,7 +228,7 @@
       post_build_command="python $(ProjectDir)/../../../uf2/utils/uf2conv.py $(ProjectDir)/$(OutDir)/$(ProjectName).bin -c -b 0x26000 -o $(OutDir)/$(Configuration).uf2 -f 0xADA52840 " />
     <configuration
       Name="PeripheralRelease"
-      c_preprocessor_definitions="KEYBOARD_PERIPH;BLE_RAW_HID"
+      c_preprocessor_definitions="KEYBOARD_PERIPH"
       linker_output_format="bin"
       linker_section_placement_macros="FLASH_START=0x26000;FLASH_SIZE=0xCD000"
       post_build_command="python $(ProjectDir)/../../../uf2/utils/uf2conv.py $(ProjectDir)/$(OutDir)/$(ProjectName).bin -c -b 0x26000 -o $(OutDir)/$(Configuration).uf2 -f 0xADA52840 "

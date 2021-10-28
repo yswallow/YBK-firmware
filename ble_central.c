@@ -213,10 +213,10 @@ static void scan_init(void)
     err_code = nrf_ble_scan_filter_set(&m_scan, SCAN_NAME_FILTER, KEYBOARD_PERIPH_NAME);
     APP_ERROR_CHECK(err_code);
 
-    err_code = nrf_ble_scan_filters_enable(&m_scan, NRF_BLE_SCAN_UUID_FILTER, false);
+    err_code = nrf_ble_scan_filters_enable(&m_scan, NRF_BLE_SCAN_UUID_FILTER, true);
     APP_ERROR_CHECK(err_code);
 
-    err_code = nrf_ble_scan_filters_enable(&m_scan, NRF_BLE_SCAN_NAME_FILTER, false);
+    err_code = nrf_ble_scan_filters_enable(&m_scan, NRF_BLE_SCAN_NAME_FILTER, true);
     APP_ERROR_CHECK(err_code);
 
     err_code = app_timer_create(&m_pairing_timer, APP_TIMER_MODE_SINGLE_SHOT, cancel_pairing);
@@ -506,7 +506,7 @@ void ble_c_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
             //APP_ERROR_CHECK(err_code);
             break;
         case BLE_GAP_EVT_ADV_REPORT:
-            if(! ble_conn_state_central_conn_count() ) {
+            if( ble_conn_state_central_conn_count()==0 ) {
                 err_code = sd_ble_gap_connect(&(p_gap_evt->params.adv_report.peer_addr), &gap_c_scan_params, &gap_conn_params, 1);
                 APP_ERROR_CHECK(err_code);
                 NRF_LOG_INFO("Connection Request...");
@@ -738,14 +738,15 @@ void ble_central_init(void)
     db_discovery_init();
     //power_management_init();
     //ble_stack_init();
-    //gatt_init();
+    gatt_c_init();
     nus_c_init();
     scan_init();
+    /*
     ble_conn_state_conn_handle_list_t connections = ble_conn_state_central_handles();
     if( connections.len > 0 ) {
        sd_ble_gap_disconnect(connections.conn_handles[0], BLE_HCI_REMOTE_USER_TERMINATED_CONNECTION);
     }
-    
+    */
     NRF_LOG_INFO("BLE UART central example started.");
 }
 
