@@ -26,6 +26,7 @@ APP_TIMER_DEF(m_keyboard_timeout);
 uint32_t keypress_bitmap[KBD_SETTING_ROW_PINS_MAX];
 keys_t keypress_status[PRESS_KEYS_MAX];
 uint8_t layer_history[DYNAMIC_KEYMAP_LAYER_COUNT];
+uint8_t current_layer;
 
 keyboard_hid_functions_t hid_functions = {
     .keycode_append = keycode_append_usb,
@@ -75,15 +76,59 @@ void timeout_timer_init(void) {
 }
 #endif
 
-
-void layer_history_append(uint8_t layer) {
-    uint8_t i=1;
-    for(;i<DYNAMIC_KEYMAP_LAYER_COUNT;i++) {
-        if(layer_history[i]==255) {
-            break;
+int8_t get_layer(uint8_t current) {
+    int8_t layer = -1;
+    for(uint8_t i=0; (keypress_status[i].kc||keypress_status[i].application); i++) {
+        switch(keypress_status[i].application & 0xF0) {
+            case 0x00:
+                break;
+            case 0x10:
+                break;
+            case 0x20:
+                break;
+            case 0x30:
+                break;
+            case 0x40:
+                if(keypress_status[i].press) {
+                    if(current != (keypress_status[i].application & 0x0F) ) {
+                        layer = keypress_status[i].application & 0x0F;
+                    }
+                }
+                break;
+            case 0x50:
+                {
+                    if(current != (keypress_status[i].kc) ) {
+                        layer = keypress_status[i].kc;
+                    }
+                }
+                break;
+            case 0x60:
+                break;
+            case 0x70:
+                break;
         }
     }
-    layer_history[i] = layer;
+    return layer;
+}
+
+void layer_history_append(uint8_t layer) {
+    current_layer = layer;
+}
+
+void layer_history_remove(uint8_t layer) {
+    uint8_t backword_count = 0;
+    NRF_LOG_INFO("removing layer:");
+    NRF_LOG_HEXDUMP_INFO(&layer, 1);
+    int8_t l = get_layer(get_active_layer());
+    if( l==-1 ) {
+        current_layer =  my_keyboard.default_layer;
+    } else {
+        current_layer = l;
+    }
+}
+
+uint8_t get_active_layer(void) {
+    return current_layer;
 }
 
 void press_keycode(uint8_t kc) {
@@ -160,34 +205,6 @@ void kbd_tick_handler(void* p_context) {
     }
 }
 
-void layer_history_remove(uint8_t layer) {
-    uint8_t backword_count = 0;
-    NRF_LOG_INFO("removing layer:");
-    NRF_LOG_HEXDUMP_INFO(&layer, 1);
-
-    for(uint8_t i=1;i<DYNAMIC_KEYMAP_LAYER_COUNT;i++) {
-        if(layer_history[i]==255) {
-            break;
-        }
-
-        if( layer_history[i] == layer ) {
-            NRF_LOG_INFO("layer removed.");
-            KEYBOARD_DEBUG_HID_REGISTER_STRING("layer removed.", 15);
-            backword_count++;
-        }
-        
-        if( backword_count ) {
-            layer_history[i] = layer_history[i+backword_count];
-        }
-    }
-}
-
-
-uint8_t get_active_layer(void) {
-    uint8_t i=1;
-    for(;layer_history[i]!=255 && i<DYNAMIC_KEYMAP_LAYER_COUNT;i++) {}
-    return layer_history[i-1];
-}
 
 void keypress(uint8_t row, uint8_t col, bool debouncing) {
     uint16_t keycode;// = dynamic_keymap_get_keycode(get_active_layer(),row,col);
@@ -366,6 +383,7 @@ void keyboard_init(keyboard_t keyboard) {
     memset(keypress_bitmap, 0, sizeof(keypress_bitmap));
     heatmap_init();
     layer_history[0] = 0;
+    current_layer = my_keyboard.default_layer;
     
     app_timer_create(&m_tick_kbd, APP_TIMER_MODE_REPEATED, kbd_tick_handler);
     app_timer_start(m_tick_kbd, APP_TIMER_TICKS(TAPPING_TERM_TICK_MS),NULL);
