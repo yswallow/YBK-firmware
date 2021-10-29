@@ -15,6 +15,7 @@
 * Remapでのキー設定（一部）
     - 長押しと短押しで異なる機能を割り当てる
     - マウスキー
+    - [実装済みのキー](./doc/Keycodes.md) 参照
 
 ## 実装予定の機能
 
@@ -26,7 +27,7 @@
 
 1. [Adafruit_nRF52_Bootloader](https://github.com/adafruit/Adafruit_nRF52_Bootloader)が導入されたボードをパソコンに接続し，リセットボタンを2連打する
 2. 表示されたドライブに[Releases](https://github.com/yswallow/nRF52-keyboard-firmware/releases)のUF2ファイルをコピーする
-    - 分割キーボードの左手側は`usbd_ble_split_keyboard_s140-CentralRelease.uf2`を, 右手側は`usbd_ble_split_keyboard_s140-PeripheralRelease.uf2`を, 一体型キーボードでは `usbd_ble_split_keyboard_s140-IntegratedRelease.uf2` を書き込んでください。
+    - 分割キーボードの左手側は`CentralRelease.uf2`を, 右手側は`PeripheralRelease.uf2`を, 一体型キーボードでは `IntegratedRelease.uf2` を書き込んでください。
     
 3. ドライブが自動で接続解除されたらリセットボタンを押し，再度ドライブとして認識されなければ書き込み成功
     
@@ -43,9 +44,13 @@
     * Row Pins: マトリックススキャンの行ピンの番号を0~48の番号をカンマ区切りで記入
     * Col Pins: マトリックススキャンの列ピンの番号を0~48の番号をカンマ区切りで記入
 4. [Send]を押す
-5. 下の欄に正しく表示されればキーボードのリセットボタンを押す。
-6. 再度[Connect keyboard]を押す。
-7. 下の欄に正しく表示されれば完了。
+5. 電源LEDを使用する場合:
+   1. Enable Power LEDにチェックを入れる
+   2. Pin Number of Power LEDを入力する
+   3. [Send Additional Data]を押す
+6. 下の欄に正しく表示されればキーボードのリセットボタンを押す。
+7. 再度[Connect keyboard]を押す。
+8. 下の欄に正しく表示されれば完了。
     * 表示が正しくなければ3.から繰り返す。
 
 ## キーマップ設定方法
