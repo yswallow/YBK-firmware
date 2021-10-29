@@ -89,8 +89,13 @@
 // <e> NRF_BLE_SCAN_ENABLED - nrf_ble_scan - Scanning Module
 //==========================================================
 #ifndef NRF_BLE_SCAN_ENABLED
+#ifdef KEYBOARD_CENTRAL
 #define NRF_BLE_SCAN_ENABLED 1
+#else
+#define NRF_BLE_SCAN_ENABLED 0
 #endif
+#endif
+
 // <o> NRF_BLE_SCAN_BUFFER - Data length for an advertising set. 
 #ifndef NRF_BLE_SCAN_BUFFER
 #define NRF_BLE_SCAN_BUFFER 31
@@ -641,10 +646,10 @@
 // <e> BLE_NUS_ENABLED - ble_nus - Nordic UART Service
 //==========================================================
 #ifndef BLE_NUS_ENABLED
-#ifdef KEYBOARD_CENTRAL
-#define BLE_NUS_ENABLED 0
-#else
+#ifdef KEYBOARD_PERIPH
 #define BLE_NUS_ENABLED 1
+#else
+#define BLE_NUS_ENABLED 0
 #endif
 #endif
 // <e> BLE_NUS_CONFIG_LOG_ENABLED - Enables logging in the module.
