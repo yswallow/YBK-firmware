@@ -50,6 +50,8 @@
 #include "keyboard_generic.h"
 
 // BLE DEFINES START
+
+//#define BLE_CONSUMER_ENABLE
 #define APP_BLE_CONN_CFG_TAG            1                                           /**< A tag identifying the SoftDevice BLE configuration. */
 
 #define APP_FEATURE_NOT_SUPPORTED       BLE_GATT_STATUS_ATTERR_APP_BEGIN + 2        /**< Reply when unsupported features are requested. */
@@ -109,6 +111,12 @@
 #define SEC_PARAM_MIN_KEY_SIZE              7                                          /**< Minimum encryption key size. */
 #define SEC_PARAM_MAX_KEY_SIZE              16                                         /**< Maximum encryption key size. */
 
+#ifdef BLE_CONSUMER_ENABLE
+#define BLE_INPUT_REPORT_COUNT              4
+#else
+#define BLE_INPUT_REPORT_COUNT              3
+#endif
+
 #define OUTPUT_REPORT_KEYS_INDEX            0                                          /**< Index of Output Report. */
 #define OUTPUT_REPORT_MAX_LEN               1                                          /**< Maximum length of Output Report. */
 #define INPUT_REPORT_KEYS_INDEX             0                                          /**< Index of Input Report. */
@@ -120,6 +128,10 @@
 #define INPUT_REPORT_MOUSE_INDEX            2
 #define INPUT_REP_REF_MOUSE_ID              2
 #define INPUT_REPORT_MOUSE_MAX_LEN          4
+
+#define INPUT_REPORT_CONSUMER_INDEX         3
+#define INPUT_REPORT_CONSUMER_ID            3
+#define INPUT_REPORT_CONSUMER_MAX_LEN       1
 
 #define INPUT_REPORT_RAW_INDEX              1
 #define OUTPUT_REPORT_RAW_INDEX             1
