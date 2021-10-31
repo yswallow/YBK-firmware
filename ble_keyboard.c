@@ -109,7 +109,7 @@ static ble_uuid_t m_adv_uuids[] = { {BLE_UUID_NUS_SERVICE, NUS_SERVICE_UUID_TYPE
 keyboard_hid_functions_t ble_hid_functions = {
     .keycode_append = keycode_append_ble,
     .keycode_remove = keycode_remove_ble,
-    .handle_keycode = handle_keycode_ble,
+    .send_consumer = send_consumer_ble,
     .reset = keyboard_reset_ble,
     .handle_mouse = handle_keycode_mouse_ble,
     .tick_handler_mouse = tick_handler_mouse_ble
@@ -640,6 +640,8 @@ ret_code_t send_consumer_ble(uint8_t code, bool press) {
                                  m_conn_handle);
 }
 #endif
+
+#if 0
 ret_code_t handle_keycode_ble(uint16_t keycode, bool press) {
 #ifdef BLE_CONSUMER_ENABLE
 /*
@@ -679,9 +681,19 @@ ret_code_t handle_keycode_ble(uint16_t keycode, bool press) {
             
     }
 #endif
+        if( kc < 0xE8 ) {
+            hid_functions.keycode_append(kc);
+        } else if( kc>=0xF0 ) {
+            hid_functions.handle_mouse(kc,1);
+        }
+    if(press) {
+        return keycode_append_ble(keycode&0x00FF);
+    } else {
+        return keycode_remove_ble(keycode&0x00FF);
+    }
     return NRF_SUCCESS;
 }
-
+#endif
 // Mouse Functions
 ret_code_t mouse_report_send_ble(void) {
     return ble_hids_inp_rep_send(&m_hids,

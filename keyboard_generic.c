@@ -31,7 +31,7 @@ uint8_t current_layer;
 keyboard_hid_functions_t hid_functions = {
     .keycode_append = keycode_append_usb,
     .keycode_remove = keycode_remove_usb,
-    .handle_keycode = handle_keycode_usb,
+    .send_consumer = send_consumer_usb,
     .reset = keyboard_reset_usb,
     .handle_mouse = handle_keycode_mouse_usb,
     .tick_handler_mouse = tick_handler_mouse_usb
@@ -119,11 +119,13 @@ void layer_history_remove(uint8_t layer) {
     uint8_t backword_count = 0;
     NRF_LOG_INFO("removing layer:");
     NRF_LOG_HEXDUMP_INFO(&layer, 1);
-    int8_t l = get_layer(get_active_layer());
-    if( l==-1 ) {
-        current_layer =  my_keyboard.default_layer;
-    } else {
-        current_layer = l;
+    if( layer == get_active_layer() ) {
+        int8_t l = get_layer(get_active_layer());
+        if( l==-1 ) {
+            current_layer =  my_keyboard.default_layer;
+        } else {
+            current_layer = l;
+        }
     }
 }
 
@@ -131,6 +133,7 @@ uint8_t get_active_layer(void) {
     return current_layer;
 }
 
+/*
 void press_keycode(uint8_t kc) {
     if( kc < 0xE8 ) {
         hid_functions.keycode_append(kc);
@@ -138,6 +141,7 @@ void press_keycode(uint8_t kc) {
         hid_functions.handle_mouse(kc,1);
     }
 }
+*/
 
 void tick_key(keys_t *p_key) {
     if( p_key->kc>=0xF0 ) {
@@ -206,6 +210,48 @@ void kbd_tick_handler(void* p_context) {
 }
 
 
+ret_code_t handle_keycode(uint16_t keycode, bool press) {
+    uint8_t kc = keycode & 0x00FF;
+    
+    switch(kc) {
+        case 0x66:
+            return hid_functions.send_consumer(0x30, press);
+            
+        case 0x76:
+            return hid_functions.send_consumer(0x40, press);
+            
+        case 0xA8:
+            return hid_functions.send_consumer(0xE2, press);
+            
+        case 0xA9:
+            return hid_functions.send_consumer(0xE9, press);
+            
+        case 0xAA:
+            return hid_functions.send_consumer(0xEA, press);
+            
+        case 0xAE:
+            return hid_functions.send_consumer(0xCD, press);
+            
+        case 0xBB:
+            return hid_functions.send_consumer(0xB3, press);
+            
+        case 0xBC:
+            return hid_functions.send_consumer(0xB4, press);
+            
+    }
+
+    if( kc < 0xE8 ) {
+        if( press ) {
+            return hid_functions.keycode_append(kc);
+        } else {
+            return hid_functions.keycode_remove(kc);
+        }
+    } else if( kc>=0xF0 ) {
+        return hid_functions.handle_mouse(kc,press);
+    }
+
+}
+
 void keypress(uint8_t row, uint8_t col, bool debouncing) {
     uint16_t keycode;// = dynamic_keymap_get_keycode(get_active_layer(),row,col);
     uint8_t i = 0;
@@ -257,7 +303,7 @@ void keypress(uint8_t row, uint8_t col, bool debouncing) {
                     hid_functions.keycode_append(j+0xe0);
                 }
             }
-            hid_functions.keycode_append(keypress_status[i].kc);
+            handle_keycode(keypress_status[i].kc,true);
             break;
         case 0x10:
             for(uint8_t j=0;j<4;j++) {
@@ -265,7 +311,7 @@ void keypress(uint8_t row, uint8_t col, bool debouncing) {
                     hid_functions.keycode_append(j+0xe4);
                 }
             }
-            hid_functions.keycode_append(keypress_status[i].kc);
+            handle_keycode(keypress_status[i].kc, true);
             break;
         case 0x50:
             if( action == 0x0C && keypress_status[i].kc == 0x00 ) {
@@ -278,7 +324,7 @@ void keypress(uint8_t row, uint8_t col, bool debouncing) {
             break;
         }
     } else {
-        press_keycode(keypress_status[i].kc);
+        handle_keycode(keypress_status[i].kc, true);
     }
 }
 
@@ -295,7 +341,7 @@ void keyrelease(uint8_t row, uint8_t col, bool debouncing) {
                 uint8_t action = keypress_status[i].application & 0x0F;
                 switch(keypress_status[i].application & 0xF0) {
                 case 0x00:
-                    hid_functions.keycode_remove(keypress_status[i].kc);
+                    handle_keycode(keypress_status[i].kc, false);
                     for(uint8_t j=0;j<4;j++) {
                         if(action & (1<<j)) {
                             hid_functions.keycode_remove(j+0xe0);
@@ -303,7 +349,7 @@ void keyrelease(uint8_t row, uint8_t col, bool debouncing) {
                     }
                     break;
                 case 0x10:
-                    hid_functions.keycode_remove(keypress_status[i].kc);
+                    handle_keycode(keypress_status[i].kc, false);
                     for(uint8_t j=0;j<4;j++) {
                         if(action & (1<<j)) {
                             hid_functions.keycode_remove(j+0xe4);
@@ -318,8 +364,8 @@ void keyrelease(uint8_t row, uint8_t col, bool debouncing) {
                     if(keypress_status[i].press)  {
                         layer_history_remove(action);
                     } else {
-                        hid_functions.keycode_append(keypress_status[i].kc);
-                        hid_functions.keycode_remove(keypress_status[i].kc);
+                        handle_keycode(keypress_status[i].kc, true);
+                        handle_keycode(keypress_status[i].kc, false);
                     }
                     break;
                 case 0x50:
@@ -333,8 +379,8 @@ void keyrelease(uint8_t row, uint8_t col, bool debouncing) {
                             }
                         }
                     } else {
-                        hid_functions.keycode_append(keypress_status[i].kc);
-                        hid_functions.keycode_remove(keypress_status[i].kc);
+                        handle_keycode(keypress_status[i].kc, true);
+                        handle_keycode(keypress_status[i].kc, false);
                     }
                     break;
                 case 0x70:
@@ -345,13 +391,13 @@ void keyrelease(uint8_t row, uint8_t col, bool debouncing) {
                             }
                         }
                     } else {
-                        hid_functions.keycode_append(keypress_status[i].kc);
-                        hid_functions.keycode_remove(keypress_status[i].kc);
+                        handle_keycode(keypress_status[i].kc, true);
+                        handle_keycode(keypress_status[i].kc, false);
                     }
                     break;
                 }
             } else {
-                release_keycode(keypress_status[i].kc);
+                handle_keycode(keypress_status[i].kc, false);
             }
 #ifdef KEYBOARD_PERIPH
             send_place_ble(row, col, false);

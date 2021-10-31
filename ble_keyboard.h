@@ -51,7 +51,7 @@
 
 // BLE DEFINES START
 
-//#define BLE_CONSUMER_ENABLE
+#define BLE_CONSUMER_ENABLE
 #define APP_BLE_CONN_CFG_TAG            1                                           /**< A tag identifying the SoftDevice BLE configuration. */
 
 #define APP_FEATURE_NOT_SUPPORTED       BLE_GATT_STATUS_ATTERR_APP_BEGIN + 2        /**< Reply when unsupported features are requested. */
@@ -171,8 +171,9 @@ void restart_timeout_timer(void);
 ret_code_t keycode_append_ble(uint8_t kc);
 ret_code_t keycode_remove_ble(uint8_t kc);
 ret_code_t keyboard_reset_ble(void);
-ret_code_t handle_keycode_ble(uint16_t keycode, bool press);
+//ret_code_t handle_keycode_ble(uint16_t keycode, bool press);
 ret_code_t raw_hid_send_ble(uint8_t *data, uint8_t length);
+ret_code_t send_consumer_ble(uint8_t code, bool press);
 
 extern keyboard_hid_functions_t ble_hid_functions;
 extern ble_gap_conn_params_t   gap_conn_params;

@@ -13,7 +13,8 @@
 ret_code_t keycode_append_usb(uint8_t kc);
 ret_code_t keycode_remove_usb(uint8_t kc);
 ret_code_t keyboard_reset_usb(void);
-ret_code_t handle_keycode_usb(uint16_t keycode, bool press);
+//ret_code_t handle_keycode_usb(uint16_t keycode, bool press);
+ret_code_t send_consumer_usb(uint8_t code, bool press);
 
 void usb_keyboard_init(void);
 

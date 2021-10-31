@@ -22,7 +22,7 @@ uint8_t usb_keyboard_rep_buffer[USB_HID_KBD_REP_LEN];
 keyboard_hid_functions_t usb_hid_functions = {
     .keycode_append = keycode_append_usb,
     .keycode_remove = keycode_remove_usb,
-    .handle_keycode = handle_keycode_usb,
+    .send_consumer = send_consumer_usb,
     .reset = keyboard_reset_usb,
     .handle_mouse = handle_keycode_mouse_usb,
     .tick_handler_mouse = tick_handler_mouse_usb
@@ -176,6 +176,6 @@ void usb_keyboard_init(void) {
     APP_ERROR_CHECK(ret);
 }
 
-ret_code_t handle_keycode_usb(uint16_t keycode, bool press) {
+ret_code_t send_consumer_usb(uint8_t code, bool press) {
     return NRF_SUCCESS;
 }
