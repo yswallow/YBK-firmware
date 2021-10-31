@@ -50,6 +50,8 @@
 #include "keyboard_generic.h"
 
 // BLE DEFINES START
+
+#define BLE_CONSUMER_ENABLE
 #define APP_BLE_CONN_CFG_TAG            1                                           /**< A tag identifying the SoftDevice BLE configuration. */
 
 #define APP_FEATURE_NOT_SUPPORTED       BLE_GATT_STATUS_ATTERR_APP_BEGIN + 2        /**< Reply when unsupported features are requested. */
@@ -109,6 +111,12 @@
 #define SEC_PARAM_MIN_KEY_SIZE              7                                          /**< Minimum encryption key size. */
 #define SEC_PARAM_MAX_KEY_SIZE              16                                         /**< Maximum encryption key size. */
 
+#ifdef BLE_CONSUMER_ENABLE
+#define BLE_INPUT_REPORT_COUNT              4
+#else
+#define BLE_INPUT_REPORT_COUNT              3
+#endif
+
 #define OUTPUT_REPORT_KEYS_INDEX            0                                          /**< Index of Output Report. */
 #define OUTPUT_REPORT_MAX_LEN               1                                          /**< Maximum length of Output Report. */
 #define INPUT_REPORT_KEYS_INDEX             0                                          /**< Index of Input Report. */
@@ -120,6 +128,10 @@
 #define INPUT_REPORT_MOUSE_INDEX            2
 #define INPUT_REP_REF_MOUSE_ID              2
 #define INPUT_REPORT_MOUSE_MAX_LEN          4
+
+#define INPUT_REPORT_CONSUMER_INDEX         3
+#define INPUT_REPORT_CONSUMER_ID            3
+#define INPUT_REPORT_CONSUMER_MAX_LEN       1
 
 #define INPUT_REPORT_RAW_INDEX              1
 #define OUTPUT_REPORT_RAW_INDEX             1
@@ -159,8 +171,9 @@ void restart_timeout_timer(void);
 ret_code_t keycode_append_ble(uint8_t kc);
 ret_code_t keycode_remove_ble(uint8_t kc);
 ret_code_t keyboard_reset_ble(void);
-ret_code_t handle_keycode_ble(uint16_t keycode, bool press);
+//ret_code_t handle_keycode_ble(uint16_t keycode, bool press);
 ret_code_t raw_hid_send_ble(uint8_t *data, uint8_t length);
+ret_code_t send_consumer_ble(uint8_t code, bool press);
 
 extern keyboard_hid_functions_t ble_hid_functions;
 extern ble_gap_conn_params_t   gap_conn_params;

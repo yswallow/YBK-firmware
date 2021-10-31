@@ -19,7 +19,8 @@ typedef struct {
 typedef struct {
     ret_code_t (*keycode_append)(uint8_t);
     ret_code_t (*keycode_remove)(uint8_t);
-    ret_code_t (*handle_keycode)(uint16_t, bool);
+    ret_code_t (*send_consumer)(uint8_t,bool);
+    //ret_code_t (*handle_keycode)(uint16_t, bool);
     ret_code_t (*reset)(void);
     ret_code_t (*handle_mouse)(uint16_t,bool);
     ret_code_t (*tick_handler_mouse)(keys_t*);

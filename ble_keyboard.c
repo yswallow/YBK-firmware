@@ -109,7 +109,7 @@ static ble_uuid_t m_adv_uuids[] = { {BLE_UUID_NUS_SERVICE, NUS_SERVICE_UUID_TYPE
 keyboard_hid_functions_t ble_hid_functions = {
     .keycode_append = keycode_append_ble,
     .keycode_remove = keycode_remove_ble,
-    .handle_keycode = handle_keycode_ble,
+    .send_consumer = send_consumer_ble,
     .reset = keyboard_reset_ble,
     .handle_mouse = handle_keycode_mouse_ble,
     .tick_handler_mouse = tick_handler_mouse_ble
@@ -276,7 +276,7 @@ static void hids_init(void)
     ble_hids_outp_rep_init_t    * p_output_report;
     uint8_t                       hid_info_flags;
 
-    static ble_hids_inp_rep_init_t     input_report_array[3];
+    static ble_hids_inp_rep_init_t     input_report_array[BLE_INPUT_REPORT_COUNT];
     static ble_hids_outp_rep_init_t    output_report_array[2];
     static uint8_t                     report_map_data[] =
     {
@@ -349,6 +349,29 @@ static void hids_init(void)
         0x81, 0x06,       /*     Input (Data, Variable, Relative)*/     
         0xC0,         /*  End Collection,                        */     
         0xC0         /* End Collection                          */     
+
+#ifdef BLE_CONSUMER_ENABLE
+        ,
+        0x05, 0x0C,
+        0x09, 0x01,
+        0xA1, 0x01,
+        0x85, INPUT_REPORT_CONSUMER_ID,
+        0x09, 0x40, // Menu
+        0x09, 0xE9, // VOLU
+        0x09, 0xEA, // VOLD
+        0x09, 0xE2, // Mute
+        0x09, 0x30, // Power
+        0x09, 0xCD, // Play/Pause
+        0x09, 0xB3, // Fast Forward
+        0x09, 0xB4, // Rewind
+        0x15, 0x00, // Logical Minimum (0)
+        0x25, 0x01, // Logical Maximum (1)
+        0x75, 0x01,
+        0x95, 0x08,
+        0x81, 0x02, // Input (Data, Variable, Absolute)
+        0xC0
+#endif
+
 #ifdef BLE_RAW_HID
         ,
         0x06, 0x60, 0xFF,
@@ -396,6 +419,7 @@ static void hids_init(void)
 
     p_output_report->sec.wr = SEC_JUST_WORKS;
     p_output_report->sec.rd = SEC_JUST_WORKS;
+    
     // Mouse Setting
     p_input_report                      = &input_report_array[INPUT_REPORT_MOUSE_INDEX];
     p_input_report->max_len             = INPUT_REPORT_MOUSE_MAX_LEN;
@@ -405,6 +429,18 @@ static void hids_init(void)
     p_input_report->sec.cccd_wr = SEC_JUST_WORKS;
     p_input_report->sec.wr      = SEC_JUST_WORKS;
     p_input_report->sec.rd      = SEC_JUST_WORKS;
+
+#ifdef BLE_CONSUMER_ENABLE
+    // Consumer setting
+    p_input_report                      = &input_report_array[INPUT_REPORT_CONSUMER_INDEX];
+    p_input_report->max_len             = INPUT_REPORT_CONSUMER_MAX_LEN;
+    p_input_report->rep_ref.report_id   = INPUT_REPORT_CONSUMER_ID;
+    p_input_report->rep_ref.report_type = BLE_HIDS_REP_TYPE_INPUT;
+
+    p_input_report->sec.cccd_wr = SEC_JUST_WORKS;
+    p_input_report->sec.wr      = SEC_JUST_WORKS;
+    p_input_report->sec.rd      = SEC_JUST_WORKS;
+#endif
 
     // RAW Setting
     p_input_report                      = &input_report_array[INPUT_REPORT_RAW_INDEX];
@@ -564,10 +600,100 @@ ret_code_t keyboard_reset_ble(void) {
     return NRF_SUCCESS;
 }
 
+#ifdef BLE_CONSUMER_ENABLE
+uint8_t ble_consumer_report[1];
+ret_code_t send_consumer_ble(uint8_t code, bool press) {
+    if(press) {
+        switch(code) {
+        case 0x30:
+            ble_consumer_report[0] = 1<<3;
+            break;
+        case 0x40:
+            ble_consumer_report[0] = 1<<7;
+            break;
+        case 0xB3:
+            ble_consumer_report[0] = 1<<1;
+            break;
+        case 0xB4:
+            ble_consumer_report[0] = 1<<0;
+            break;
+        case 0xCD:
+            ble_consumer_report[0] = 1<<2;
+            break;
+        case 0xE2:
+            ble_consumer_report[0] = 1<<4;
+            break;
+        case 0xE9:
+            ble_consumer_report[0] = 1<<5;
+            break;
+        case 0xEA:
+            ble_consumer_report[0] = 1<<6;
+            break;
+        }
+    } else {
+        ble_consumer_report[0] = 0;
+    }
+    return ble_hids_inp_rep_send(&m_hids,
+                                 INPUT_REPORT_CONSUMER_INDEX,
+                                 INPUT_REPORT_CONSUMER_MAX_LEN,
+                                 ble_consumer_report,
+                                 m_conn_handle);
+}
+#endif
+
+#if 0
 ret_code_t handle_keycode_ble(uint16_t keycode, bool press) {
+#ifdef BLE_CONSUMER_ENABLE
+/*
+        0x09, 0x40, // Menu
+        0x09, 0xE9, // VOLU
+        0x09, 0xEA, // VOLD
+        0x09, 0xE2, // Mute
+        0x09, 0x30, // Power
+        0x09, 0xCD, // Play/Pause
+        0x09, 0xB3, // Fast Forward
+        0x09, 0xB4, // Rewind
+*/
+    switch(keycode) {
+        case 0x66:
+            return send_consumer_ble(0x30, press);
+            
+        case 0x76:
+            return send_consumer_ble(0x40, press);
+            
+        case 0x7F:
+            return send_consumer_ble(0xE2, press);
+            
+        case 0x80:
+            return send_consumer_ble(0xE9, press);
+            
+        case 0x81:
+            return send_consumer_ble(0xEA, press);
+            
+        case 0xAE:
+            return send_consumer_ble(0xCD, press);
+            
+        case 0xBB:
+            return send_consumer_ble(0xB3, press);
+            
+        case 0xBC:
+            return send_consumer_ble(0xB4, press);
+            
+    }
+#endif
+        if( kc < 0xE8 ) {
+            hid_functions.keycode_append(kc);
+        } else if( kc>=0xF0 ) {
+            hid_functions.handle_mouse(kc,1);
+        }
+    if(press) {
+        return keycode_append_ble(keycode&0x00FF);
+    } else {
+        return keycode_remove_ble(keycode&0x00FF);
+    }
     return NRF_SUCCESS;
 }
-
+#endif
 // Mouse Functions
 ret_code_t mouse_report_send_ble(void) {
     return ble_hids_inp_rep_send(&m_hids,
@@ -945,6 +1071,9 @@ static void ble_p_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
         case BLE_GAP_EVT_DISCONNECTED:
             NRF_LOG_INFO("Disconnected");
             m_conn_handle = BLE_CONN_HANDLE_INVALID;
+#ifdef KEYBOARD_PERIPH
+            sd_nvic_SystemReset();
+#endif
             break; // BLE_GAP_EVT_DISCONNECTED
 
         case BLE_GAP_EVT_PHY_UPDATE_REQUEST:
@@ -1088,7 +1217,7 @@ static void advertising_init(void)
     init.advdata.uuids_complete.uuid_cnt = sizeof(m_adv_uuids) / sizeof(m_adv_uuids[0]);
     init.advdata.uuids_complete.p_uuids  = m_adv_uuids;
 
-    init.config.ble_adv_whitelist_enabled          = true;
+    init.config.ble_adv_whitelist_enabled          = false;
     init.config.ble_adv_directed_high_duty_enabled = true;
     init.config.ble_adv_directed_enabled           = false;
     init.config.ble_adv_directed_interval          = 0;
