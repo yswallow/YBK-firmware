@@ -600,7 +600,7 @@ ret_code_t keyboard_reset_ble(void) {
     return NRF_SUCCESS;
 }
 
-#ifdef BLE_CONSUEMER_ENABLE
+#ifdef BLE_CONSUMER_ENABLE
 uint8_t ble_consumer_report[1];
 ret_code_t send_consumer_ble(uint8_t code, bool press) {
     if(press) {
@@ -1205,7 +1205,7 @@ static void advertising_init(void)
     init.advdata.uuids_complete.uuid_cnt = sizeof(m_adv_uuids) / sizeof(m_adv_uuids[0]);
     init.advdata.uuids_complete.p_uuids  = m_adv_uuids;
 
-    init.config.ble_adv_whitelist_enabled          = true;
+    init.config.ble_adv_whitelist_enabled          = false;
     init.config.ble_adv_directed_high_duty_enabled = true;
     init.config.ble_adv_directed_enabled           = false;
     init.config.ble_adv_directed_interval          = 0;
