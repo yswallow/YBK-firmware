@@ -57,6 +57,7 @@ void sleep_mode_enter(void *ptr)
     }
 }
 #ifndef KEYBOARD_PERIPH
+#ifdef KEYBOARD_TIMEOUT
 void restart_timeout_timer(void) {
     ret_code_t err_code;
     err_code = app_timer_stop(m_keyboard_timeout);
@@ -74,6 +75,7 @@ void timeout_timer_init(void) {
     err_code = app_timer_start(m_keyboard_timeout, KEYBOARD_TIMEOUT_TICKS, NULL);
     APP_ERROR_CHECK(err_code);
 }
+#endif
 #endif
 
 int8_t get_layer(uint8_t current) {
@@ -223,10 +225,10 @@ ret_code_t handle_keycode(uint16_t keycode, bool press) {
         case 0xA8:
             return hid_functions.send_consumer(0xE2, press);
             
-        case 0xA9:
+        case 0xA9: //VOLU
             return hid_functions.send_consumer(0xE9, press);
             
-        case 0xAA:
+        case 0xAA: //VOLD
             return hid_functions.send_consumer(0xEA, press);
             
         case 0xAE:
@@ -277,7 +279,9 @@ void keypress(uint8_t row, uint8_t col, bool debouncing) {
     send_place_ble(row,col,true);
 #endif
 #ifndef KEYBOARD_PERIPH
+#ifdef KEYBOARD_TIMEOUT
     restart_timeout_timer();
+#endif
 #endif
     if(debouncing) {
         nrf_delay_ms(DEBOUNCING_DELAY_MS);
@@ -435,7 +439,9 @@ void keyboard_init(keyboard_t keyboard) {
     app_timer_start(m_tick_kbd, APP_TIMER_TICKS(TAPPING_TERM_TICK_MS),NULL);
     (keyboard.init_method)(keyboard.keyboard_type,keyboard.keyboard_definision);
 #ifndef KEYBOARD_PERIPH
+#ifdef KEYBOARD_TIMEOUT
     timeout_timer_init();
+#endif
 #endif
     // initialize indicator
     if(keyboard.kbd_power_led_enable) {
