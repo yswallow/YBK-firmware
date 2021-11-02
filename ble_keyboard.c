@@ -623,10 +623,10 @@ ret_code_t send_consumer_ble(uint8_t code, bool press) {
             ble_consumer_report[0] = 1<<3;
             break;
         case 0xE9:
-            ble_consumer_report[0] = 1<<2;
+            ble_consumer_report[0] = 1<<1;
             break;
         case 0xEA:
-            ble_consumer_report[0] = 1<<1;
+            ble_consumer_report[0] = 1<<2;
             break;
         }
     } else {
