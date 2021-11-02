@@ -310,12 +310,11 @@ static void hids_init(void)
         0x95, 0x06,       // Report Count (6)
         0x75, 0x08,       // Report Size (8)
         0x15, 0x00,       // Logical Minimum (0)
-        0x25, 0x65,       // Logical Maximum (101)
+        0x25, 0x98,       // Logical Maximum (101)
         0x05, 0x07,       // Usage Page (Key codes)
         0x19, 0x00,       // Usage Minimum (0)
-        0x29, 0x65,       // Usage Maximum (101)
+        0x29, 0x98,       // Usage Maximum (101)
         0x81, 0x00,       // Input (Data, Array) Key array(6 bytes)
-        
         
         0xC0
 
@@ -470,7 +469,7 @@ static void hids_init(void)
     hids_init_obj.is_kb                          = true;
     hids_init_obj.is_mouse                       = false;
 
-    hids_init_obj.inp_rep_count                  = 3;
+    hids_init_obj.inp_rep_count                  = BLE_INPUT_REPORT_COUNT;
     hids_init_obj.outp_rep_count                 = 2;
 
     hids_init_obj.p_inp_rep_array                = input_report_array;
@@ -606,28 +605,28 @@ ret_code_t send_consumer_ble(uint8_t code, bool press) {
     if(press) {
         switch(code) {
         case 0x30:
-            ble_consumer_report[0] = 1<<3;
-            break;
-        case 0x40:
-            ble_consumer_report[0] = 1<<7;
-            break;
-        case 0xB3:
-            ble_consumer_report[0] = 1<<1;
-            break;
-        case 0xB4:
-            ble_consumer_report[0] = 1<<0;
-            break;
-        case 0xCD:
-            ble_consumer_report[0] = 1<<2;
-            break;
-        case 0xE2:
             ble_consumer_report[0] = 1<<4;
             break;
-        case 0xE9:
+        case 0x40:
+            ble_consumer_report[0] = 1<<0;
+            break;
+        case 0xB3:
+            ble_consumer_report[0] = 1<<6;
+            break;
+        case 0xB4:
+            ble_consumer_report[0] = 1<<7;
+            break;
+        case 0xCD:
             ble_consumer_report[0] = 1<<5;
             break;
+        case 0xE2:
+            ble_consumer_report[0] = 1<<3;
+            break;
+        case 0xE9:
+            ble_consumer_report[0] = 1<<2;
+            break;
         case 0xEA:
-            ble_consumer_report[0] = 1<<6;
+            ble_consumer_report[0] = 1<<1;
             break;
         }
     } else {
@@ -1094,7 +1093,9 @@ static void ble_p_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
             m_ble_hid_rep_pending = false;
             break;
 #endif
-
+        case BLE_GATTS_EVT_SYS_ATTR_MISSING :
+            NRF_LOG_DEBUG("BLE_GATTS_EVT_SYS_ATTR_MISSING");
+            break;
         case BLE_GATTC_EVT_TIMEOUT:
             // Disconnect on GATT Client timeout event.
             NRF_LOG_DEBUG("GATT Client Timeout.");
