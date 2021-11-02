@@ -19,7 +19,9 @@
 
 APP_TIMER_DEF(m_tick_kbd);
 #ifndef KEYBOARD_PERIPH
+#ifdef KEYBOARD_TIMEOUT
 APP_TIMER_DEF(m_keyboard_timeout);
+#endif
 #endif
 
 
@@ -46,6 +48,7 @@ void sleep_mode_enter(void *ptr)
 {
     ret_code_t err_code;
     if(! ( NRF_POWER_USBREGSTATUS_VBUSDETECT_MASK & nrf_power_usbregstatus_get() ) ) {
+        NRF_LOG_INFO("Going to Sleep...");
         hid_functions.reset();
         // Prepare wakeup buttons.
         err_code = keyboard_sleep_prepare();

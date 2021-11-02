@@ -82,7 +82,8 @@
 
 #define ECHOBACK_BLE_UART_DATA  1                                       /**< Echo the UART data that is received over the Nordic UART Service (NUS) back to the sender. */
 
-#define PAIRING_TIMEOUT_TICKS APP_TIMER_TICKS(2000)
+#define PAIRING_TIMEOUT_TICKS   APP_TIMER_TICKS(2000)
+#define KEYBOARD_CENTRAL_SCAN_TIMEOUT_TICKS   APP_TIMER_TICKS(60000)
 
 BLE_NUS_C_DEF(m_ble_nus_c);                                             /**< BLE Nordic UART Service (NUS) client instance. */
 NRF_BLE_GATT_DEF(m_gatt_c);                                               /**< GATT module instance. */
@@ -92,6 +93,7 @@ NRF_BLE_GQ_DEF(m_ble_gatt_queue,                                        /**< BLE
                NRF_SDH_BLE_CENTRAL_LINK_COUNT,
                NRF_BLE_GQ_QUEUE_SIZE);
 APP_TIMER_DEF(m_pairing_timer);
+APP_TIMER_DEF(m_central_scan_timer);
 
 static uint16_t m_ble_nus_max_data_len = BLE_GATT_ATT_MTU_DEFAULT - OPCODE_LENGTH - HANDLE_LENGTH; /**< Maximum length of data (in bytes) that can be transmitted to the peer by the Nordic UART service module. */
 
@@ -141,7 +143,7 @@ static void nus_error_handler(uint32_t nrf_error)
 static void scan_start(void)
 {
     ret_code_t ret;
-
+    
     ret = nrf_ble_scan_start(&m_scan);
     APP_ERROR_CHECK(ret);
 }
@@ -220,6 +222,11 @@ static void scan_init(void)
     APP_ERROR_CHECK(err_code);
 
     err_code = app_timer_create(&m_pairing_timer, APP_TIMER_MODE_SINGLE_SHOT, cancel_pairing);
+    APP_ERROR_CHECK(err_code);
+
+    err_code = app_timer_create(&m_central_scan_timer, APP_TIMER_MODE_SINGLE_SHOT, sleep_mode_enter);
+    APP_ERROR_CHECK(err_code);
+    err_code = app_timer_start(m_central_scan_timer, KEYBOARD_CENTRAL_SCAN_TIMEOUT_TICKS, NULL);
     APP_ERROR_CHECK(err_code);
 }
 
@@ -368,8 +375,15 @@ static void ble_nus_c_evt_handler(ble_nus_c_t * p_ble_nus_c, ble_nus_c_evt_t con
             err_code = ble_nus_c_tx_notif_enable(p_ble_nus_c);
             APP_ERROR_CHECK(err_code);
             NRF_LOG_INFO("Connected to device with Nordic UART Service.");
+            
+            err_code = app_timer_stop(m_pairing_timer);
+            APP_ERROR_CHECK(err_code);
+            err_code = app_timer_stop(m_central_scan_timer);
+            APP_ERROR_CHECK(err_code);
+
             err_code = ble_nus_c_string_send(p_ble_nus_c, "init", 4);
             APP_ERROR_CHECK(err_code);
+            
             advertising_start();
             break;
 
@@ -481,8 +495,8 @@ void ble_c_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
             APP_ERROR_CHECK(err_code);
             ble_c_connected = true;
             NRF_LOG_INFO("Connected: Central");
-            err_code = app_timer_stop(m_pairing_timer);
-            APP_ERROR_CHECK(err_code);
+            //err_code = app_timer_stop(m_pairing_timer);
+            //APP_ERROR_CHECK(err_code);
             break;
 
         case BLE_GAP_EVT_DISCONNECTED:
