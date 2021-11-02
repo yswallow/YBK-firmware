@@ -4,8 +4,11 @@ cpkb/
 cpkb.c
 cpkb.h
 .*
+!.keep
 !.gitignore
 keyboard/s140/ses/Output/*
 *.jlink
 keyboard/s140/dust/
 *.emSession
+*.uf2
+

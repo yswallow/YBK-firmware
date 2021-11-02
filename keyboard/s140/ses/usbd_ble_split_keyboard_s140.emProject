@@ -221,23 +221,23 @@
       Name="CentralDebug"
       c_preprocessor_definitions="KEYBOARD_CENTRAL;DEBUG;KEYBOARD_DEBUG_HID;BLE_RAW_HID"
       linker_section_placement_macros="FLASH_START=0x27000;FLASH_SIZE=0xCC000"
-      post_build_command="python $(ProjectDir)/../../../uf2/utils/uf2conv.py $(ProjectDir)/$(OutDir)/$(ProjectName).bin -c -b 0x26000 -o $(OutDir)/$(Configuration).uf2 -f 0xADA52840 " />
+      post_build_command="python $(ProjectDir)/../../../uf2/utils/uf2conv.py $(ProjectDir)/$(OutDir)/$(ProjectName).bin -c -b 0x27000 -o $(OutDir)/$(Configuration).uf2 -f 0xADA52840 " />
     <configuration
       Name="PeripheralDebug"
       c_preprocessor_definitions="KEYBOARD_PERIPH;DEBUG"
-      post_build_command="python $(ProjectDir)/../../../uf2/utils/uf2conv.py $(ProjectDir)/$(OutDir)/$(ProjectName).bin -c -b 0x26000 -o $(OutDir)/$(Configuration).uf2 -f 0xADA52840 " />
+      post_build_command="python $(ProjectDir)/../../../uf2/utils/uf2conv.py $(ProjectDir)/$(OutDir)/$(ProjectName).bin -c -b 0x27000 -o $(OutDir)/$(Configuration).uf2 -f 0xADA52840 " />
     <configuration
       Name="PeripheralRelease"
       c_preprocessor_definitions="KEYBOARD_PERIPH"
       linker_output_format="bin"
       linker_section_placement_macros="FLASH_START=0x26000;FLASH_SIZE=0xCD000"
-      post_build_command="python $(ProjectDir)/../../../uf2/utils/uf2conv.py $(ProjectDir)/$(OutDir)/$(ProjectName).bin -c -b 0x26000 -o $(OutDir)/$(Configuration).uf2 -f 0xADA52840 "
+      post_build_command="python $(ProjectDir)/../../../uf2/utils/uf2conv.py $(ProjectDir)/$(OutDir)/$(ProjectName).bin -c -b 0x26000 -o $(ProjectDir)/uf2/$(Configuration).uf2 -f 0xADA52840 "
       post_build_command_control="Always Run" />
     <configuration
       Name="CentralRelease"
       c_preprocessor_definitions="KEYBOARD_CENTRAL;KEYBOARD_DEBUG_HID;BLE_RAW_HID"
       linker_section_placement_macros="FLASH_START=0x26000;FLASH_SIZE=0xCD000"
-      post_build_command="python $(ProjectDir)/../../../uf2/utils/uf2conv.py $(ProjectDir)/$(OutDir)/$(ProjectName).bin -c -b 0x26000 -o $(OutDir)/$(Configuration).uf2 -f 0xADA52840 "
+      post_build_command="python $(ProjectDir)/../../../uf2/utils/uf2conv.py $(ProjectDir)/$(OutDir)/$(ProjectName).bin -c -b 0x26000 -o $(ProjectDir)/uf2/$(Configuration).uf2 -f 0xADA52840 "
       post_build_command_control="Always Run" />
     <configuration
       Name="IntegratedDebug"
@@ -249,7 +249,7 @@
       Name="IntegratedRelease"
       c_preprocessor_definitions="BLE_RAW_HID"
       linker_section_placement_macros="FLASH_START=0x26000;FLASH_SIZE=0xCD000"
-      post_build_command="python $(ProjectDir)/../../../uf2/utils/uf2conv.py $(ProjectDir)/$(OutDir)/$(ProjectName).bin -c -b 0x26000 -o $(OutDir)/$(Configuration).uf2 -f 0xADA52840 " />
+      post_build_command="python $(ProjectDir)/../../../uf2/utils/uf2conv.py $(ProjectDir)/$(OutDir)/$(ProjectName).bin -c -b 0x26000 -o $(ProjectDir)/uf2/$(Configuration).uf2 -f 0xADA52840 " />
   </project>
   <configuration
     Name="Release"
