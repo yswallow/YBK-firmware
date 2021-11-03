@@ -16,12 +16,12 @@
 
 ### UF2をビルドする場合
 
-4. 画面左上のドロップボックスから`PeripheralRelease`又は`CentralRelease`を選択します。
+4. 画面左上のドロップボックスから`PeripheralRelease`, `IntegratedRelease`又は`CentralRelease`を選択します。
 5. `Build`から`Build usbd_ble_split_keyboard_s140`を選択するとビルドされます。
-6. ファイルは `(nRF52-keyboard-firmware/)keyboard/s140/ses/Output/(ビルド設定名)/Exe/usbd_ble_split_keyboard-(ビルド設定名).uf2`に作成されます。
+6. ファイルは `(nRF52-keyboard-firmware/)keyboard/s140/ses/Output/uf2/(ビルド設定名).uf2`に作成されます。
 
 
 ### SWDで書き込む場合
-4. 画面左上のドロップボックスから`PeripheralDebug`又は`CentralDebug`を選択します。
+4. 画面左上のドロップボックスから`PeripheralDebug`, `IntegratedDebug`又は`CentralDebug`を選択します。
 5. J-linkでキーボードを接続します。
 6. `Debug`から`Go`を選択するとビルドと書き込みが行われ，main関数開始前で止まった状態になります。
