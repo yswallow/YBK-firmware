@@ -72,6 +72,7 @@ void keypress(uint8_t row, uint8_t col, bool debouncing);
 void keyrelease(uint8_t row, uint8_t col, bool debouncing);
 uint8_t get_active_layer(void);
 
+void restart_timeout_timer(void);
 void sleep_mode_enter(void *ptr);
 
 #define PRESS_KEYS_MAX 10

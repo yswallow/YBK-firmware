@@ -44,7 +44,6 @@
 #include <stdbool.h>
 #include "nordic_common.h"
 #include "app_error.h"
-//#include "app_uart.h"
 #include "ble_db_discovery.h"
 #include "app_timer.h"
 #include "app_util.h"
@@ -67,7 +66,7 @@
 
 #include "keyboard_generic.h"
 #include "ble_central.h"
-#include "ble_keyboard.h"
+#include "ble_setting.h" // for KEYBOARD_PERIPH_NAME
 
 #include "keyboard_config.h"
 #include "debug_message_hid.h"

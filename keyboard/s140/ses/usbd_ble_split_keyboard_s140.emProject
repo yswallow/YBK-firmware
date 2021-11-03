@@ -131,11 +131,6 @@
       <file file_name="../../../usb_mouse.h">
         <configuration Name="Debug" build_exclude_from_build="No" />
       </file>
-      <file file_name="../../../ble_keyboard.c">
-        <configuration Name="Debug" build_exclude_from_build="No" />
-        <configuration Name="CentralDebug" build_exclude_from_build="No" />
-      </file>
-      <file file_name="../../../ble_keyboard.h" />
       <file file_name="../../../usb_keyboard.c">
         <configuration Name="Debug" build_exclude_from_build="No" />
       </file>
@@ -159,6 +154,10 @@
       <file file_name="../../../heatmap.h" />
       <file file_name="../../../debug_message_hid.c" />
       <file file_name="../../../debug_message_hid.h" />
+      <file file_name="../../../ble_setting.c" />
+      <file file_name="../../../ble_setting.h" />
+      <file file_name="../../../ble_hiddevice.h" />
+      <file file_name="../../../ble_hiddevice.c" />
     </folder>
     <folder Name="nRF_Segger_RTT">
       <file file_name="../../../../../../external/segger_rtt/SEGGER_RTT.c" />

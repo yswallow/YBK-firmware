@@ -5,7 +5,7 @@
 #include "main.h"
 
 #ifdef BLE_RAW_HID
-#include "ble_keyboard.h"
+#include "ble_hiddevice.h"
 #endif
 
 APP_USBD_HID_GENERIC_GLOBAL_DEF(m_app_hid_raw,

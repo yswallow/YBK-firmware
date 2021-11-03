@@ -1,7 +1,7 @@
 #ifdef KEYBOARD_DEBUG_HID
 #include "raw_hid.h"
 #include "usb_keyboard.h"
-#include "ble_keyboard.h"
+#include "ble_hiddevice.h"
 #include "keyboard_generic.h"
 #include "via.h"
 #include "dynamic_keymap.h"
@@ -12,10 +12,13 @@ APP_TIMER_DEF(m_keyboard_debug_timer);
 static uint8_t hid_debug_message[RAW_REP_SIZE];
 static bool m_keyboard_hid_debug_enable = false;
 static bool m_keyboard_hid_debug_pending = false;
+
+
 void keyboard_debug_hid_set(uint8_t* data, uint8_t length) {
     m_keyboard_hid_debug_enable = data[2] ? true : false;
     return;
 }
+
 
 void keyboard_debug_hid_response(uint8_t* data, uint8_t length) {
     if( m_keyboard_hid_debug_enable ) {
@@ -23,6 +26,7 @@ void keyboard_debug_hid_response(uint8_t* data, uint8_t length) {
         return;
     }
 }
+
 
 void keyboard_debug_hid_register(uint8_t *data, uint8_t length) {
     if( m_keyboard_hid_debug_enable ) {
@@ -39,12 +43,14 @@ void keyboard_debug_hid_register(uint8_t *data, uint8_t length) {
     }
 }
 
+
 void keyboard_debug_hid_register_string(uint8_t *data, uint8_t length) {
     uint8_t mem[length+1];
     memcpy(mem+1, data, length);
     mem[0] = 0x08;
     keyboard_debug_hid_register(mem, length+1);
 }
+
 
 void keyboard_send_hid_debug_periodical(void* ptr) {
     uint8_t periodical_debug_data[29];
@@ -56,6 +62,7 @@ void keyboard_send_hid_debug_periodical(void* ptr) {
     memcpy( periodical_debug_data+20, ble_keyboard_rep_buffer, 8);
     keyboard_debug_hid_register(periodical_debug_data, 29);
 }
+
 
 void keyboard_debug_periodical_init(void) {
     ret_code_t ret;

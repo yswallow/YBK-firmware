@@ -93,7 +93,8 @@
 #include "main.h"
 #include "keyboard_generic.h"
 #include "usb_keyboard.h"
-#include "ble_keyboard.h"
+#include "ble_setting.h"
+#include "ble_hiddevice.h"
 #include "usb_mouse.h"
 #include "ble_central.h"
 #include "via_fds.h"
@@ -375,9 +376,8 @@ int main(void)
     usb_hid_raw_init();
     usb_mouse_init();
     via_fds_init();
-    // moved into ble_keyboard_init()
-    //ble_common_init(); 
-    ble_keyboard_init();
+    
+    ble_device_init();
 #ifdef KEYBOARD_CENTRAL
     ble_central_init();
 #endif
