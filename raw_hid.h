@@ -5,7 +5,7 @@
 
 #include "nrf.h"
 #include "app_usbd_hid.h"
-#include "main.h"
+#include "usb_config.h"
 
 #define RAW_ENABLE
 

@@ -2,7 +2,7 @@
 #include "nrf_log.h"
 #include "via.h"
 #include "raw_hid.h"
-#include "main.h"
+#include "usb_config.h"
 
 #ifdef BLE_RAW_HID
 #include "ble_hiddevice.h"

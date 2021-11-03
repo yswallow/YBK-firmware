@@ -40,7 +40,7 @@
 
 #include "fds.h"
 #include "nrf_error.h"
-#include "main.h"
+//#include "main.h"
 #include "via_fds.h"
 #include "nrf_log.h"
 #include "via.h"

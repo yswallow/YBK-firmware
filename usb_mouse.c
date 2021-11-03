@@ -7,7 +7,7 @@
 #include "app_usbd_hid_mouse.h"
 #include "app_usbd_hid_types.h"
 
-#include "main.h"
+#include "usb_config.h"
 #include "usb_mouse.h"
 
 #define ENDPOINT_LIST_MOUSE() ( HID_MOUSE_EPIN, HID_MOUSE_EPOUT )

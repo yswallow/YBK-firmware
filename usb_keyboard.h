@@ -1,5 +1,5 @@
 #include "sdk_errors.h"
-#include "app_usbd_hid_kbd.h"
+#include "app_usbd_hid_generic.h"
 #include "keyboard_generic.h"
 
 #define USB_HID_KBD_IN_QUEUE_SIZE 1

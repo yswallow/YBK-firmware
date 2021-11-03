@@ -70,7 +70,7 @@
 
 #include "ble_hiddevice.h"
 #include "ble_setting.h"
-#include "main.h"
+//#include "main.h"
 #include "keyboard_generic.h"
 #include "via.h"
 

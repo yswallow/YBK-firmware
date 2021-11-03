@@ -7,7 +7,7 @@
 #include "app_usbd_hid_kbd.h"
 #include "app_usbd_hid_types.h"
 
-#include "main.h"
+#include "usb_config.h"
 #include "usb_keyboard.h"
 #include "usb_mouse.h"
 

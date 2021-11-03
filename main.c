@@ -90,7 +90,7 @@
 #include "app_usbd_hid_kbd_desc.h"
 
 #include "raw_hid.h"
-#include "main.h"
+//#include "main.h"
 #include "keyboard_generic.h"
 #include "usb_keyboard.h"
 #include "ble_setting.h"

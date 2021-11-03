@@ -117,7 +117,6 @@
       <file file_name="../../../raw_hid.h" />
       <file file_name="../../../via.c" />
       <file file_name="../../../via.h" />
-      <file file_name="../../../main.h" />
       <file file_name="../../../usb_keyboard.h">
         <configuration Name="Debug" build_exclude_from_build="No" />
       </file>
@@ -158,6 +157,7 @@
       <file file_name="../../../ble_setting.h" />
       <file file_name="../../../ble_hiddevice.h" />
       <file file_name="../../../ble_hiddevice.c" />
+      <file file_name="../../../usb_config.h" />
     </folder>
     <folder Name="nRF_Segger_RTT">
       <file file_name="../../../../../../external/segger_rtt/SEGGER_RTT.c" />
