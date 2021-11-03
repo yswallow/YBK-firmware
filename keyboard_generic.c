@@ -27,7 +27,7 @@ APP_TIMER_DEF(m_keyboard_timeout);
 
 uint32_t keypress_bitmap[KBD_SETTING_ROW_PINS_MAX];
 keys_t keypress_status[PRESS_KEYS_MAX];
-uint8_t layer_history[DYNAMIC_KEYMAP_LAYER_COUNT];
+//uint8_t layer_history[DYNAMIC_KEYMAP_LAYER_COUNT];
 uint8_t current_layer;
 
 keyboard_hid_functions_t hid_functions = {
@@ -260,6 +260,7 @@ ret_code_t handle_keycode(uint16_t keycode, bool press) {
 void keypress(uint8_t row, uint8_t col, bool debouncing) {
     uint16_t keycode;// = dynamic_keymap_get_keycode(get_active_layer(),row,col);
     uint8_t i = 0;
+    uint8_t kc;
     for(; (keypress_status[i].kc||keypress_status[i].application) && i<PRESS_KEYS_MAX; i++) {
         if(keypress_status[i].col == col && keypress_status[i].row == row) {
             // already pressed.
@@ -297,7 +298,7 @@ void keypress(uint8_t row, uint8_t col, bool debouncing) {
 #else
     
 #endif
-    keypress_status[i].kc = keycode & 0x00FF;
+    kc = keypress_status[i].kc = keycode & 0x00FF;
     keypress_status[i].application = (keycode>>8) & 0x00FF ;
     
     
@@ -326,8 +327,13 @@ void keypress(uint8_t row, uint8_t col, bool debouncing) {
                 keyboard_init(my_keyboard);
                 hid_functions.reset();
                 break;
+            } else if( action == 0x02 ) {
+                my_keyboard.default_layer = kc;
+                kbd_setting[0x50+KBD_SETTING_ADDITIONAL_DEFAULT_LAYER_INDEX] = kc;
+                save_kbd_setting();
             }
             layer_history_append(keypress_status[i].kc);
+            
             break;
         }
     } else {
@@ -376,7 +382,9 @@ void keyrelease(uint8_t row, uint8_t col, bool debouncing) {
                     }
                     break;
                 case 0x50:
-                    layer_history_remove(keypress_status[i].kc);
+                    if( (action!=0x0C) && (action!=0x02) ) {
+                        layer_history_remove(keypress_status[i].kc);
+                    }
                     break;
                 case 0x60:
                     if(keypress_status[i].press) {
@@ -432,10 +440,10 @@ void keyboard_scan(keyboard_t keyboard) {
 
 void keyboard_init(keyboard_t keyboard) {
     memset(keypress_status, 0, sizeof(keypress_status));
-    memset(layer_history, 255, sizeof(uint8_t)*DYNAMIC_KEYMAP_LAYER_COUNT);
+    //memset(layer_history, 255, sizeof(uint8_t)*DYNAMIC_KEYMAP_LAYER_COUNT);
     memset(keypress_bitmap, 0, sizeof(keypress_bitmap));
     heatmap_init();
-    layer_history[0] = 0;
+    //layer_history[0] = 0;
     current_layer = my_keyboard.default_layer;
     
     app_timer_create(&m_tick_kbd, APP_TIMER_MODE_REPEATED, kbd_tick_handler);

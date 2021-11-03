@@ -84,6 +84,6 @@ void sleep_mode_enter(void *ptr);
 extern keyboard_hid_functions_t hid_functions;
 extern uint32_t keypress_bitmap[KBD_SETTING_ROW_PINS_MAX];
 extern keys_t keypress_status[PRESS_KEYS_MAX];
-extern uint8_t layer_history[DYNAMIC_KEYMAP_LAYER_COUNT];
+//extern uint8_t layer_history[DYNAMIC_KEYMAP_LAYER_COUNT];
 
 #endif //__KEYBOARD_H

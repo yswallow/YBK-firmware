@@ -1,5 +1,7 @@
 #include <stdint.h>
-#define DYNAMIC_KEYMAP_LAYER_COUNT 6
+
+
+#define DYNAMIC_KEYMAP_LAYER_COUNT  ( dynamic_keymap_get_layer_count() )
 
 uint8_t dynamic_keymap_get_layer_count(void);
 void dynamic_keymap_get_buffer(uint16_t offset, uint16_t size, uint8_t *data);

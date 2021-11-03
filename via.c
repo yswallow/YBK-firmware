@@ -21,6 +21,9 @@
 #include "via_fds.h"
 
 
+bool keymap_updated = false;
+
+
 // This is generalized so the layout options EEPROM usage can be
 // variable, between 1 and 4 bytes.
 uint32_t via_get_layout_options(void) {
@@ -43,6 +46,7 @@ void via_set_layout_options(uint32_t value) {
         value = value >> 8;
         target--;
     }
+    keymap_updated = true;
 }
 
 
@@ -53,7 +57,6 @@ void via_set_layout_options(uint32_t value) {
 //
 // raw_hid_send() is called at the end, with the same buffer, which was
 // possibly modified with returned values.
-bool keymap_updated = false;
 void raw_hid_receive(uint8_t *data, uint8_t length) {
     uint8_t *command_id   = &(data[0]);
     uint8_t *command_data = &(data[1]);
@@ -112,7 +115,7 @@ void raw_hid_receive(uint8_t *data, uint8_t length) {
             switch (command_data[0]) {
                 case id_layout_options: {
                     uint32_t value = ((uint32_t)command_data[1] << 24) | ((uint32_t)command_data[2] << 16) | ((uint32_t)command_data[3] << 8) | (uint32_t)command_data[4];
-                    //via_set_layout_options(value);
+                    via_set_layout_options(value);
                     break;
                 }
                 default: {
@@ -138,7 +141,7 @@ void raw_hid_receive(uint8_t *data, uint8_t length) {
             break;
         }
         case id_dynamic_keymap_macro_get_count: {
-            //command_data[0] = dynamic_keymap_macro_get_count();
+            command_data[0] = 0; //dynamic_keymap_macro_get_count();
             break;
         }
         case id_dynamic_keymap_macro_get_buffer_size: {
