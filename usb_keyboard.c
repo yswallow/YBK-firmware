@@ -10,6 +10,7 @@
 #include "usb_config.h"
 #include "usb_keyboard.h"
 #include "usb_mouse.h"
+#include "raw_hid.h"
 
 #define ENDPOINT_LIST_KEYBOARD() ( HID_KEYBOARD_EPIN, HID_KEYBOARD_EPOUT )
 
@@ -211,6 +212,9 @@ void usb_keyboard_init(void) {
     APP_ERROR_CHECK(ret);
 }
 
-ret_code_t send_consumer_usb(uint8_t code, bool press) {
-    return NRF_SUCCESS;
+void usb_hid_init(void) {
+    usb_keyboard_init();
+    usb_hid_raw_init();
+    usb_mouse_init();
+    usb_hid_consumer_init();
 }

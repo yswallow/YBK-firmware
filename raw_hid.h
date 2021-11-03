@@ -30,7 +30,7 @@
  * @brief Feature report maximum size. HID generic class will reserve
  *        this buffer size + 1 memory space. 
  */
-#define REPORT_FEATURE_MAXSIZE  31
+#define REPORT_FEATURE_MAXSIZE  0
 
 #define HID_RAW_EP_COUNT 2
 #define ENDPOINT_LIST_RAW() \

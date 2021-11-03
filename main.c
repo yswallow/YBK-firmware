@@ -371,10 +371,8 @@ int main(void)
     ret = app_usbd_class_append(class_cdc_acm);
     APP_ERROR_CHECK(ret);
 */
+    usb_hid_init();
     
-    usb_keyboard_init();
-    usb_hid_raw_init();
-    usb_mouse_init();
     via_fds_init();
     
     ble_device_init();

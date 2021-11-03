@@ -158,6 +158,7 @@
       <file file_name="../../../ble_hiddevice.h" />
       <file file_name="../../../ble_hiddevice.c" />
       <file file_name="../../../usb_config.h" />
+      <file file_name="../../../usb_consumer.c" />
     </folder>
     <folder Name="nRF_Segger_RTT">
       <file file_name="../../../../../../external/segger_rtt/SEGGER_RTT.c" />

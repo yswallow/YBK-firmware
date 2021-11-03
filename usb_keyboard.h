@@ -17,6 +17,8 @@ ret_code_t keyboard_reset_usb(void);
 ret_code_t send_consumer_usb(uint8_t code, bool press);
 
 void usb_keyboard_init(void);
+void usb_hid_consumer_init(void);
+void usb_hid_init(void);
 
 extern const app_usbd_hid_generic_t m_app_hid_kbd;
 

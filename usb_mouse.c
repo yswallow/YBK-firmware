@@ -10,8 +10,6 @@
 #include "usb_config.h"
 #include "usb_mouse.h"
 
-#define ENDPOINT_LIST_MOUSE() ( HID_MOUSE_EPIN, HID_MOUSE_EPOUT )
-
 static void hid_mouse_ev_handler(app_usbd_class_inst_t const * p_inst,
                                 app_usbd_hid_user_event_t event);
 
