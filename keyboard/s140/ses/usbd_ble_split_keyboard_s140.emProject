@@ -204,7 +204,8 @@
       c_preprocessor_definitions="KEYBOARD_CENTRAL" />
     <configuration
       Name="PeripheralDebug"
-      c_preprocessor_definitions="KEYBOARD_PERIPH" />
+      c_preprocessor_definitions="KEYBOARD_PERIPH"
+      c_preprocessor_undefinitions="BLE_RAW_HID" />
     <configuration
       Name="PeripheralRelease"
       c_preprocessor_definitions="KEYBOARD_PERIPH"
@@ -218,14 +219,15 @@
     <configuration Name="IntegratedRelease" />
     <configuration
       Name="Debug"
-      c_preprocessor_definitions="NRF_SD_BLE_API_VERSION=7;KEYBOARD_DEBUG_HID;BLE_RAW_HID"
+      build_treat_warnings_as_errors="Yes"
+      c_preprocessor_definitions="NRF_SD_BLE_API_VERSION=7;KEYBOARD_DEBUG_HID;BLE_RAW_HID;DEBUG;DEBUG_NRF;"
       linker_section_placement_macros="FLASH_START=0x27000;FLASH_SIZE=0xCC000"
       post_build_command="python $(ProjectDir)/../../../uf2/utils/uf2conv.py $(ProjectDir)/$(OutDir)/$(ProjectName).bin -c -b 0x27000 -o $(OutDir)/$(Configuration).uf2 -f 0xADA52840" />
     <configuration
       Name="Release"
-      c_preprocessor_definitions="NRF_SD_BLE_API_VERSION=6;"
+      c_preprocessor_definitions="NRF_SD_BLE_API_VERSION=6;KEYBOARD_DEBUG_HID;BLE_RAW_HID"
       linker_section_placement_macros="FLASH_START=0x26000;FLASH_SIZE=0xCD000"
-      post_build_command="python $(ProjectDir)/../../../uf2/utils/uf2conv.py $(ProjectDir)/$(OutDir)/$(ProjectName).bin -c -b 0x26000 -o $(OutDir)/$(Configuration).uf2 -f 0xADA52840" />
+      post_build_command="python $(ProjectDir)/../../../uf2/utils/uf2conv.py $(ProjectDir)/$(OutDir)/$(ProjectName).bin -c -b 0x26000 -o $(ProjectDir)/uf2/$(Configuration).uf2 -f 0xADA52840" />
   </project>
   <configuration Name="CentralDebug" inherited_configurations="Debug" />
   <configuration Name="PeripheralDebug" inherited_configurations="Debug" />
