@@ -59,7 +59,9 @@ void keyboard_send_hid_debug_periodical(void* ptr) {
     periodical_debug_data[1] = get_active_layer();
     memset( periodical_debug_data+2,  0, 10);
     memcpy( periodical_debug_data+12, usb_keyboard_rep_buffer, 8);
+#ifndef KEYBOARD_PERIPH
     memcpy( periodical_debug_data+20, ble_keyboard_rep_buffer, 8);
+#endif
     keyboard_debug_hid_register(periodical_debug_data, 29);
 }
 

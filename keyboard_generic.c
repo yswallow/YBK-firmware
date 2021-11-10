@@ -17,6 +17,8 @@
 #include "ble_peripheral.h"
 #endif
 
+#include "ble_setting.h"
+
 APP_TIMER_DEF(m_tick_kbd);
 #ifndef KEYBOARD_PERIPH
 #ifdef KEYBOARD_TIMEOUT
@@ -47,6 +49,7 @@ keyboard_hid_functions_t hid_functions = {
 void sleep_mode_enter(void *ptr)
 {
     ret_code_t err_code;
+    NRF_LOG_DEBUG("sleep mode enter");
     if(! ( NRF_POWER_USBREGSTATUS_VBUSDETECT_MASK & nrf_power_usbregstatus_get() ) ) {
         NRF_LOG_INFO("Going to Sleep...");
         hid_functions.reset();
@@ -243,6 +246,26 @@ ret_code_t handle_keycode(uint16_t keycode, bool press) {
         case 0xBC:
             return hid_functions.send_consumer(0xB4, press);
             
+    }
+
+  
+    if( ((kc & 0xF0) == 0xC0) && press ) {
+        // change pair
+        /*
+        if( (kc&0x0F) < ble_peer_addr_array.count ) {
+            NRF_LOG_DEBUG("existing peer");
+            ble_connect_to_device( ble_peer_addr_array.peer_addr[kc&0x0F] );
+        } else {
+            NRF_LOG_DEBUG("Create new connection...");
+            ble_gap_addr_t addr = { .addr_id_peer = 0 };
+            ble_connect_to_device(addr);
+        }
+        */
+        if( (kc&0x0F)==0x0F ) {
+            advertising_without_whitelist(BLE_ADV_MODE_FAST);
+        } else {
+            ble_connect_to_device( kc&0x0F );
+        }
     }
 
     if( kc < 0xE8 ) {

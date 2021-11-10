@@ -40,7 +40,6 @@
 
 #include "fds.h"
 #include "nrf_error.h"
-//#include "main.h"
 #include "via_fds.h"
 #include "nrf_log.h"
 #include "via.h"
@@ -48,12 +47,9 @@
 #include "heatmap.h"
 #include "debug_message_hid.h"
 
-fds_record_desc_t eeprom_desc;
-fds_record_desc_t setting_desc;
-/*
-static fds_find_token_t  tok  = {0};
-static fds_flash_record_t config = {0};
-*/
+static fds_record_desc_t eeprom_desc;
+static fds_record_desc_t setting_desc;
+
 uint8_t eeprom[EEPROM_SIZE];
 uint8_t kbd_setting[KBD_SETTING_SIZE];
 
@@ -190,8 +186,8 @@ fds_record_t const m_kbd_setting_record = {
     .data.length_words = (KBD_SETTING_SIZE*sizeof(uint8_t) + 3)/sizeof(uint32_t)
 };
 
+
 void save_keymap(void) {
-    
     ret_code_t ret;
     fds_find_token_t tok;
     if( eeprom_desc.p_record = 0 ) {
@@ -276,22 +272,18 @@ void via_fds_init(void) {
     else
     {
         /* System config not found; write a new one. */
+        NRF_LOG_INFO("Writing config file...");
         ret = fds_gc();
         wait_for_fds_gc_complete();
-        NRF_LOG_INFO("Writing config file...");
-        if(ret==NRF_SUCCESS) {
-            ret = fds_record_write(&eeprom_desc, &m_eeprom_record);
-            if ((ret != NRF_SUCCESS) && (ret == FDS_ERR_NO_SPACE_IN_FLASH))
-            {
-                NRF_LOG_INFO("No space in flash, delete some records to update the config file.");
-            }
-            else
-            {
-                APP_ERROR_CHECK(ret);
-            }
-         } else {
+        ret = fds_record_write(&eeprom_desc, &m_eeprom_record);
+        if ((ret != NRF_SUCCESS) && (ret == FDS_ERR_NO_SPACE_IN_FLASH))
+        {
+            NRF_LOG_INFO("No space in flash, delete some records to update the config file.");
+        }
+        else
+        {
             APP_ERROR_CHECK(ret);
-         }
+        }
     }
     memset(&tok, 0, sizeof(fds_find_token_t));
     ret = fds_record_find(KBD_SETTING_FILE, KBD_SETTING_REC_KEY, &setting_desc, &tok);
@@ -314,24 +306,17 @@ void via_fds_init(void) {
 
         NRF_LOG_INFO("Writing config file...");
         ret = fds_record_write(&setting_desc, &m_kbd_setting_record);
-        if(ret==NRF_SUCCESS) {
-            
-            if ((ret != NRF_SUCCESS) && (ret == FDS_ERR_NO_SPACE_IN_FLASH))
-            {
-                NRF_LOG_INFO("No space in flash, delete some records to update the config file.");
-            }
-            else
-            {
-                APP_ERROR_CHECK(ret);
-            }
+        if ((ret != NRF_SUCCESS) && (ret == FDS_ERR_NO_SPACE_IN_FLASH))
+        {
+            NRF_LOG_INFO("No space in flash, delete some records to update the config file.");
+        }
+        else
+        {
             APP_ERROR_CHECK(ret);
-       } else {
-            APP_ERROR_CHECK(ret);
-       }
-       //ret = fds_record_find(KBD_SETTING_FILE, KBD_SETTING_REC_KEY, &setting_desc, &tok);
-            
+        }
     }
 }
+
 
 void save_kbd_setting(void) {
     ret_code_t ret;
@@ -361,7 +346,6 @@ void save_kbd_setting(void) {
     }
     //fds_record_close(&desc);
 }
-
 
 
 // Keyboard level code can override this to handle custom messages from VIA.

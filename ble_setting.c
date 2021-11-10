@@ -57,7 +57,7 @@
 #include "nrf_sdh.h"
 #include "nrf_sdh_soc.h"
 #include "nrf_sdh_ble.h"
-#include "fds.h"
+//#include "fds.h"
 #include "ble_conn_state.h"
 #include "nrf_ble_gatt.h"
 #include "nrf_ble_qwr.h"
@@ -67,6 +67,9 @@
 #include "nrf_log.h"
 #include "nrf_log_ctrl.h"
 #include "nrf_log_default_backends.h"
+
+#include "nrf_delay.h"
+#include "app_timer.h"
 
 #include "ble_hiddevice.h"
 #include "ble_setting.h"
@@ -90,18 +93,19 @@
 
 
 #ifndef KEYBOARD_PERIPH
-
 BLE_BAS_DEF(m_bas);
-//static uint8_t dummy[1023];
 #endif
 
 NRF_BLE_GATT_DEF(m_gatt);                                           /**< GATT module instance. */
 NRF_BLE_QWR_DEF(m_qwr);                                             /**< Context for the Queued Write module.*/
-
 BLE_ADVERTISING_DEF(m_advertising);                                 /**< Advertising module instance. */
 
+ble_gap_conn_params_t   gap_conn_params;
 uint16_t                  m_conn_handle  = BLE_CONN_HANDLE_INVALID;  /**< Handle of the current connection. */
 static pm_peer_id_t       m_peer_id;                                 /**< Device reference handle to the current bonded central. */
+static bool m_disconnected_by_user = false;
+
+static void set_advertising_conf_default(void);
 
 #ifdef KEYBOARD_PERIPH
 static ble_uuid_t m_adv_uuids[] = { {BLE_UUID_NUS_SERVICE, NUS_SERVICE_UUID_TYPE} };
@@ -109,7 +113,7 @@ static ble_uuid_t m_adv_uuids[] = { {BLE_UUID_NUS_SERVICE, NUS_SERVICE_UUID_TYPE
 
 static ble_uuid_t m_adv_uuids[] = {
     {BLE_UUID_HUMAN_INTERFACE_DEVICE_SERVICE, BLE_UUID_TYPE_BLE}
-,    {BLE_UUID_DEVICE_INFORMATION_SERVICE, BLE_UUID_TYPE_BLE}
+,   {BLE_UUID_DEVICE_INFORMATION_SERVICE, BLE_UUID_TYPE_BLE}
 };
 
 /**@brief Function for initializing Device Information Service.
@@ -129,7 +133,7 @@ static void dis_init(void)
 
     ble_srv_ascii_to_utf8(&dis_init_obj.manufact_name_str, MANUFACTURER_NAME);
     dis_init_obj.p_pnp_id = &pnp_id;
-
+    
     dis_init_obj.dis_char_rd_sec = SEC_JUST_WORKS;
 
     err_code = ble_dis_init(&dis_init_obj);
@@ -192,9 +196,32 @@ static void whitelist_set(pm_peer_id_list_skip_t skip)
                    BLE_GAP_WHITELIST_ADDR_MAX_COUNT);
 
     err_code = pm_whitelist_set(peer_ids, peer_id_count);
-    APP_ERROR_CHECK(err_code);
+    //APP_ERROR_CHECK(err_code);
 }
 
+static int whitelist_set_one_device(uint8_t index)
+{
+    pm_peer_id_t peer_ids[BLE_GAP_WHITELIST_ADDR_MAX_COUNT];
+    uint32_t     peer_id_count = BLE_GAP_WHITELIST_ADDR_MAX_COUNT;
+
+    ret_code_t err_code = pm_peer_id_list(peer_ids, &peer_id_count, PM_PEER_ID_INVALID, PM_PEER_ID_LIST_SKIP_NO_ID_ADDR);
+    APP_ERROR_CHECK(err_code);
+    if(index<peer_id_count) {
+        err_code = pm_whitelist_set(peer_ids+index, 1);
+        APP_ERROR_CHECK(err_code);
+        err_code = pm_device_identities_list_set(peer_ids+index, 1);
+        APP_ERROR_CHECK(err_code);
+        return index;
+    } else {
+    /*
+        err_code = pm_whitelist_set(NULL, 0);
+        APP_ERROR_CHECK(err_code);
+        err_code = pm_device_identities_list_set(NULL, 0);
+        APP_ERROR_CHECK(err_code);
+    */
+        return -1;
+    }
+}
 
 /**@brief Function for setting filtered device identities.
  *
@@ -230,16 +257,22 @@ static void delete_bonds(void)
 
 /**@brief Function for starting advertising.
  */
-void advertising_start(void)
+void advertising_start(bool set_whitelist, ble_adv_mode_t adv_mode)
 {
-    whitelist_set(PM_PEER_ID_LIST_SKIP_NO_ID_ADDR);
     ret_code_t ret;
+
+    if(set_whitelist) {
+        whitelist_set(PM_PEER_ID_LIST_SKIP_NO_ID_ADDR);
+    }
+    
     if( ble_conn_state_peripheral_conn_count()==0 ) {
-        ret = ble_advertising_start(&m_advertising, BLE_ADV_MODE_FAST);
-        if( ret != NRF_SUCCESS && ret != NRF_ERROR_INVALID_STATE ) {
-            APP_ERROR_CHECK(ret);
+        //while(m_conn_handle!=BLE_CONN_HANDLE_INVALID) {}
+        ret = ble_advertising_start(&m_advertising, adv_mode);    
+        if( ret == NRF_SUCCESS ) {
+            NRF_LOG_INFO("Start Advertising...");
+        } else {
+            NRF_LOG_INFO("Advertising start error");
         }
-        NRF_LOG_INFO("Start Advertising...");
     }
 }
 
@@ -274,7 +307,10 @@ static void pm_evt_handler(pm_evt_t const * p_evt)
 #ifdef KEYBOARD_CENTRAL
             if(ble_conn_state_central_conn_count()) {
 #endif
-            advertising_start();
+            if(! m_disconnected_by_user ) {
+                
+                advertising_start(true, BLE_ADV_MODE_DIRECTED_HIGH_DUTY);
+            }
 #ifdef KEYBOARD_CENTRAL
             }
 #endif
@@ -314,10 +350,10 @@ static void pm_evt_handler(pm_evt_t const * p_evt)
  */
 static void ble_advertising_error_handler(uint32_t nrf_error)
 {
-    APP_ERROR_HANDLER(nrf_error);
+    //APP_ERROR_HANDLER(nrf_error);
 }
 
-
+void advertising_without_whitelist(ble_adv_mode_t mode);
 
 /**@brief Function for handling advertising events.
  *
@@ -358,12 +394,17 @@ static void on_adv_evt(ble_adv_evt_t ble_adv_evt)
 
         case BLE_ADV_EVT_SLOW_WHITELIST:
             NRF_LOG_INFO("Slow advertising with whitelist.");
-            
+            err_code = sd_ble_gap_adv_stop(m_advertising.adv_handle);
+            APP_ERROR_CHECK(err_code);
+            advertising_without_whitelist(BLE_ADV_MODE_FAST);
+            //err_code = ble_advertising_restart_without_whitelist(&m_advertising);
+            //APP_ERROR_CHECK(err_code);
             break;
 
         case BLE_ADV_EVT_IDLE:
             sleep_mode_enter(NULL);
             break;
+
 #ifndef KEYBOARD_PERIPH
         case BLE_ADV_EVT_WHITELIST_REQUEST:
         {
@@ -375,7 +416,7 @@ static void on_adv_evt(ble_adv_evt_t ble_adv_evt)
 
             err_code = pm_whitelist_get(whitelist_addrs, &addr_cnt,
                                         whitelist_irks,  &irk_cnt);
-            if(err_code==5) {
+            if(err_code==5) { // NRF_ERROR_NOT_FOUND
                 break;
             }
             APP_ERROR_CHECK(err_code);
@@ -383,7 +424,7 @@ static void on_adv_evt(ble_adv_evt_t ble_adv_evt)
                           addr_cnt, irk_cnt);
 
             // Set the correct identities list (no excluding peers with no Central Address Resolution).
-            identities_set(PM_PEER_ID_LIST_SKIP_NO_IRK);
+            //identities_set(PM_PEER_ID_LIST_SKIP_NO_IRK);
 
             // Apply the whitelist.
             err_code = ble_advertising_whitelist_reply(&m_advertising,
@@ -409,7 +450,7 @@ static void on_adv_evt(ble_adv_evt_t ble_adv_evt)
                     APP_ERROR_CHECK(err_code);
 
                     // Manipulate identities to exclude peers with no Central Address Resolution.
-                    identities_set(PM_PEER_ID_LIST_SKIP_ALL);
+                    //identities_set(PM_PEER_ID_LIST_SKIP_ALL);
 
                     ble_gap_addr_t * p_peer_addr = &(peer_bonding_data.peer_ble_id.id_addr_info);
                     err_code = ble_advertising_peer_addr_reply(&m_advertising, p_peer_addr);
@@ -437,18 +478,36 @@ static void ble_p_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
     {
         case BLE_GAP_EVT_CONNECTED:
             NRF_LOG_INFO("Connected");
+            NRF_LOG_HEXDUMP_INFO( &(p_ble_evt->evt.gap_evt.params.connected.peer_addr.addr), 6);
             
             m_conn_handle = p_ble_evt->evt.gap_evt.conn_handle;
+            m_disconnected_by_user = false;
             err_code = nrf_ble_qwr_conn_handle_assign(&m_qwr, m_conn_handle);
             APP_ERROR_CHECK(err_code);
+
             break;
 
         case BLE_GAP_EVT_DISCONNECTED:
             NRF_LOG_INFO("Disconnected");
+            NRF_LOG_HEXDUMP_DEBUG( &(p_ble_evt->evt.gap_evt.params.disconnected.reason), 1);
+            /*
+            if( p_ble_evt->evt.gap_evt.params.disconnected.reason == BLE_HCI_REMOTE_USER_TERMINATED_CONNECTION ) {
+                pm_peer_id_t peer_id;
+                err_code = pm_peer_id_get(m_conn_handle, &peer_id);
+                APP_ERROR_CHECK(err_code);
+                err_code = pm_peer_delete(peer_id);
+                APP_ERROR_CHECK(err_code);
+                NRF_LOG_INFO("Delete peer");
+            }
+            */
             m_conn_handle = BLE_CONN_HANDLE_INVALID;
 #ifdef KEYBOARD_PERIPH
             sd_nvic_SystemReset();
 #endif
+            if(! m_disconnected_by_user) {
+                set_advertising_conf_default();
+                advertising_start(true, BLE_ADV_MODE_DIRECTED_HIGH_DUTY);
+            }
             break; // BLE_GAP_EVT_DISCONNECTED
 
         case BLE_GAP_EVT_PHY_UPDATE_REQUEST:
@@ -472,6 +531,7 @@ static void ble_p_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
         case BLE_GATTS_EVT_SYS_ATTR_MISSING :
             NRF_LOG_DEBUG("BLE_GATTS_EVT_SYS_ATTR_MISSING");
             break;
+
         case BLE_GATTC_EVT_TIMEOUT:
             // Disconnect on GATT Client timeout event.
             NRF_LOG_DEBUG("GATT Client Timeout.");
@@ -509,6 +569,8 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
     }
 #endif
 }
+
+
 /**@brief Function for initializing the BLE stack.
  *
  * @details Initializes the SoftDevice and the BLE event interrupt.
@@ -576,6 +638,45 @@ static void peer_manager_init(void)
     APP_ERROR_CHECK(err_code);
 }
 
+
+static void get_advertising_conf_default(ble_adv_modes_config_t *pt) {   
+    memset(pt, 0, sizeof(ble_adv_modes_config_t));
+#ifdef KEYBOARD_PERIPH
+    pt->ble_adv_on_disconnect_disabled     = false;
+    pt->ble_adv_slow_enabled               = false;
+#else
+    pt->ble_adv_slow_enabled               = true;
+    pt->ble_adv_on_disconnect_disabled     = true;
+#endif
+    pt->ble_adv_whitelist_enabled          = false;
+    pt->ble_adv_directed_high_duty_enabled = true;
+    pt->ble_adv_directed_enabled           = true;
+    pt->ble_adv_directed_interval          = 0x10;
+    pt->ble_adv_directed_timeout           = 100;
+    pt->ble_adv_fast_enabled               = true;
+    pt->ble_adv_fast_interval              = APP_ADV_FAST_INTERVAL;
+    pt->ble_adv_fast_timeout               = APP_ADV_FAST_DURATION;
+    pt->ble_adv_slow_interval              = APP_ADV_SLOW_INTERVAL;
+    pt->ble_adv_slow_timeout               = APP_ADV_SLOW_DURATION;
+}
+
+
+static void set_advertising_conf_default(void) {
+    ble_adv_modes_config_t conf;
+    get_advertising_conf_default(&conf);
+    ble_advertising_modes_config_set(&m_advertising, &conf);
+}
+
+void advertising_without_whitelist(ble_adv_mode_t mode) {
+    ble_adv_modes_config_t conf;
+    sd_ble_gap_adv_stop(m_advertising.adv_handle);
+    get_advertising_conf_default(&conf);
+    conf.ble_adv_whitelist_enabled = false;
+    ble_advertising_modes_config_set(&m_advertising, &conf);
+    advertising_start(true, mode);
+}
+
+
 /**@brief Function for initializing the Advertising functionality.
  */
 // call after service_init()
@@ -588,23 +689,14 @@ static void advertising_init(void)
     memset(&init, 0, sizeof(init));
 
     adv_flags                            = BLE_GAP_ADV_FLAGS_LE_ONLY_GENERAL_DISC_MODE;
-    init.advdata.name_type               = BLE_ADVDATA_FULL_NAME;
+    init.advdata.name_type               = BLE_ADVDATA_SHORT_NAME;
+    init.advdata.short_name_len          = 5;
     init.advdata.include_appearance      = true;
     init.advdata.flags                   = adv_flags;
     init.advdata.uuids_complete.uuid_cnt = sizeof(m_adv_uuids) / sizeof(m_adv_uuids[0]);
     init.advdata.uuids_complete.p_uuids  = m_adv_uuids;
-
-    init.config.ble_adv_whitelist_enabled          = false;
-    init.config.ble_adv_directed_high_duty_enabled = true;
-    init.config.ble_adv_directed_enabled           = false;
-    init.config.ble_adv_directed_interval          = 0;
-    init.config.ble_adv_directed_timeout           = 0;
-    init.config.ble_adv_fast_enabled               = true;
-    init.config.ble_adv_fast_interval              = APP_ADV_FAST_INTERVAL;
-    init.config.ble_adv_fast_timeout               = APP_ADV_FAST_DURATION;
-    init.config.ble_adv_slow_enabled               = true;
-    init.config.ble_adv_slow_interval              = APP_ADV_SLOW_INTERVAL;
-    init.config.ble_adv_slow_timeout               = APP_ADV_SLOW_DURATION;
+    
+    get_advertising_conf_default(&(init.config));
 
     init.evt_handler   = on_adv_evt;
     init.error_handler = ble_advertising_error_handler;
@@ -646,9 +738,6 @@ static void qwr_init(void)
  * @details This function sets up all the necessary GAP (Generic Access Profile) parameters of the
  *          device including the device name, appearance, and the preferred connection parameters.
  */
-
-ble_gap_conn_params_t   gap_conn_params;
-
 static void gap_params_init(void)
 {
     ret_code_t              err_code;
@@ -666,7 +755,6 @@ static void gap_params_init(void)
     
     // from ble_common_init() 
     memset(&gap_conn_params, 0, sizeof(gap_conn_params));
-
     gap_conn_params.min_conn_interval = MIN_CONN_INTERVAL;
     gap_conn_params.max_conn_interval = MAX_CONN_INTERVAL;
     gap_conn_params.slave_latency     = SLAVE_LATENCY;
@@ -685,7 +773,6 @@ static void gatt_init(void)
     ret_code_t err_code = nrf_ble_gatt_init(&m_gatt, NULL);
     APP_ERROR_CHECK(err_code);
 }
-
 
 
 /**@brief Function for initializing services that will be used by the application.
@@ -735,21 +822,60 @@ static void conn_params_init(void)
     APP_ERROR_CHECK(err_code);
 }
 
+
 void ble_device_init(void) {
     ble_conn_state_init();
-    
     ble_stack_init();
     scheduler_init();
     gap_params_init();
     gatt_init();
     services_init();
     advertising_init();
-    
     conn_params_init();
-    
     peer_manager_init();
+
 #ifndef KEYBOARD_PERIPH
     ble_keyboard_init();
 #endif
 }
+
+
+void ble_connect_to_device(uint8_t index) {
+    ret_code_t ret;
+    ble_adv_modes_config_t conf;
+    
+    if( m_conn_handle != BLE_CONN_HANDLE_INVALID ) {
+        ret = sd_ble_gap_disconnect(m_conn_handle, BLE_HCI_REMOTE_USER_TERMINATED_CONNECTION);
+        APP_ERROR_CHECK(ret);
+    }
+    m_disconnected_by_user = true;
+    ret = sd_ble_gap_adv_stop(m_advertising.adv_handle);
+    //APP_ERROR_CHECK(ret);
+    
+    memset(&conf, 0, sizeof(conf));
+
+    conf.ble_adv_on_disconnect_disabled = true;
+    conf.ble_adv_directed_high_duty_enabled = false;
+    conf.ble_adv_directed_enabled           = false;
+    conf.ble_adv_directed_interval          = 0;
+    conf.ble_adv_directed_timeout           = 0;
+    conf.ble_adv_fast_enabled               = true;
+    conf.ble_adv_fast_interval              = APP_ADV_FAST_INTERVAL;
+    conf.ble_adv_fast_timeout               = APP_ADV_FAST_DURATION;
+    conf.ble_adv_slow_enabled               = true;
+    conf.ble_adv_slow_interval              = APP_ADV_SLOW_INTERVAL;
+    conf.ble_adv_slow_timeout               = APP_ADV_SLOW_DURATION;
+
+    if( whitelist_set_one_device(index) != -1 ){
+        // valid target
+        conf.ble_adv_whitelist_enabled          = true;
+    } else {
+        // new pair
+        conf.ble_adv_whitelist_enabled          = false;
+    }
+    ble_advertising_modes_config_set(&m_advertising, &conf);
+    
+    advertising_start(false, BLE_ADV_MODE_FAST);
+}
+
 

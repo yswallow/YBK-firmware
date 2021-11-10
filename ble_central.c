@@ -63,6 +63,8 @@
 #include "nrf_log_default_backends.h"
 #include "ble_conn_state.h"
 #include "app_timer.h"
+#include "peer_manager.h"
+#include "id_manager.h"
 
 #include "keyboard_generic.h"
 #include "ble_central.h"
@@ -70,6 +72,8 @@
 
 #include "keyboard_config.h"
 #include "debug_message_hid.h"
+
+#define KBD_PERIPH_SHORT_NAME "nRF5"
 
 #define APP_BLE_CONN_CFG_TAG    1                                       /**< Tag that refers to the BLE stack configuration set with @ref sd_ble_cfg_set. The default tag is @ref BLE_CONN_CFG_TAG_DEFAULT. */
 #define APP_BLE_OBSERVER_PRIO   3                                       /**< BLE observer priority of the application. There is no need to modify this value. */
@@ -95,6 +99,7 @@ APP_TIMER_DEF(m_pairing_timer);
 APP_TIMER_DEF(m_central_scan_timer);
 
 static uint16_t m_ble_nus_max_data_len = BLE_GATT_ATT_MTU_DEFAULT - OPCODE_LENGTH - HANDLE_LENGTH; /**< Maximum length of data (in bytes) that can be transmitted to the peer by the Nordic UART service module. */
+ble_data_t m_scan_adv_report_buffer[BLE_GAP_SCAN_BUFFER_MAX];
 
 /**@brief NUS UUID. */
 static ble_uuid_t const m_nus_uuid =
@@ -107,6 +112,17 @@ static ble_uuid_t const m_hid_uuid =
 {
     .uuid = BLE_UUID_HUMAN_INTERFACE_DEVICE_SERVICE, 
     .type = BLE_UUID_TYPE_BLE
+};
+
+
+ble_gap_scan_params_t gap_c_scan_params = {
+    .active = 0,
+    .interval      = NRF_BLE_SCAN_SCAN_INTERVAL,
+    .window        = NRF_BLE_SCAN_SCAN_WINDOW,
+    .scan_phys     = BLE_GAP_PHY_1MBPS,
+    .filter_policy = BLE_GAP_SCAN_FP_WHITELIST,
+    .extended      = false,
+    .timeout = 1500
 };
 
 
@@ -139,35 +155,79 @@ static void nus_error_handler(uint32_t nrf_error)
 
 
 /**@brief Function to start scanning. */
+
 static void scan_start(void)
 {
     ret_code_t ret;
-    
+    //ret = sd_ble_gap_scan_start(&(m_scan.scan_params), &(m_scan.scan_buffer));
     ret = nrf_ble_scan_start(&m_scan);
     APP_ERROR_CHECK(ret);
+    
+    NRF_LOG_INFO("Start Scanning...");
 }
 
+#define PM_PEER_LIST_SIZE 16
+static void scan_turnoff_whitelist(void* ptr) {
+    ret_code_t ret;
+    ble_gap_scan_params_t param;
+    memcpy(&param, &gap_c_scan_params, sizeof(ble_gap_scan_params_t));
+    param.filter_policy = BLE_GAP_SCAN_FP_ACCEPT_ALL;
+    param.timeout       = 6000;
+    ret = nrf_ble_scan_params_set(&m_scan, &param);
+    APP_ERROR_CHECK(ret);
+    scan_start();
+}
 
 /**@brief Function for handling Scanning Module events.
  */
 static void scan_evt_handler(scan_evt_t const * p_scan_evt)
 {
     ret_code_t err_code;
-
+    //NRF_LOG_DEBUG("scan event 0x%x", p_scan_evt->scan_evt_id);
     switch(p_scan_evt->scan_evt_id)
     {
-         case NRF_BLE_SCAN_EVT_CONNECTING_ERROR:
-         {
-              err_code = p_scan_evt->params.connecting_err.err_code;
-              APP_ERROR_CHECK(err_code);
-         } break;
+        // Connect is in ble_c_evt_handler
+        case NRF_BLE_SCAN_EVT_WHITELIST_ADV_REPORT:
+        case NRF_BLE_SCAN_EVT_FILTER_MATCH:
+            if( ble_conn_state_central_conn_count()==0 ) {
+                err_code = sd_ble_gap_connect(&(p_scan_evt->params.filter_match.p_adv_report->peer_addr), &gap_c_scan_params, &gap_conn_params, 1);
+                if( err_code==NRF_SUCCESS ) {
+                    NRF_LOG_INFO("Connection Request...");
+                    err_code = app_timer_start(m_pairing_timer, PAIRING_TIMEOUT_TICKS, NULL);
+                    APP_ERROR_CHECK(err_code);
+                } else {
+                    NRF_LOG_DEBUG("sd_ble_gap_connect() fail in scan_evt_handler");
+                }
+            }
+            break;
+        
+        case NRF_BLE_SCAN_EVT_NOT_FOUND:
+            //NRF_LOG_INFO("No Periph found");
+            break;
 
-         case NRF_BLE_SCAN_EVT_CONNECTED:
-         {
-              ble_gap_evt_connected_t const * p_connected =
-                               p_scan_evt->params.connected.p_connected;
-             // Scan is automatically stopped by the connection.
-             NRF_LOG_INFO("Connecting to target %02x%02x%02x%02x%02x%02x",
+        case NRF_BLE_SCAN_EVT_SCAN_TIMEOUT:
+        {
+            NRF_LOG_INFO("Scan timed out.");
+            if(m_scan.scan_params.filter_policy == BLE_GAP_SCAN_FP_WHITELIST) {
+                NRF_LOG_INFO("Turn off whitelist");
+                scan_turnoff_whitelist(NULL);
+            } else {
+                sleep_mode_enter(NULL);
+            }
+        } break;
+
+        case NRF_BLE_SCAN_EVT_CONNECTING_ERROR:
+        {
+            err_code = p_scan_evt->params.connecting_err.err_code;
+            APP_ERROR_CHECK(err_code);
+        } break;
+
+
+        case NRF_BLE_SCAN_EVT_CONNECTED:
+        {
+            ble_gap_evt_connected_t const * p_connected = p_scan_evt->params.connected.p_connected;
+            // Scan is automatically stopped by the connection.
+            NRF_LOG_INFO("Connecting to target %02x%02x%02x%02x%02x%02x",
                       p_connected->peer_addr.addr[0],
                       p_connected->peer_addr.addr[1],
                       p_connected->peer_addr.addr[2],
@@ -175,16 +235,27 @@ static void scan_evt_handler(scan_evt_t const * p_scan_evt)
                       p_connected->peer_addr.addr[4],
                       p_connected->peer_addr.addr[5]
                       );
-         } break;
+        } break;
 
-         case NRF_BLE_SCAN_EVT_SCAN_TIMEOUT:
-         {
-             NRF_LOG_INFO("Scan timed out.");
-             scan_start();
-         } break;
+        case NRF_BLE_SCAN_EVT_WHITELIST_REQUEST:
+            NRF_LOG_INFO("BLE_SCAN_EVT_WHITELIST_REQUEST");
+            
+            pm_peer_id_t peer_list[PM_PEER_LIST_SIZE];
+            uint32_t peer_list_size = PM_PEER_LIST_SIZE;
+            
+            err_code = pm_peer_id_list(peer_list, &peer_list_size, PM_PEER_ID_INVALID, PM_PEER_ID_LIST_SKIP_NO_IRK);
+            APP_ERROR_CHECK(err_code);
+            if( peer_list_size == 0 ) {
+                scan_turnoff_whitelist(NULL);
+                break;
+            }
+            err_code = im_whitelist_set(peer_list, peer_list_size);
+            APP_ERROR_CHECK(err_code);
+            break;
 
-         default:
-             break;
+        default:
+            NRF_LOG_DEBUG("Unkown eventid %x", p_scan_evt->scan_evt_id);
+            break;
     }
 }
 
@@ -194,6 +265,8 @@ static void cancel_pairing(void* ptr) {
     scan_start();
 }
 
+
+
 /**@brief Function for initializing the scanning and setting the filters.
  */
 static void scan_init(void)
@@ -202,27 +275,20 @@ static void scan_init(void)
     nrf_ble_scan_init_t init_scan;
 
     memset(&init_scan, 0, sizeof(init_scan));
-
-    init_scan.connect_if_match = true;
+    init_scan.p_scan_param = &gap_c_scan_params;
+    init_scan.connect_if_match = false;
     init_scan.conn_cfg_tag     = APP_BLE_CONN_CFG_TAG;
 
     err_code = nrf_ble_scan_init(&m_scan, &init_scan, scan_evt_handler);
     APP_ERROR_CHECK(err_code);
-
+/*
     err_code = nrf_ble_scan_filter_set(&m_scan, SCAN_UUID_FILTER, &m_nus_uuid);
     APP_ERROR_CHECK(err_code);
-    err_code = nrf_ble_scan_filter_set(&m_scan, SCAN_NAME_FILTER, KEYBOARD_PERIPH_NAME);
+    err_code = nrf_ble_scan_filters_enable(&m_scan, NRF_BLE_SCAN_UUID_FILTER, false);
     APP_ERROR_CHECK(err_code);
-
-    err_code = nrf_ble_scan_filters_enable(&m_scan, NRF_BLE_SCAN_UUID_FILTER, true);
-    APP_ERROR_CHECK(err_code);
-
-    err_code = nrf_ble_scan_filters_enable(&m_scan, NRF_BLE_SCAN_NAME_FILTER, true);
-    APP_ERROR_CHECK(err_code);
-
+*/
     err_code = app_timer_create(&m_pairing_timer, APP_TIMER_MODE_SINGLE_SHOT, cancel_pairing);
     APP_ERROR_CHECK(err_code);
-
     err_code = app_timer_create(&m_central_scan_timer, APP_TIMER_MODE_SINGLE_SHOT, sleep_mode_enter);
     APP_ERROR_CHECK(err_code);
     err_code = app_timer_start(m_central_scan_timer, KEYBOARD_CENTRAL_SCAN_TIMEOUT_TICKS, NULL);
@@ -383,7 +449,7 @@ static void ble_nus_c_evt_handler(ble_nus_c_t * p_ble_nus_c, ble_nus_c_evt_t con
             err_code = ble_nus_c_string_send(p_ble_nus_c, "init", 4);
             APP_ERROR_CHECK(err_code);
             
-            advertising_start();
+            advertising_start(true, BLE_ADV_MODE_FAST);
             break;
 
         case BLE_NUS_C_EVT_NUS_TX_EVT:
@@ -462,21 +528,7 @@ NRF_PWR_MGMT_HANDLER_REGISTER(shutdown_handler, APP_SHUTDOWN_HANDLER_PRIORITY);
  * @param[in]   p_context   Unused.
  */
 
-static ble_gap_scan_params_t const gap_c_scan_params = {
-    .active = 1,
-    .channel_mask[0] = 0,
-    .channel_mask[1] = 0,
-    .channel_mask[2] = 0,
-    .channel_mask[3] = 0,
-    .channel_mask[4] = 0,
-    .extended = 0,
-    .filter_policy = BLE_GAP_SCAN_FP_ACCEPT_ALL,
-    .interval = 50,
-    .report_incomplete_evts = 1,
-    .scan_phys = BLE_GAP_PHY_1MBPS,
-    .timeout = 10000,
-    .window = BLE_GAP_PHY_CODED 
-};
+
 bool ble_c_connected = false;
 void ble_c_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
 {
@@ -486,6 +538,8 @@ void ble_c_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
     switch (p_ble_evt->header.evt_id)
     {
         case BLE_GAP_EVT_CONNECTED:
+            err_code = pm_conn_secure(p_ble_evt->evt.gap_evt.conn_handle, false);
+            APP_ERROR_CHECK(err_code);
             err_code = ble_nus_c_handles_assign(&m_ble_nus_c, p_ble_evt->evt.gap_evt.conn_handle, NULL);
             APP_ERROR_CHECK(err_code);
 
@@ -499,11 +553,14 @@ void ble_c_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
             break;
 
         case BLE_GAP_EVT_DISCONNECTED:
-
             NRF_LOG_INFO("Disconnected. conn_handle: 0x%x, reason: 0x%x",
                          p_gap_evt->conn_handle,
                          p_gap_evt->params.disconnected.reason);
+            if( p_gap_evt->params.disconnected.reason == 0x3E ) { //BLE_HCI_CONN_FAILED_TO_BE_ESTABLISHED
+                delete_secure_failed_peer(p_gap_evt->conn_handle);
+            }
             ble_c_connected = false;
+            scan_turnoff_whitelist(NULL);
             break;
 
         case BLE_GAP_EVT_TIMEOUT:
@@ -511,6 +568,7 @@ void ble_c_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
             {
                 NRF_LOG_INFO("Connection Request timed out.");
             }
+            
             break;
 
         case BLE_GAP_EVT_SEC_PARAMS_REQUEST:
@@ -518,15 +576,28 @@ void ble_c_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
             //err_code = sd_ble_gap_sec_params_reply(p_ble_evt->evt.gap_evt.conn_handle, BLE_GAP_SEC_STATUS_PAIRING_NOT_SUPP, NULL, NULL);
             //APP_ERROR_CHECK(err_code);
             break;
+        
         case BLE_GAP_EVT_ADV_REPORT:
-            if( ble_conn_state_central_conn_count()==0 ) {
-                err_code = sd_ble_gap_connect(&(p_gap_evt->params.adv_report.peer_addr), &gap_c_scan_params, &gap_conn_params, 1);
-                APP_ERROR_CHECK(err_code);
-                NRF_LOG_INFO("Connection Request...");
-                err_code = app_timer_start(m_pairing_timer, PAIRING_TIMEOUT_TICKS, NULL);
-                APP_ERROR_CHECK(err_code);
-            }
+            //NRF_LOG_DEBUG("BLE_GAP_EVT_ADV_REPORT");
+            //if( ble_conn_state_central_conn_count()==0 ) {
+                if( (
+                        ble_advdata_short_name_find(p_gap_evt->params.adv_report.data.p_data, p_gap_evt->params.adv_report.data.len, KBD_PERIPH_SHORT_NAME, 2)  && 
+                        ble_advdata_uuid_find(p_gap_evt->params.adv_report.data.p_data, p_gap_evt->params.adv_report.data.len, &m_nus_uuid ) 
+                    )  && (
+                        p_gap_evt->params.adv_report.type.connectable
+                    ) ) {
+                    err_code = sd_ble_gap_connect(&(p_gap_evt->params.adv_report.peer_addr), &(m_scan.scan_params), &gap_conn_params, 1);
+                    if( err_code==NRF_SUCCESS ) {
+                        NRF_LOG_INFO("Connection Request...");
+                        err_code = app_timer_start(m_pairing_timer, PAIRING_TIMEOUT_TICKS, NULL);
+                        APP_ERROR_CHECK(err_code);
+                    } else {
+                        NRF_LOG_DEBUG("sd_ble_gap_connect() fail in ble_c_evt_handler");
+                    }
+                }
+            //}
             break;
+        
         case BLE_GAP_EVT_CONN_PARAM_UPDATE_REQUEST:
             // Accepting parameters requested by peer.
             err_code = sd_ble_gap_conn_param_update(p_gap_evt->conn_handle,
@@ -766,6 +837,5 @@ void ble_central_init(void)
 void ble_central_start(void)
 {
     scan_start();
-    NRF_LOG_INFO("Start Scanning...");
 }
 #endif //KEYBOARD_CENTRAL

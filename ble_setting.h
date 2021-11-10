@@ -2,6 +2,8 @@
 #define __BLE_SETTING_H
 
 #include "ble_conn_params.h"
+#include "ble_gap.h"
+#include "ble_advertising.h"
 
 #define APP_BLE_CONN_CFG_TAG            1                                           /**< A tag identifying the SoftDevice BLE configuration. */
 
@@ -17,7 +19,7 @@
 #define PNP_ID_PRODUCT_ID               0xEEEE                                     /**< Product ID. */
 #define DEVICE_NAME                     KEYBOARD_PERIPH_NAME
 #else
-#define DEVICE_NAME                     "nRF52 KB BLE Integ"
+#define DEVICE_NAME                     "nRF52 KB BLE Intg"
 #endif // KEYBOARD_PERIPH
 #endif // KEYBOARD_CENTRAL
 
@@ -40,7 +42,7 @@
 #define APP_ADV_FAST_INTERVAL               0x0028                                     /**< Fast advertising interval (in units of 0.625 ms. This value corresponds to 25 ms.). */
 #define APP_ADV_SLOW_INTERVAL               0x0C80                                     /**< Slow advertising interval (in units of 0.625 ms. This value corrsponds to 2 seconds). */
 
-#define APP_ADV_FAST_DURATION               3000                                       /**< The advertising duration of fast advertising in units of 10 milliseconds. */
+#define APP_ADV_FAST_DURATION               1500                                       /**< The advertising duration of fast advertising in units of 10 milliseconds. */
 #define APP_ADV_SLOW_DURATION               18000                                      /**< The advertising duration of slow advertising in units of 10 milliseconds. */
 
 
@@ -70,10 +72,13 @@
 #define SCHED_QUEUE_SIZE                    10                                         /**< Maximum number of events in the scheduler queue. */
 #endif
 
+
 extern uint16_t m_conn_handle;
 extern ble_gap_conn_params_t   gap_conn_params;
 
-void advertising_start(void);
+void advertising_start(bool set_whitelist, ble_adv_mode_t adv_mode);
+void advertising_without_whitelist(ble_adv_mode_t mode);
 void ble_device_init(void);
-
+void ble_connect_to_device(uint8_t index);
+void delete_secure_failed_peer(uint16_t conn_handle);
 #endif // __BLE_SETTING_H

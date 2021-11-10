@@ -90,7 +90,6 @@
 #include "app_usbd_hid_kbd_desc.h"
 
 #include "raw_hid.h"
-//#include "main.h"
 #include "keyboard_generic.h"
 #include "usb_keyboard.h"
 #include "ble_setting.h"
@@ -322,8 +321,9 @@ static void usbd_user_ev_handler(app_usbd_event_type_t event)
 #endif
             m_usb_connected = true;
             app_usbd_start();
+#ifndef FORCE_BLE
             hid_functions = usb_hid_functions;
-            
+#endif      
         }
             break;
 
@@ -359,10 +359,11 @@ int main(void)
     power_management_init();
     app_usbd_serial_num_generate();
 
-    //ret = nrf_drv_clock_init();
-    //APP_ERROR_CHECK(ret);
+    ret = nrf_drv_clock_init();
+    APP_ERROR_CHECK(ret);
 
-    NRF_LOG_INFO("USBD BLE UART example started.");
+    NRF_LOG_INFO("USBD BLE UART Keyboard started.");
+    NRF_LOG_INFO(DEVICE_NAME);
 
     ret = app_usbd_init(&usbd_config);
     APP_ERROR_CHECK(ret);
@@ -394,7 +395,7 @@ int main(void)
 #ifdef KEYBOARD_CENTRAL
     ble_central_start();
 #else
-    advertising_start(); // in central, advertising_start() is called after peripheral connected
+    advertising_start(true, BLE_ADV_MODE_FAST); // in central, advertising_start() is called after peripheral connected
 #endif
     // Enter main loop.
     for (;;)

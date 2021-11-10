@@ -118,7 +118,7 @@
 
 // <o> NRF_BLE_SCAN_SCAN_DURATION - Duration of a scanning session in units of 10 ms. Range: 0x0001 - 0xFFFF (10 ms to 10.9225 ms). If set to 0x0000, the scanning continues until it is explicitly disabled. 
 #ifndef NRF_BLE_SCAN_SCAN_DURATION
-#define NRF_BLE_SCAN_SCAN_DURATION 0
+#define NRF_BLE_SCAN_SCAN_DURATION 10000
 #endif
 
 // <o> NRF_BLE_SCAN_SCAN_WINDOW - Scanning window. Determines the scanning window in units of 0.625 millisecond. 
@@ -175,7 +175,7 @@
 
 // <o> NRF_BLE_SCAN_SHORT_NAME_CNT - Number of short name filters. 
 #ifndef NRF_BLE_SCAN_SHORT_NAME_CNT
-#define NRF_BLE_SCAN_SHORT_NAME_CNT 0
+#define NRF_BLE_SCAN_SHORT_NAME_CNT 1
 #endif
 
 // <o> NRF_BLE_SCAN_ADDRESS_CNT - Number of address filters. 
