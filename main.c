@@ -395,7 +395,11 @@ int main(void)
 #ifdef KEYBOARD_CENTRAL
     ble_central_start();
 #else
-    advertising_start(true, BLE_ADV_MODE_FAST); // in central, advertising_start() is called after peripheral connected
+#ifdef KEYBOARD_PERIPH
+    advertising_start(false, BLE_ADV_MODE_FAST); // in central, advertising_start() is called after peripheral connected
+#else
+    advertising_start(true, BLE_ADV_MODE_FAST);
+#endif  
 #endif
     // Enter main loop.
     for (;;)

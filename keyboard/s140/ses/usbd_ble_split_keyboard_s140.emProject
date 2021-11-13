@@ -227,7 +227,7 @@
       Name="Release"
       c_preprocessor_definitions="NRF_SD_BLE_API_VERSION=6;KEYBOARD_DEBUG_HID;BLE_RAW_HID"
       linker_section_placement_macros="FLASH_START=0x26000;FLASH_SIZE=0xCD000"
-      post_build_command="python $(ProjectDir)/../../../uf2/utils/uf2conv.py $(ProjectDir)/$(OutDir)/$(ProjectName).hex -c -b 0x26000 -o $(ProjectDir)/uf2/$(Configuration).uf2 -f 0xADA52840;adafruit-nrfutil dfu genpkg --dev-type 0x052 --application $(ProjectDir)/$(OutDir)/$(ProjectName).hex $(ProjectDir)/dfu-zip/$(Configuration).zip" />
+      post_build_command="python $(ProjectDir)/../../../uf2/utils/uf2conv.py $(ProjectDir)/$(OutDir)/$(ProjectName).hex -c -b 0x26000 -o $(ProjectDir)/uf2/$(Configuration).uf2 -f 0xADA52840 &amp;&amp; adafruit-nrfutil dfu genpkg --dev-type 0x052 --application $(ProjectDir)/$(OutDir)/$(ProjectName).hex $(ProjectDir)/dfu-zip/$(Configuration).zip" />
   </project>
   <configuration Name="CentralDebug" inherited_configurations="Debug" />
   <configuration Name="PeripheralDebug" inherited_configurations="Debug" />

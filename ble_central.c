@@ -581,7 +581,7 @@ void ble_c_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
             //NRF_LOG_DEBUG("BLE_GAP_EVT_ADV_REPORT");
             //if( ble_conn_state_central_conn_count()==0 ) {
                 if( (
-                        ble_advdata_short_name_find(p_gap_evt->params.adv_report.data.p_data, p_gap_evt->params.adv_report.data.len, KBD_PERIPH_SHORT_NAME, 2)  && 
+                        //ble_advdata_short_name_find(p_gap_evt->params.adv_report.data.p_data, p_gap_evt->params.adv_report.data.len, KBD_PERIPH_SHORT_NAME, 2)  && 
                         ble_advdata_uuid_find(p_gap_evt->params.adv_report.data.p_data, p_gap_evt->params.adv_report.data.len, &m_nus_uuid ) 
                     )  && (
                         p_gap_evt->params.adv_report.type.connectable

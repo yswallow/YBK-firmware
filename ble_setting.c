@@ -501,7 +501,9 @@ static void ble_p_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
             }
             */
             m_conn_handle = BLE_CONN_HANDLE_INVALID;
+
 #ifdef KEYBOARD_PERIPH
+            NRF_POWER->GPREGRET = 0x6d;
             sd_nvic_SystemReset();
 #endif
             if(! m_disconnected_by_user) {
@@ -652,7 +654,7 @@ static void get_advertising_conf_default(ble_adv_modes_config_t *pt) {
     pt->ble_adv_directed_high_duty_enabled = true;
     pt->ble_adv_directed_enabled           = true;
     pt->ble_adv_directed_interval          = 0x10;
-    pt->ble_adv_directed_timeout           = 100;
+    pt->ble_adv_directed_timeout           = 500;
     pt->ble_adv_fast_enabled               = true;
     pt->ble_adv_fast_interval              = APP_ADV_FAST_INTERVAL;
     pt->ble_adv_fast_timeout               = APP_ADV_FAST_DURATION;

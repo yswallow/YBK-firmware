@@ -11,4 +11,5 @@ keyboard/s140/ses/Output/*
 keyboard/s140/dust/
 *.emSession
 *.uf2
+*.zip
 
