@@ -7,7 +7,7 @@ void matrix_scan(keyboard_type_t type, void* ptr) {
         return;
     }
     for(uint8_t i=0; i<defs.row_pins_count; i++) {
-        nrf_gpio_cfg_output(defs.row_pins[i]);
+        //nrf_gpio_cfg_output(defs.row_pins[i]);
         nrf_gpio_pin_clear(defs.row_pins[i]);
 
         for(uint8_t j=0; j<defs.col_pins_count; j++) {

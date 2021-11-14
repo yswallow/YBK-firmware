@@ -60,7 +60,7 @@ void sleep_mode_enter(void *ptr)
         APP_ERROR_CHECK(err_code);
 
         // skip bootloader
-        NRF_POWER->GPREGRET = 0x6d;
+        //NRF_POWER->GPREGRET = 0x6d;
         // Go to system-off mode (this function will not return; wakeup will cause a reset).
         err_code = sd_power_system_off();
         APP_ERROR_CHECK(err_code);
@@ -465,6 +465,17 @@ void keyrelease(uint8_t row, uint8_t col, bool debouncing) {
                         handle_keycode(keypress_status[i].kc, false);
                     }
                     break;
+                case 0xC0:
+                    // especial functions
+                    if( keypress_status[i].kc==0xFE ) {
+                        // Coffee to sleep
+                        
+                        hid_functions.reset();
+                        // wait to release all physical keys
+                        //nrf_delay_ms(1000);
+                        sleep_mode_enter(NULL);
+                        break;
+                    }
                 }
             } else {
                 handle_keycode(keypress_status[i].kc, false);
