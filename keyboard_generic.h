@@ -17,6 +17,12 @@ typedef struct {
 } keys_t;
 
 typedef struct {
+    uint8_t row;
+    uint8_t col;
+    uint32_t tick;
+} debounceing_keys_t;
+
+typedef struct {
     ret_code_t (*keycode_append)(uint8_t);
     ret_code_t (*keycode_remove)(uint8_t);
     ret_code_t (*send_consumer)(uint8_t,bool);
@@ -77,12 +83,15 @@ void sleep_mode_enter(void *ptr);
 
 #define PRESS_KEYS_MAX 10
 #define DEBOUNCING_DELAY_MS 30
+#define DEBOUNCING_TICKS 2
 #define TAPPING_TERM_TICK_MS 50
 #define MOUSE_MOVE_INTERVAL_TICKS ( MOUSE_MOVE_INTERVAL / TAPPING_TERM_TICK_MS )
 #define KEYBOARD_TIMEOUT_TICKS APP_TIMER_TICKS(600000)
 
 extern keyboard_hid_functions_t hid_functions;
 extern uint32_t keypress_bitmap[KBD_SETTING_ROW_PINS_MAX];
+extern uint32_t debouncing_bitmap[KBD_SETTING_ROW_PINS_MAX];
+
 extern keys_t keypress_status[PRESS_KEYS_MAX];
 //extern uint8_t layer_history[DYNAMIC_KEYMAP_LAYER_COUNT];
 

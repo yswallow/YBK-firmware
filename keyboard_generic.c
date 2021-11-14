@@ -19,6 +19,8 @@
 
 #include "ble_setting.h"
 
+#define DEBOUNCING_TICK_INVALID 0xFFFFFFFFUL
+
 APP_TIMER_DEF(m_tick_kbd);
 #ifndef KEYBOARD_PERIPH
 #ifdef KEYBOARD_TIMEOUT
@@ -26,7 +28,7 @@ APP_TIMER_DEF(m_keyboard_timeout);
 #endif
 #endif
 
-
+uint32_t debouncing_bitmap[KBD_SETTING_ROW_PINS_MAX];
 uint32_t keypress_bitmap[KBD_SETTING_ROW_PINS_MAX];
 keys_t keypress_status[PRESS_KEYS_MAX];
 //uint8_t layer_history[DYNAMIC_KEYMAP_LAYER_COUNT];
@@ -205,6 +207,8 @@ void press_key(keys_t *p_key) {
     }
 }
 
+debounceing_keys_t debouncing_keys[PRESS_KEYS_MAX];
+
 void kbd_tick_handler(void* p_context) {
     //called every TAPPING_TERM_TICK_MS msecs
     for(uint8_t i=0; (keypress_status[i].kc||keypress_status[i].application) && i<PRESS_KEYS_MAX; i++) {
@@ -217,8 +221,31 @@ void kbd_tick_handler(void* p_context) {
             }
         }
     }
+
+    for(uint8_t i=0; i<PRESS_KEYS_MAX; i++) {
+        if( debouncing_keys[i].tick != DEBOUNCING_TICK_INVALID ) {
+            debouncing_keys[i].tick++;
+
+            if( debouncing_keys[i].tick == DEBOUNCING_TICKS ) {
+                debouncing_bitmap[debouncing_keys[i].row] &= ~(1<<debouncing_keys[i].col);
+                debouncing_keys[i].tick = DEBOUNCING_TICK_INVALID;
+            }
+        }
+    }
 }
 
+void register_debounce(uint8_t row, uint8_t col) {
+    debouncing_bitmap[row] |= (1<<col);
+    
+    for(uint8_t i=0; i<PRESS_KEYS_MAX; i++) {
+        if( debouncing_keys[i].tick == DEBOUNCING_TICK_INVALID ) {
+            debouncing_keys[i].row = row;
+            debouncing_keys[i].col = col;
+            debouncing_keys[i].tick = 0;
+            break;
+        }
+    }
+}
 
 ret_code_t handle_keycode(uint16_t keycode, bool press) {
     uint8_t kc = keycode & 0x00FF;
@@ -286,6 +313,7 @@ void keypress(uint8_t row, uint8_t col, bool debouncing) {
     uint16_t keycode;// = dynamic_keymap_get_keycode(get_active_layer(),row,col);
     uint8_t i = 0;
     uint8_t kc;
+    
     for(; (keypress_status[i].kc||keypress_status[i].application) && i<PRESS_KEYS_MAX; i++) {
         if(keypress_status[i].col == col && keypress_status[i].row == row) {
             // already pressed.
@@ -313,7 +341,8 @@ void keypress(uint8_t row, uint8_t col, bool debouncing) {
 #endif
 #endif
     if(debouncing) {
-        nrf_delay_ms(DEBOUNCING_DELAY_MS);
+        //nrf_delay_ms(DEBOUNCING_DELAY_MS);
+        register_debounce(row, col);
     }
     keycode = dynamic_keymap_get_keycode(get_active_layer(),row,col);
 #ifdef KEYBOARD_PERIPH
@@ -368,6 +397,7 @@ void keypress(uint8_t row, uint8_t col, bool debouncing) {
 
 void keyrelease(uint8_t row, uint8_t col, bool debouncing) {
     uint8_t removes_count = 0;
+    
     for(uint8_t i=0; i<PRESS_KEYS_MAX; i++) {
         if(keypress_status[i].kc==0x00 && keypress_status[i].application==0x00) {
             break;
@@ -444,7 +474,8 @@ void keyrelease(uint8_t row, uint8_t col, bool debouncing) {
 #endif
             memset(keypress_status+i, 0, sizeof(keys_t));
             if(debouncing) {
-                nrf_delay_ms(DEBOUNCING_DELAY_MS);
+                register_debounce(row,col);
+                //nrf_delay_ms(DEBOUNCING_DELAY_MS);
             }
             
         }
@@ -467,6 +498,7 @@ void keyboard_init(keyboard_t keyboard) {
     memset(keypress_status, 0, sizeof(keypress_status));
     //memset(layer_history, 255, sizeof(uint8_t)*DYNAMIC_KEYMAP_LAYER_COUNT);
     memset(keypress_bitmap, 0, sizeof(keypress_bitmap));
+    memset(debouncing_bitmap, 0, sizeof(debouncing_bitmap));
     heatmap_init();
     //layer_history[0] = 0;
     current_layer = my_keyboard.default_layer;

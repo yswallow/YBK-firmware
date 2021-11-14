@@ -11,21 +11,22 @@ void matrix_scan(keyboard_type_t type, void* ptr) {
         nrf_gpio_pin_clear(defs.row_pins[i]);
 
         for(uint8_t j=0; j<defs.col_pins_count; j++) {
-            uint8_t val = nrf_gpio_pin_read(defs.col_pins[j]);
-            //if( ((kc>>8) & 0xFF) == 0x00 ) { 
+            if(! (debouncing_bitmap[i] & (1UL<<j)) ) {
+                uint8_t val = nrf_gpio_pin_read(defs.col_pins[j]);
+             
                 if(val == 0 ) {
-                    if( keypress_bitmap[i] & (1<<j) ) {
+                    if( keypress_bitmap[i] & (1UL<<j) ) {
                     } else {
-                        keypress_bitmap[i] |= (1<<j);
+                        keypress_bitmap[i] |= (1UL<<j);
                         keypress(i,j, true);
                     }
                 } else {
-                    if( keypress_bitmap[i] & (1<<j) ) {
-                        keypress_bitmap[i] &= ~(1<<j);
+                    if( keypress_bitmap[i] & (1UL<<j) ) {
+                        keypress_bitmap[i] &= ~(1UL<<j);
                         keyrelease(i,j, true);
                     }
                 }
-            //}
+            }
         }
 
         nrf_gpio_pin_set(defs.row_pins[i]);
