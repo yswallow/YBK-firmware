@@ -234,14 +234,14 @@ void kbd_tick_handler(void* p_context) {
     }
 }
 
-void register_debounce(uint8_t row, uint8_t col) {
+void register_debounce(uint8_t row, uint8_t col, bool press) {
     debouncing_bitmap[row] |= (1<<col);
     
     for(uint8_t i=0; i<PRESS_KEYS_MAX; i++) {
         if( debouncing_keys[i].tick == DEBOUNCING_TICK_INVALID ) {
             debouncing_keys[i].row = row;
             debouncing_keys[i].col = col;
-            debouncing_keys[i].tick = 0;
+            debouncing_keys[i].tick = press ? 0 : 2;
             break;
         }
     }
@@ -342,7 +342,7 @@ void keypress(uint8_t row, uint8_t col, bool debouncing) {
 #endif
     if(debouncing) {
         //nrf_delay_ms(DEBOUNCING_DELAY_MS);
-        register_debounce(row, col);
+        register_debounce(row, col, true);
     }
     keycode = dynamic_keymap_get_keycode(get_active_layer(),row,col);
 #ifdef KEYBOARD_PERIPH
@@ -485,7 +485,7 @@ void keyrelease(uint8_t row, uint8_t col, bool debouncing) {
 #endif
             memset(keypress_status+i, 0, sizeof(keys_t));
             if(debouncing) {
-                register_debounce(row,col);
+                register_debounce(row,col,false);
                 //nrf_delay_ms(DEBOUNCING_DELAY_MS);
             }
             
