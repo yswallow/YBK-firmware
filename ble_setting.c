@@ -502,7 +502,7 @@ static void ble_p_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
             */
             m_conn_handle = BLE_CONN_HANDLE_INVALID;
 
-#ifdef KEYBOARD_PERIPH
+#if 0
             NRF_POWER->GPREGRET = 0x6d;
             sd_nvic_SystemReset();
 #endif
