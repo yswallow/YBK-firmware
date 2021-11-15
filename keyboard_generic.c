@@ -18,6 +18,8 @@
 #endif
 
 #include "ble_setting.h"
+#include "neopixel.h"
+#include "neopixel_data.h"
 
 #define DEBOUNCING_TICK_INVALID 0xFFFFFFFFUL
 
@@ -33,6 +35,8 @@ uint32_t keypress_bitmap[KBD_SETTING_ROW_PINS_MAX];
 keys_t keypress_status[PRESS_KEYS_MAX];
 //uint8_t layer_history[DYNAMIC_KEYMAP_LAYER_COUNT];
 uint8_t current_layer;
+
+static uint8_t neopixel_head;
 
 keyboard_hid_functions_t hid_functions = {
     .keycode_append = keycode_append_usb,
@@ -232,6 +236,8 @@ void kbd_tick_handler(void* p_context) {
             }
         }
     }
+    neopixel_write(neopixel_dimmer+neopixel_head, NEOPIXEL_MAX_CHAINS);
+    neopixel_head = (neopixel_head>=NEOPIXEL_MAX_CHAINS*6) ? 0 : (neopixel_head+1);
 }
 
 void register_debounce(uint8_t row, uint8_t col, bool press) {
@@ -241,7 +247,7 @@ void register_debounce(uint8_t row, uint8_t col, bool press) {
         if( debouncing_keys[i].tick == DEBOUNCING_TICK_INVALID ) {
             debouncing_keys[i].row = row;
             debouncing_keys[i].col = col;
-            debouncing_keys[i].tick = press ? 0 : 2;
+            debouncing_keys[i].tick = press ? 0 : 1;
             break;
         }
     }
@@ -511,6 +517,9 @@ void keyboard_init(keyboard_t keyboard) {
     memset(keypress_bitmap, 0, sizeof(keypress_bitmap));
     memset(debouncing_bitmap, 0, sizeof(debouncing_bitmap));
     heatmap_init();
+    neopixel_data_init();
+    neopixel_init(NRF_GPIO_PIN_MAP(1,15), NULL);
+    neopixel_head = 0;
     //layer_history[0] = 0;
     current_layer = my_keyboard.default_layer;
     
