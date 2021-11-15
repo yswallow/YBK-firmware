@@ -236,8 +236,10 @@ void kbd_tick_handler(void* p_context) {
             }
         }
     }
-    neopixel_write(neopixel_dimmer+neopixel_head, NEOPIXEL_MAX_CHAINS);
-    neopixel_head = (neopixel_head>=NEOPIXEL_MAX_CHAINS*6) ? 0 : (neopixel_head+1);
+    if(my_keyboard.neopixel_length) {
+        neopixel_write(neopixel_dimmer+neopixel_head, my_keyboard.neopixel_length);
+        neopixel_head = (neopixel_head>=NEOPIXEL_MAX_CHAINS*6) ? 0 : (neopixel_head+1);
+    }
 }
 
 void register_debounce(uint8_t row, uint8_t col, bool press) {
@@ -517,9 +519,11 @@ void keyboard_init(keyboard_t keyboard) {
     memset(keypress_bitmap, 0, sizeof(keypress_bitmap));
     memset(debouncing_bitmap, 0, sizeof(debouncing_bitmap));
     heatmap_init();
-    neopixel_data_init();
-    neopixel_init(NRF_GPIO_PIN_MAP(1,15), NULL);
-    neopixel_head = 0;
+    if(my_keyboard.neopixel_length) {
+        neopixel_data_init();
+        neopixel_init(my_keyboard.neopixel_pin, NULL);
+        neopixel_head = 0;
+    }
     //layer_history[0] = 0;
     current_layer = my_keyboard.default_layer;
     

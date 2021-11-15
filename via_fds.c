@@ -226,6 +226,9 @@ void apply_kbd_setting(void) {
     my_keyboard.kbd_power_led_enable = kbd_setting[0x50+KBD_SETTING_ADDITIONAL_POWER_LED_EN_INDEX];
     my_keyboard.default_layer = kbd_setting[0x50+KBD_SETTING_ADDITIONAL_DEFAULT_LAYER_INDEX];
 
+    my_keyboard.neopixel_pin = kbd_setting[0x50+KBD_SETTING_ADDITIONAL_NEOPIXEL_PIN_INDEX];
+    my_keyboard.neopixel_length = kbd_setting[0x50+KBD_SETTING_ADDITIONAL_NEOPIXEL_LEN_INDEX];
+
     definision->col_pins = &kbd_setting[0];
     definision->row_pins = &kbd_setting[0x20];
     definision->row_pins_count = kbd_setting[0x40];
