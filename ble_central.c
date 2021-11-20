@@ -458,6 +458,11 @@ static void ble_nus_c_evt_handler(ble_nus_c_t * p_ble_nus_c, ble_nus_c_evt_t con
 
         case BLE_NUS_C_EVT_DISCONNECTED:
             NRF_LOG_INFO("Disconnected.");
+            for(uint8_t i=my_keyboard.split_keyboard.central_cols_count; i<my_keyboard.kbd_cols_count; i++) {
+                for(uint8_t j=0;j<my_keyboard.kbd_rows_count;j++) {
+                    keyrelease(j,i,false);
+                }
+            }
             KEYBOARD_DEBUG_HID_REGISTER_STRING("NUS Disconnected.", 14);
             scan_start();
             break;
