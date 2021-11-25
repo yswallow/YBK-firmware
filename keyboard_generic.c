@@ -9,6 +9,7 @@
 #include "via_fds.h"
 #include "nrf_log.h"
 #include "nrf_power.h"
+#include "nrfx_rtc.h"
 
 #include "heatmap.h"
 #include "debug_message_hid.h"
@@ -37,6 +38,7 @@ keys_t keypress_status[PRESS_KEYS_MAX];
 uint8_t current_layer;
 
 static uint8_t neopixel_head;
+nrfx_rtc_t keyboard_tick_rtc = NRFX_RTC_INSTANCE(2);
 
 keyboard_hid_functions_t hid_functions = {
     .keycode_append = keycode_append_usb,
@@ -513,6 +515,21 @@ void keyboard_scan(keyboard_t keyboard) {
     (keyboard.scan_method)(keyboard.keyboard_type,keyboard.keyboard_definision);
 }
 
+
+void rtc_handler(nrfx_rtc_int_type_t event) {
+}
+
+
+void rtc_init(void) {
+    ret_code_t ret;
+    nrfx_rtc_config_t init = NRFX_RTC_DEFAULT_CONFIG;
+    ret = nrfx_rtc_init(&keyboard_tick_rtc, &init, rtc_handler);
+    APP_ERROR_CHECK(ret);
+    nrfx_rtc_tick_enable(&keyboard_tick_rtc, false);
+    nrfx_rtc_enable(&keyboard_tick_rtc);
+}
+
+
 void keyboard_init(keyboard_t keyboard) {
     memset(keypress_status, 0, sizeof(keypress_status));
     //memset(layer_history, 255, sizeof(uint8_t)*DYNAMIC_KEYMAP_LAYER_COUNT);
@@ -527,8 +544,7 @@ void keyboard_init(keyboard_t keyboard) {
     //layer_history[0] = 0;
     current_layer = my_keyboard.default_layer;
     
-    app_timer_create(&m_tick_kbd, APP_TIMER_MODE_REPEATED, kbd_tick_handler);
-    app_timer_start(m_tick_kbd, APP_TIMER_TICKS(TAPPING_TERM_TICK_MS),NULL);
+    rtc_init();
     (keyboard.init_method)(keyboard.keyboard_type,keyboard.keyboard_definision);
 #ifndef KEYBOARD_PERIPH
 #ifdef KEYBOARD_TIMEOUT

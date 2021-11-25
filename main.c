@@ -409,6 +409,10 @@ int main(void)
             /* Nothing to do */
         }
         keyboard_scan(my_keyboard);
+        if(keyboard_tick_rtc.p_reg->EVENTS_TICK) {
+            kbd_tick_handler(NULL);
+            keyboard_tick_rtc.p_reg->EVENTS_TICK=0;
+        }
 #ifdef KEYBOARD_CENTRAL
         cache_pop_central();
 #endif

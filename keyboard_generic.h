@@ -4,6 +4,7 @@
 #include "via_fds.h"
 #include "dynamic_keymap.h"
 #include "app_timer.h"
+#include "nrfx_rtc.h"
 
 #ifndef __KEYBOARD_H
 #define __KEYBOARD_H
@@ -82,11 +83,12 @@ uint8_t get_active_layer(void);
 
 void restart_timeout_timer(void);
 void sleep_mode_enter(void *ptr);
+void kbd_tick_handler(void* p_context);
 
 #define PRESS_KEYS_MAX 10
 #define DEBOUNCING_DELAY_MS 30
-#define DEBOUNCING_TICKS 2
-#define TAPPING_TERM_TICK_MS 25
+#define DEBOUNCING_TICKS 5
+#define TAPPING_TERM_TICK_MS 10
 #define MOUSE_MOVE_INTERVAL_TICKS ( MOUSE_MOVE_INTERVAL / TAPPING_TERM_TICK_MS )
 #define KEYBOARD_TIMEOUT_TICKS APP_TIMER_TICKS(600000)
 
@@ -95,6 +97,7 @@ extern uint32_t keypress_bitmap[KBD_SETTING_ROW_PINS_MAX];
 extern uint32_t debouncing_bitmap[KBD_SETTING_ROW_PINS_MAX];
 
 extern keys_t keypress_status[PRESS_KEYS_MAX];
+extern nrfx_rtc_t keyboard_tick_rtc;
 //extern uint8_t layer_history[DYNAMIC_KEYMAP_LAYER_COUNT];
 
 #endif //__KEYBOARD_H

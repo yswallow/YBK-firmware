@@ -105,6 +105,7 @@
       <file file_name="../../../../../../modules/nrfx/drivers/src/nrfx_uarte.c" />
       <file file_name="../../../../../../modules/nrfx/drivers/src/nrfx_usbd.c" />
       <file file_name="../../../../../../modules/nrfx/drivers/src/nrfx_pwm.c" />
+      <file file_name="../../../../../../modules/nrfx/drivers/src/nrfx_rtc.c" />
     </folder>
     <folder Name="Application">
       <file file_name="../../../main.c" />
