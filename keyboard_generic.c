@@ -249,7 +249,7 @@ void register_debounce(uint8_t row, uint8_t col, bool press) {
         if( debouncing_keys[i].tick == DEBOUNCING_TICK_INVALID ) {
             debouncing_keys[i].row = row;
             debouncing_keys[i].col = col;
-            debouncing_keys[i].tick = press ? 0 : 1;
+            debouncing_keys[i].tick = press ? 0 : 0;
             break;
         }
     }
