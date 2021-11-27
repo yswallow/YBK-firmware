@@ -83,7 +83,7 @@
 #include "app_usbd_string_desc.h"
 #include "app_usbd_cdc_acm.h"
 #include "app_usbd_serial_num.h"
-#include "app_scheduler.h"
+//#include "app_scheduler.h"
 #include "app_usbd_hid.h"
 #include "app_usbd_hid_generic.h"
 #include "app_usbd_hid_kbd.h"
@@ -140,6 +140,7 @@ static void power_manage(void)
  *
  * @details If there is no pending log operation, then sleep until next the next event occurs.
  */
+/*
 void idle_state_handle(void)
 {
     app_sched_execute();
@@ -148,7 +149,7 @@ void idle_state_handle(void)
         nrf_pwr_mgmt_run();
     }
 }
-
+*/
 
 // USB CODE START
 static bool m_usb_connected = false;
@@ -343,6 +344,27 @@ static void power_management_init(void)
     APP_ERROR_CHECK(err_code);
 }
 
+APP_TIMER_DEF(m_keyboard_job_timer);
+
+static void keyboard_job(void* ptr) {
+    release_prev_tick_kc();
+    keyboard_scan(my_keyboard);
+    
+    kbd_tick_handler(NULL);
+
+#ifdef KEYBOARD_CENTRAL
+    cache_pop_central();
+#endif
+    //power_manage();
+}
+
+void keyboard_job_timer_start(void) {
+    ret_code_t err_code;
+    err_code = app_timer_create(&m_keyboard_job_timer, APP_TIMER_MODE_REPEATED, keyboard_job);
+    APP_ERROR_CHECK(err_code);
+    err_code = app_timer_start(m_keyboard_job_timer, APP_TIMER_TICKS(5), NULL);
+    APP_ERROR_CHECK(err_code);
+}
 
 /** @brief Application main function. */
 int main(void)
@@ -390,7 +412,7 @@ int main(void)
     APP_ERROR_CHECK(ret);
     keyboard_init(my_keyboard);
     KEYBOARD_DEBUG_HID_INIT();
-    
+    keyboard_job_timer_start();
     
 #ifdef KEYBOARD_CENTRAL
     ble_central_start();
@@ -408,15 +430,9 @@ int main(void)
         {
             /* Nothing to do */
         }
-        keyboard_scan(my_keyboard);
-        if(keyboard_tick_rtc.p_reg->EVENTS_TICK) {
-            kbd_tick_handler(NULL);
-            keyboard_tick_rtc.p_reg->EVENTS_TICK=0;
-        }
-#ifdef KEYBOARD_CENTRAL
-        cache_pop_central();
-#endif
-        idle_state_handle();
+        
+        power_manage();
+        NRF_LOG_PROCESS();
     }
 }
 

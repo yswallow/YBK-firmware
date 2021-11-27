@@ -50,7 +50,11 @@
       <file file_name="../../../../../../components/libraries/util/app_error_handler_gcc.c" />
       <file file_name="../../../../../../components/libraries/util/app_error_weak.c" />
       <file file_name="../../../../../../components/libraries/fifo/app_fifo.c" />
-      <file file_name="../../../../../../components/libraries/scheduler/app_scheduler.c" />
+      <file file_name="../../../../../../components/libraries/scheduler/app_scheduler.c">
+        <configuration
+          Name="IntegratedDebug"
+          build_exclude_from_build="Yes" />
+      </file>
       <file file_name="../../../../../../components/libraries/timer/app_timer2.c" />
       <file file_name="../../../../../../components/libraries/uart/app_uart_fifo.c" />
       <file file_name="../../../../../../components/libraries/usbd/app_usbd.c" />
@@ -105,7 +109,6 @@
       <file file_name="../../../../../../modules/nrfx/drivers/src/nrfx_uarte.c" />
       <file file_name="../../../../../../modules/nrfx/drivers/src/nrfx_usbd.c" />
       <file file_name="../../../../../../modules/nrfx/drivers/src/nrfx_pwm.c" />
-      <file file_name="../../../../../../modules/nrfx/drivers/src/nrfx_rtc.c" />
     </folder>
     <folder Name="Application">
       <file file_name="../../../main.c" />

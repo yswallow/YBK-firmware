@@ -53,7 +53,7 @@
 #include "ble_hids.h"
 #include "ble_dis.h"
 #include "ble_conn_params.h"
-#include "app_scheduler.h"
+//#include "app_scheduler.h"
 #include "nrf_sdh.h"
 #include "nrf_sdh_soc.h"
 #include "nrf_sdh_ble.h"
@@ -601,11 +601,12 @@ static void ble_stack_init(void)
 
 /**@brief Function for the Event Scheduler initialization.
  */
+/*
 static void scheduler_init(void)
 {
     APP_SCHED_INIT(SCHED_MAX_EVENT_DATA_SIZE, SCHED_QUEUE_SIZE);
 }
-
+*/
 
 /**@brief Function for the Peer Manager initialization.
  */
@@ -828,7 +829,7 @@ static void conn_params_init(void)
 void ble_device_init(void) {
     ble_conn_state_init();
     ble_stack_init();
-    scheduler_init();
+    //scheduler_init();
     gap_params_init();
     gatt_init();
     services_init();

@@ -79,7 +79,7 @@ ret_code_t keyboard_sleep_prepare(void);
 
 void keypress(uint8_t row, uint8_t col, bool debouncing);
 void keyrelease(uint8_t row, uint8_t col, bool debouncing);
-uint8_t get_active_layer(void);
+uint8_t get_active_layer(void);void release_prev_tick_kc(void);
 
 void restart_timeout_timer(void);
 void sleep_mode_enter(void *ptr);
@@ -87,8 +87,8 @@ void kbd_tick_handler(void* p_context);
 
 #define PRESS_KEYS_MAX 10
 #define DEBOUNCING_DELAY_MS 30
-#define DEBOUNCING_TICKS 5
-#define TAPPING_TERM_TICK_MS 10
+#define DEBOUNCING_TICKS 8
+#define TAPPING_TERM_TICK_MS 5
 #define MOUSE_MOVE_INTERVAL_TICKS ( MOUSE_MOVE_INTERVAL / TAPPING_TERM_TICK_MS )
 #define KEYBOARD_TIMEOUT_TICKS APP_TIMER_TICKS(600000)
 
@@ -97,7 +97,6 @@ extern uint32_t keypress_bitmap[KBD_SETTING_ROW_PINS_MAX];
 extern uint32_t debouncing_bitmap[KBD_SETTING_ROW_PINS_MAX];
 
 extern keys_t keypress_status[PRESS_KEYS_MAX];
-extern nrfx_rtc_t keyboard_tick_rtc;
 //extern uint8_t layer_history[DYNAMIC_KEYMAP_LAYER_COUNT];
 
 #endif //__KEYBOARD_H
