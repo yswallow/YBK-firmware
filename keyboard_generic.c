@@ -21,6 +21,7 @@
 #include "ble_setting.h"
 #include "neopixel.h"
 #include "neopixel_data.h"
+#include "neopixel_fds.h"
 
 #define DEBOUNCING_TICK_INVALID 0xFFFFFFFFUL
 #define KC_INVALID 0xFF
@@ -37,8 +38,10 @@ keys_t keypress_status[PRESS_KEYS_MAX];
 uint8_t kc_release_next_tick[PRESS_KEYS_MAX];
 //uint8_t layer_history[DYNAMIC_KEYMAP_LAYER_COUNT];
 uint8_t current_layer;
+uint8_t m_tick_count;
 
-static uint8_t neopixel_head;
+static uint16_t neopixel_index;
+static uint8_t neopixel_pattern = 0;
 
 keyboard_hid_functions_t hid_functions = {
     .keycode_append = keycode_append_usb,
@@ -238,9 +241,18 @@ void kbd_tick_handler(void* p_context) {
             }
         }
     }
-    if(my_keyboard.neopixel_length) {
-        neopixel_write(neopixel_dimmer+neopixel_head, my_keyboard.neopixel_length);
-        neopixel_head = (neopixel_head>=NEOPIXEL_MAX_CHAINS*6) ? 0 : (neopixel_head+1);
+    if(my_keyboard.neopixel_length &&
+       (++m_tick_count%(neopixel_user_defined_config[neopixel_pattern].interval_ticks)==0)) {
+        neopixel_write_uint8(
+            neopixel_user_defined[neopixel_pattern]
+            +NEOPIXEL_FRAME_BYTES*neopixel_index,
+            my_keyboard.neopixel_length);
+        
+        neopixel_index++;
+        if( neopixel_user_defined_config[neopixel_pattern].frame_count <= neopixel_index ) {
+            neopixel_index = 0;
+        }
+        m_tick_count = 0;
     }
 }
 
@@ -540,7 +552,7 @@ void keyboard_init(keyboard_t keyboard) {
     if(my_keyboard.neopixel_length) {
         neopixel_data_init();
         neopixel_init(my_keyboard.neopixel_pin, NULL);
-        neopixel_head = 0;
+        neopixel_index = 0;
     }
     //layer_history[0] = 0;
     current_layer = my_keyboard.default_layer;

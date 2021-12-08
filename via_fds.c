@@ -46,12 +46,20 @@
 #include "keyboard_config.h"
 #include "heatmap.h"
 #include "debug_message_hid.h"
+#include "neopixel_fds.h"
+#include "nrf_soc.h"
+
+#define KBD_SETTING_ID_HEATMAP 0x80
+#define KBD_SETTING_ID_DEBUG_SETTING 0x88
+#define KBD_SETTING_ID_DEBUG_RECEIVED 0x89
 
 static fds_record_desc_t eeprom_desc;
 static fds_record_desc_t setting_desc;
 
 uint8_t eeprom[EEPROM_SIZE];
 uint8_t kbd_setting[KBD_SETTING_SIZE];
+
+static bool fds_waiting_gc = true;
 
 static char const * fds_evt_str[] =
 {
@@ -67,31 +75,47 @@ enum {
     KBD_SETTING_ID_COL_PINS = 0x04,
     KBD_SETTING_ID_ROW_PINS,
     KBD_SETTING_ID_PINS_COUNT,
-    KBD_SETTING_ID_ADDITIONAL
+    KBD_SETTING_ID_ADDITIONAL,
 };
 
-#define KBD_SETTING_ID_HEATMAP 0x80
-#define KBD_SETTING_ID_DEBUG_SETTING 0x88
-#define KBD_SETTING_ID_DEBUG_RECEIVED 0x89
+
+static fds_record_t const m_eeprom_record = {
+    .file_id = CONFIG_FILE,
+    .key = CONFIG_REC_KEY,
+    .data.p_data = eeprom,
+    .data.length_words = (EEPROM_SIZE*sizeof(uint8_t) + 3)/sizeof(uint32_t)
+};
+
+static fds_record_t const m_kbd_setting_record = {
+    .file_id = KBD_SETTING_FILE,
+    .key = KBD_SETTING_REC_KEY,
+    .data.p_data = kbd_setting,
+    .data.length_words = (KBD_SETTING_SIZE*sizeof(uint8_t) + 3)/sizeof(uint32_t)
+};
+
 
 static void wait_for_fds_ready(void)
 {
     while (!m_fds_initialized)
     {
-        //power_manage();
+        uint32_t err_code = sd_app_evt_wait();
+        APP_ERROR_CHECK(err_code);
     }
 }
 
-bool fds_waiting_gc = true;
+
 static void wait_for_fds_gc_complete(void) {
     while(fds_waiting_gc) {}
     fds_waiting_gc = true;
     return;
 }
 
+
 __INLINE uint8_t* via_fds_get_eeprom_addr(void) {
     return eeprom;
 }
+
+
 const char *fds_err_str(ret_code_t ret)
 {
     /* Array to map FDS return values to strings. */
@@ -172,20 +196,37 @@ static void fds_evt_handler(fds_evt_t const * p_evt)
     }
 }
 
-fds_record_t const m_eeprom_record = {
-    .file_id = CONFIG_FILE,
-    .key = CONFIG_REC_KEY,
-    .data.p_data = eeprom,
-    .data.length_words = (EEPROM_SIZE*sizeof(uint8_t) + 3)/sizeof(uint32_t)
-};
 
-fds_record_t const m_kbd_setting_record = {
-    .file_id = KBD_SETTING_FILE,
-    .key = KBD_SETTING_REC_KEY,
-    .data.p_data = kbd_setting,
-    .data.length_words = (KBD_SETTING_SIZE*sizeof(uint8_t) + 3)/sizeof(uint32_t)
-};
 
+void update_fds_entry(fds_record_desc_t* p_desc, fds_record_t* p_record) {
+    ret_code_t ret;
+    if(p_desc->p_record==0) {
+        fds_find_token_t tok;
+        memset(&tok, 0, sizeof(fds_find_token_t));
+        ret = fds_record_find(p_record->file_id, p_record->key, p_desc, &tok);
+        if(ret==FDS_ERR_NOT_FOUND) {
+            NRF_LOG_ERROR("Record Not Found.");
+        }
+        APP_ERROR_CHECK(ret);
+    }
+    
+    ret = fds_record_update(p_desc, p_record);
+    if ((ret != NRF_SUCCESS) && (ret == FDS_ERR_NO_SPACE_IN_FLASH))
+    {
+        ret = fds_gc();
+        wait_for_fds_gc_complete();
+        ret = fds_record_update(p_desc, p_record);
+        if(ret!=NRF_SUCCESS) {
+            NRF_LOG_INFO("No space in flash, delete some records to update the config file.");
+        }
+    }
+    else
+    {
+        //fds_record_delete(p_desc);
+        APP_ERROR_CHECK(ret);
+    }
+    //fds_record_close(&desc);
+}
 
 void save_keymap(void) {
     ret_code_t ret;
@@ -239,6 +280,25 @@ void apply_kbd_setting(void) {
         definision->col_pins_count = kbd_setting[0x41];
     }
 }
+
+
+void create_fds_new_entry(fds_record_desc_t* p_desc, fds_record_t* p_record) {
+    /* System config not found; write a new one. */
+    NRF_LOG_INFO("Writing config file...");
+    ret_code_t ret = fds_gc();
+    wait_for_fds_gc_complete();
+    ret = fds_record_write(p_desc, p_record);
+    if ((ret != NRF_SUCCESS) && (ret == FDS_ERR_NO_SPACE_IN_FLASH))
+    {
+        NRF_LOG_INFO("No space in flash, delete some records to update the config file.");
+    }
+    else
+    {
+        APP_ERROR_CHECK(ret);
+    }
+
+}
+
 
 void via_fds_init(void) {
     ret_code_t ret;
@@ -318,6 +378,7 @@ void via_fds_init(void) {
             APP_ERROR_CHECK(ret);
         }
     }
+    neopixel_fds_init();
 }
 
 
@@ -389,6 +450,11 @@ void raw_hid_receive_kb(uint8_t *data, uint8_t length) {
         case KBD_SETTING_ID_DEBUG_RECEIVED:
             KEYBOARD_DEBUG_HID_RESPONSE(data, length);
             break;
+
+        case KBD_NEOPIXEL_CONF:
+        case KBD_NEOPIXEL:
+            raw_hid_receive_neopixel(data,length);
+            break;
         default:
             *command_id         = id_unhandled;
             break;
@@ -413,6 +479,11 @@ void raw_hid_receive_kb(uint8_t *data, uint8_t length) {
         case KBD_SETTING_ID_ADDITIONAL:
             memcpy(kbd_setting+0x50, data+2, (length-2)<KBD_SETTING_ADDITIONAL_LEN ? length-2 : KBD_SETTING_ADDITIONAL_LEN);
             kbd_setting_updated = true;
+            break;
+
+        case KBD_NEOPIXEL_CONF:
+        case KBD_NEOPIXEL:
+            raw_hid_receive_neopixel(data,length);
             break;
         default:
             *command_id         = id_unhandled;
