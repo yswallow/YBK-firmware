@@ -11,6 +11,8 @@
 #define NEOPIXEL_PATTERN_BYTES ( NEOPIXEL_FRAME_BYTES * NEOPIXEL_MAX_FRAMES )
 
 #define FDS_NEOPIXEL_FILE_ID (0x8139)
+#define NEOPIXEL_FDS_FRAME_FILE_ID (0x8140)
+#define NEOPIXEL_FDS_FRAME_REC_KEY_BASE (0x0001)
 #define FDS_NEOPIXEL_REC_KEY (0x0001)
 #define FDS_NEOPIXEL_CONF_FILE_ID FDS_NEOPIXEL_FILE_ID
 #define FDS_NEOPIXEL_CONF_REC_KEY (0x0010)
@@ -26,10 +28,9 @@ enum {
 };
 
 extern neopixel_user_defined_config_t neopixel_user_defined_config[NEOPIXEL_USER_DEFINED_COUNT];
-extern uint8_t neopixel_user_defined[NEOPIXEL_USER_DEFINED_COUNT][NEOPIXEL_PATTERN_BYTES];
+extern uint8_t neopixel_user_defined[NEOPIXEL_USER_DEFINED_COUNT][NEOPIXEL_MAX_FRAMES][NEOPIXEL_FRAME_BYTES];
 
 void neopixel_fds_init(void);
-void save_neopixel(void);
 void raw_hid_receive_neopixel(uint8_t *data, uint8_t length);
 
 

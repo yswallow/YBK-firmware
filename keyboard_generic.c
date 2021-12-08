@@ -243,11 +243,7 @@ void kbd_tick_handler(void* p_context) {
     }
     if(my_keyboard.neopixel_length &&
        (++m_tick_count%(neopixel_user_defined_config[neopixel_pattern].interval_ticks)==0)) {
-        neopixel_write_uint8(
-            neopixel_user_defined[neopixel_pattern]
-            +NEOPIXEL_FRAME_BYTES*neopixel_index,
-            my_keyboard.neopixel_length);
-        
+        neopixel_write_uint8( neopixel_user_defined[neopixel_pattern][neopixel_index], my_keyboard.neopixel_length);
         neopixel_index++;
         if( neopixel_user_defined_config[neopixel_pattern].frame_count <= neopixel_index ) {
             neopixel_index = 0;
