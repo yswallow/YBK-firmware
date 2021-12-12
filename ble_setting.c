@@ -53,11 +53,10 @@
 #include "ble_hids.h"
 #include "ble_dis.h"
 #include "ble_conn_params.h"
-//#include "app_scheduler.h"
+
 #include "nrf_sdh.h"
 #include "nrf_sdh_soc.h"
 #include "nrf_sdh_ble.h"
-//#include "fds.h"
 #include "ble_conn_state.h"
 #include "nrf_ble_gatt.h"
 #include "nrf_ble_qwr.h"
@@ -73,7 +72,6 @@
 
 #include "ble_hiddevice.h"
 #include "ble_setting.h"
-//#include "main.h"
 #include "keyboard_generic.h"
 #include "via.h"
 
@@ -692,7 +690,7 @@ static void advertising_init(void)
     memset(&init, 0, sizeof(init));
 
     adv_flags                            = BLE_GAP_ADV_FLAGS_LE_ONLY_GENERAL_DISC_MODE;
-    init.advdata.name_type               = BLE_ADVDATA_SHORT_NAME;
+    init.advdata.name_type               = BLE_ADVDATA_FULL_NAME;
     init.advdata.short_name_len          = 4;
     init.advdata.include_appearance      = true;
     init.advdata.flags                   = adv_flags;

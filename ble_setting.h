@@ -9,17 +9,17 @@
 
 #define APP_FEATURE_NOT_SUPPORTED       BLE_GATT_STATUS_ATTERR_APP_BEGIN + 2        /**< Reply when unsupported features are requested. */
 
-#define KEYBOARD_PERIPH_NAME            "nRF52 KB BLE Prph"
+#define KEYBOARD_PERIPH_NAME            "YBK BLE Prph"
 
 #ifdef KEYBOARD_CENTRAL
 #define PNP_ID_PRODUCT_ID               0xEEED                                     /**< Product ID. */
-#define DEVICE_NAME                     "nRF52 KB BLE Cntr"                      /**< Name of device. Will be included in the advertising data. */
+#define DEVICE_NAME                     "YBK BLE Cntr"                      /**< Name of device. Will be included in the advertising data. */
 #else
 #ifdef KEYBOARD_PERIPH
 #define PNP_ID_PRODUCT_ID               0xEEEE                                     /**< Product ID. */
 #define DEVICE_NAME                     KEYBOARD_PERIPH_NAME
 #else
-#define DEVICE_NAME                     "nRF52 KB BLE Intg"
+#define DEVICE_NAME                     "YBK BLE Intg"
 #endif // KEYBOARD_PERIPH
 #endif // KEYBOARD_CENTRAL
 
