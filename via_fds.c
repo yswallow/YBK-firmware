@@ -240,7 +240,11 @@ void save_keymap(void) {
         APP_ERROR_CHECK(ret);
     }
     memset(&tok, 0, sizeof(fds_find_token_t));
+    
+    CRITICAL_REGION_ENTER();
     ret = fds_record_update(&eeprom_desc, &m_eeprom_record);
+    CRITICAL_REGION_EXIT();
+
     if ((ret != NRF_SUCCESS) && (ret == FDS_ERR_NO_SPACE_IN_FLASH))
     {
         ret = fds_gc();

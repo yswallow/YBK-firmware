@@ -84,7 +84,18 @@ void neopixel_fds_init(void){
             }
             else
             {
-               create_fds_new_entry(&neopixel_frame_desc[i][j], &fds_neopixel_frame_records[i][j]);
+                // migration
+                /*
+                if( NRF_SUCCESS == fds_record_find(NEOPIXEL_FDS_FRAME_FILE_ID_8140, NEOPIXEL_FDS_FRAME_REC_KEY_BASE+i*0x100+j, &neopixel_frame_desc[i][j], &tok) ) {
+                    ret = fds_record_open(&neopixel_frame_desc[i][j], &config);
+                    APP_ERROR_CHECK(ret);
+       
+                    memcpy(neopixel_user_defined[i][j], config.p_data, sizeof(uint8_t)*NEOPIXEL_FRAME_BYTES_8140);
+                    ret = fds_record_delete(&neopixel_frame_desc[i][j]);
+                    APP_ERROR_CHECK(ret);
+                }
+                */
+                create_fds_new_entry(&neopixel_frame_desc[i][j], &fds_neopixel_frame_records[i][j]);
             }
         }
     }
@@ -92,6 +103,8 @@ void neopixel_fds_init(void){
 
 
 void save_neopixel(void) {
+    CRITICAL_REGION_ENTER();
+
     if(neopixel_user_defined_config_updated) {
         update_fds_entry(&neopixel_conf_desc, &fds_neopixel_conf_record);
         neopixel_user_defined_config_updated = false;
@@ -105,6 +118,8 @@ void save_neopixel(void) {
             }
         }
     }
+
+    CRITICAL_REGION_EXIT();
 }
 
 
