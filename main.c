@@ -81,9 +81,7 @@
 #include "app_usbd_core.h"
 #include "app_usbd.h"
 #include "app_usbd_string_desc.h"
-#include "app_usbd_cdc_acm.h"
 #include "app_usbd_serial_num.h"
-//#include "app_scheduler.h"
 #include "app_usbd_hid.h"
 #include "app_usbd_hid_generic.h"
 #include "app_usbd_hid_kbd.h"
@@ -95,18 +93,27 @@
 #include "ble_setting.h"
 #include "ble_hiddevice.h"
 #include "usb_mouse.h"
-#include "ble_central.h"
 #include "via_fds.h"
 #include "debug_message_hid.h"
 
-#ifdef ENABLE_USB_CDC_ACM
-#define LED_CDC_ACM_CONN (BSP_BOARD_LED_2)
-#define LED_CDC_ACM_RX   (BSP_BOARD_LED_3)
+#ifdef KEYBOARD_CENTRAL
+#include "ble_central.h"
+#elif KEYBOARD_PERIPH
+#include "ble_peripheral.h"
 #endif
 
-#define LED_BLINK_INTERVAL 800
+#ifdef ENABLE_USB_CDC_ACM
+#include "app_usbd_cdc_acm.h"
+#define LED_CDC_ACM_CONN (BSP_BOARD_LED_2)
+#define LED_CDC_ACM_RX   (BSP_BOARD_LED_3)
 
+#define LED_BLINK_INTERVAL 800
 #define ENDLINE_STRING "\r\n"
+#endif
+
+
+APP_TIMER_DEF(m_keyboard_job_timer);
+static bool m_usb_connected = false;
 
 
 /** @brief Function for initializing the timer module. */
@@ -152,7 +159,6 @@ void idle_state_handle(void)
 */
 
 // USB CODE START
-static bool m_usb_connected = false;
 
 #ifdef ENABLE_USB_CDC_ACM
 
@@ -344,7 +350,6 @@ static void power_management_init(void)
     APP_ERROR_CHECK(err_code);
 }
 
-APP_TIMER_DEF(m_keyboard_job_timer);
 
 static void keyboard_job(void* ptr) {
     release_prev_tick_kc();
@@ -354,8 +359,9 @@ static void keyboard_job(void* ptr) {
 
 #ifdef KEYBOARD_CENTRAL
     cache_pop_central();
+#elif KEYBOARD_PERIPH
+    cache_pop_peripheral();
 #endif
-    //power_manage();
 }
 
 void keyboard_job_timer_start(void) {

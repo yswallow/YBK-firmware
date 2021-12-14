@@ -1,10 +1,28 @@
 #ifdef KEYBOARD_PERIPH
+#include <string.h>
+
 #include "ble_nus.h"
-#include "ble_peripheral.h"
 #include "nrf_log.h"
 #include "app_error.h"
+#include "app_util_platform.h"
+
+#include "ble_peripheral.h"
+#include "neopixel.h"
+#include "neopixel_fds.h"
+#include "via.h"
+
+#define UART_CACHE_SIZE 32
+#define UART_CACHE_COUNT 7
 
 BLE_NUS_DEF(m_nus, NRF_SDH_BLE_TOTAL_LINK_COUNT);
+
+typedef struct {
+    uint8_t length;
+    uint8_t data[UART_CACHE_SIZE];
+} uart_cache_t;
+ 
+static uart_cache_t uart_cache[UART_CACHE_COUNT];
+static uint16_t uart_cache_usage = 0;
 
 /**@brief Function for handling the data from the Nordic UART Service.
  *
@@ -13,13 +31,81 @@ BLE_NUS_DEF(m_nus, NRF_SDH_BLE_TOTAL_LINK_COUNT);
  *
  * @param[in] p_evt       Nordic UART Service event.
  */
-/**@snippet [Handling the data received over BLE] */
-
 static void nus_data_handler(ble_nus_evt_t * p_evt)
 {
-    return;
+    ret_code_t ret;
+    const uint8_t *data;
+    uint16_t len;
+
+    switch(p_evt->type) {
+    case BLE_NUS_EVT_RX_DATA:
+        data = p_evt->params.rx_data.p_data;
+        len = p_evt->params.rx_data.length;
+        
+        if( len > UART_CACHE_SIZE-1 ) {
+            len = UART_CACHE_SIZE - 1;
+        }
+        
+        for(uint8_t i=0;i<UART_CACHE_COUNT;i++) {
+            if(! (uart_cache_usage & (1<<i)) ) {
+                memcpy(uart_cache[i].data, data, len);
+                uart_cache[i].length = len;
+                uart_cache_usage |= (1<<i);
+                break;
+            }
+        }
+        
+        break;
+    }
 }
-/**@snippet [Handling the data received over BLE] */
+
+
+static void uart_receive_peripheral(uint8_t* p_data, uint16_t len) {
+    NRF_LOG_HEXDUMP_DEBUG(p_data,len)
+    switch(p_data[0]) {
+    case UART_NEOPIXEL_SYNC_TIMING_ID:
+        m_neopixel_tick_count = 0;
+        break;
+    case UART_NEOPIXEL_SYNC_PATTERN_ID:
+        if( p_data[1]<NEOPIXEL_USER_DEFINED_COUNT ) {
+            m_neopixel_pattern = p_data[1];
+        }
+        break;
+
+    case UART_NEOPIXEL_SET_PATTERN_ID:
+    case UART_NEOPIXEL_SET_PATTERN_CONF_ID:
+        p_data[0] = id_set_keyboard_value;
+        p_data[1] -= 2;
+        raw_hid_receive_neopixel(p_data, len);
+        break;
+
+    case UART_NEOPIXEL_GET_PATTERN_CONF_ID:
+    case UART_NEOPIXEL_GET_PATTERN_ID:
+    case UART_NEOPIXEL_SAVE_ID:
+        p_data[0] = id_get_keyboard_value;
+        p_data[1] -= 2;
+        raw_hid_receive_neopixel(p_data, len);
+        break;
+    }
+
+}
+
+
+void cache_pop_peripheral(void) {
+    uint8_t data[UART_CACHE_SIZE];
+    uint16_t len;
+    if(uart_cache_usage) {
+        for(uint8_t i=0;i<UART_CACHE_COUNT;i++) {
+            if( uart_cache_usage & (1<<i) ) {
+                memcpy(data, uart_cache[i].data, uart_cache[i].length);
+                len = uart_cache[i].length;
+                uart_cache_usage &= ~(1<<i);
+                
+                uart_receive_peripheral(data,len);
+            }
+        }
+    }
+}
 
 
 void periph_nus_init(void) {
@@ -40,6 +126,7 @@ char num2ascii(uint8_t n) {
     return n<10 ? 0x30+n : 0x41+n-10;
 }
 
+
 void send_place_ble(uint8_t row, uint8_t col, bool press) {
     char message[8];
     uint16_t message_sent = 6;
@@ -52,9 +139,9 @@ void send_place_ble(uint8_t row, uint8_t col, bool press) {
     message[6] = '\0';
     ble_nus_data_send(&m_nus, message, &message_sent, m_conn_handle);
     if(press) {
-        NRF_LOG_INFO("Send KeyPress");
+        NRF_LOG_DEBUG("Send KeyPress");
     } else {
-        NRF_LOG_INFO("Send KeyRelease");
+        NRF_LOG_DEBUG("Send KeyRelease");
     }
 }
 #endif

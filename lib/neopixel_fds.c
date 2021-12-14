@@ -1,8 +1,13 @@
 #include "neopixel_fds.h"
 #include "via.h"
-#include "string.h"
+#include <string.h>
 #include "fds.h"
 #include "nrf_error.h"
+
+#ifdef KEYBOARD_CENTRAL
+#include "ble_central.h"
+#endif //KEYBOARD_CENTRAL
+
 
 static fds_record_desc_t neopixel_frame_desc[NEOPIXEL_USER_DEFINED_COUNT][NEOPIXEL_MAX_FRAMES];
 static fds_record_desc_t neopixel_conf_desc;
@@ -132,6 +137,14 @@ void raw_hid_receive_neopixel(uint8_t *data, uint8_t length) {
             save_neopixel();
             *(data+2) = NEOPIXEL_MAX_CHAINS;
             break;
+        
+#ifdef KEYBOARD_CENTRAL
+        case KBD_NEOPIXEL_PERIPH:
+            *data = UART_NEOPIXEL_GET_PATTERN_ID;
+            uart_send_central(data, length);
+            *data = id_get_keyboard_value;
+            break;
+#endif //KEYBOARD_CENTRAL
         }
         break;
     case id_set_keyboard_value:
@@ -152,8 +165,22 @@ void raw_hid_receive_neopixel(uint8_t *data, uint8_t length) {
             *data = id_unhandled;
             neopixel_user_defined_config_updated = true;
             break;
+
+#ifdef KEYBOARD_CENTRAL
+        case KBD_NEOPIXEL_PERIPH:
+            *data = UART_NEOPIXEL_SET_PATTERN_ID;
+            uart_send_central(data, length);
+            *data = id_unhandled;
+            break;
+        case KBD_NEOPIXEL_PERIPH_CONF:
+            *data = UART_NEOPIXEL_SET_PATTERN_CONF_ID;
+            uart_send_central(data, length);
+            *data = id_unhandled;
+            break;
+#endif //KEYBOARD_CENTRAL
         }
-        break;
+        break; // id_set_keyboard_value
+
     default:
         break;
     }

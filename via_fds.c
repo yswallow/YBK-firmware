@@ -457,8 +457,11 @@ void raw_hid_receive_kb(uint8_t *data, uint8_t length) {
 
         case KBD_NEOPIXEL_CONF:
         case KBD_NEOPIXEL:
+        case KBD_NEOPIXEL_PERIPH_CONF:
+        case KBD_NEOPIXEL_PERIPH:
             raw_hid_receive_neopixel(data,length);
             break;
+
         default:
             *command_id         = id_unhandled;
             break;
@@ -487,8 +490,11 @@ void raw_hid_receive_kb(uint8_t *data, uint8_t length) {
 
         case KBD_NEOPIXEL_CONF:
         case KBD_NEOPIXEL:
+        case KBD_NEOPIXEL_PERIPH_CONF:
+        case KBD_NEOPIXEL_PERIPH:
             raw_hid_receive_neopixel(data,length);
             break;
+
         default:
             *command_id         = id_unhandled;
             break;

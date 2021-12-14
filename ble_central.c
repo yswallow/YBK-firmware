@@ -88,6 +88,8 @@
 #define PAIRING_TIMEOUT_TICKS   APP_TIMER_TICKS(2000)
 #define KEYBOARD_CENTRAL_SCAN_TIMEOUT_TICKS   APP_TIMER_TICKS(60000)
 
+#define UART_CACHE_SIZE 16
+
 BLE_NUS_C_DEF(m_ble_nus_c);                                             /**< BLE Nordic UART Service (NUS) client instance. */
 NRF_BLE_GATT_DEF(m_gatt_c);                                               /**< GATT module instance. */
 BLE_DB_DISCOVERY_DEF(m_db_disc);                                        /**< Database discovery module instance. */
@@ -100,6 +102,9 @@ APP_TIMER_DEF(m_central_scan_timer);
 
 static uint16_t m_ble_nus_max_data_len = BLE_GATT_ATT_MTU_DEFAULT - OPCODE_LENGTH - HANDLE_LENGTH; /**< Maximum length of data (in bytes) that can be transmitted to the peer by the Nordic UART service module. */
 ble_data_t m_scan_adv_report_buffer[BLE_GAP_SCAN_BUFFER_MAX];
+
+static uint8_t m_uart_send_buffer[UART_CACHE_SIZE];
+static uint8_t m_uart_send_len;
 
 /**@brief NUS UUID. */
 static ble_uuid_t const m_nus_uuid =
@@ -813,6 +818,17 @@ static void idle_state_handle(void)
     {
         nrf_pwr_mgmt_run();
     }
+}
+
+
+void uart_send_central(uint8_t *p_data, uint8_t len) {
+    ret_code_t ret;
+    
+    m_uart_send_len = len>UART_CACHE_SIZE ? UART_CACHE_SIZE : len;
+    memcpy(m_uart_send_buffer, p_data, m_uart_send_len);
+
+    ret = ble_nus_c_string_send(&m_ble_nus_c,m_uart_send_buffer, m_uart_send_len);
+    APP_ERROR_CHECK(ret);
 }
 
 

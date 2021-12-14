@@ -29,6 +29,8 @@ typedef struct {
 enum {
     KBD_NEOPIXEL = 0x10,
     KBD_NEOPIXEL_CONF,
+    KBD_NEOPIXEL_PERIPH,
+    KBD_NEOPIXEL_PERIPH_CONF,
 };
 
 extern neopixel_user_defined_config_t neopixel_user_defined_config[NEOPIXEL_USER_DEFINED_COUNT];

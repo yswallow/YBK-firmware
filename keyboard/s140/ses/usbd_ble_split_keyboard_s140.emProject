@@ -134,7 +134,6 @@
       <file file_name="../../../usb_consumer.c" />
       <file file_name="../../../neopixel.c" />
       <folder Name="Headers">
-        <file file_name="../../../ble_central.h" />
         <file file_name="../../../ble_hiddevice.h" />
         <file file_name="../../../ble_peripheral.h" />
         <file file_name="../../../ble_setting.h" />
@@ -153,12 +152,16 @@
         <file file_name="../../../via.h" />
         <file file_name="../../../via_fds.h" />
         <file file_name="../../../lib/neopixel_fds.h" />
+        <file file_name="../../../ble_central.h" />
       </folder>
       <folder Name="Data">
         <file file_name="../../../lib/data/neopixel_data.h" />
         <file file_name="../../../lib/data/neopixel_data.c">
           <configuration
             Name="IntegratedDebug"
+            build_exclude_from_build="Yes" />
+          <configuration
+            Name="PeripheralRelease"
             build_exclude_from_build="Yes" />
         </file>
       </folder>
