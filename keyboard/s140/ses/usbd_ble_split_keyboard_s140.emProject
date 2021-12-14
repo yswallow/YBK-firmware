@@ -156,7 +156,11 @@
       </folder>
       <folder Name="Data">
         <file file_name="../../../lib/data/neopixel_data.h" />
-        <file file_name="../../../lib/data/neopixel_data.c" />
+        <file file_name="../../../lib/data/neopixel_data.c">
+          <configuration
+            Name="IntegratedDebug"
+            build_exclude_from_build="Yes" />
+        </file>
       </folder>
       <file file_name="../../../lib/neopixel_fds.c" />
     </folder>

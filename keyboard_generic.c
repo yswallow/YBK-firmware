@@ -1,6 +1,5 @@
 #include "keyboard_generic.h"
 #include "nrf_gpio.h"
-//#include "main.h"
 #include "usb_keyboard.h"
 #include "dynamic_keymap.h"
 #include "app_timer.h"
@@ -20,7 +19,7 @@
 
 #include "ble_setting.h"
 #include "neopixel.h"
-#include "neopixel_data.h"
+//#include "neopixel_data.h"
 #include "neopixel_fds.h"
 
 #define DEBOUNCING_TICK_INVALID 0xFFFFFFFFUL
@@ -546,7 +545,7 @@ void keyboard_init(keyboard_t keyboard) {
     memset(kc_release_next_tick,KC_INVALID,PRESS_KEYS_MAX);
     heatmap_init();
     if(my_keyboard.neopixel_length) {
-        neopixel_data_init();
+        //neopixel_data_init();
         neopixel_init(my_keyboard.neopixel_pin, NULL);
         neopixel_index = 0;
     }
