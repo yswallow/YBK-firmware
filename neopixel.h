@@ -26,7 +26,9 @@ void neopixel_init(uint8_t pin, neopixel_handler_t handler);
 void neopixel_uninit(void);
 void neopixel_write_uint32(uint32_t *colors, uint32_t leds_count);
 void neopixel_write_uint8(uint8_t *colors, uint32_t leds_count);
+void neopixel_sync(void);
 
 extern uint8_t m_neopixel_tick_count;
+extern uint8_t m_neopixel_index;
 extern uint8_t m_neopixel_pattern;
 #endif

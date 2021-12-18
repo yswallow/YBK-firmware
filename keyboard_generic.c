@@ -37,10 +37,10 @@ keys_t keypress_status[PRESS_KEYS_MAX];
 uint8_t kc_release_next_tick[PRESS_KEYS_MAX];
 //uint8_t layer_history[DYNAMIC_KEYMAP_LAYER_COUNT];
 uint8_t current_layer;
+
 uint8_t m_neopixel_tick_count;
 uint8_t m_neopixel_pattern = 0;
-
-static uint16_t neopixel_index;
+uint8_t m_neopixel_index;
 
 
 keyboard_hid_functions_t hid_functions = {
@@ -243,10 +243,10 @@ void kbd_tick_handler(void* p_context) {
     }
     if(my_keyboard.neopixel_length &&
        (++m_neopixel_tick_count%(neopixel_user_defined_config[m_neopixel_pattern].interval_ticks)==0)) {
-        neopixel_write_uint8( neopixel_user_defined[m_neopixel_pattern][neopixel_index], my_keyboard.neopixel_length);
-        neopixel_index++;
-        if( neopixel_user_defined_config[m_neopixel_pattern].frame_count <= neopixel_index ) {
-            neopixel_index = 0;
+        neopixel_write_uint8( neopixel_user_defined[m_neopixel_pattern][m_neopixel_index], my_keyboard.neopixel_length);
+        m_neopixel_index++;
+        if( neopixel_user_defined_config[m_neopixel_pattern].frame_count <= m_neopixel_index ) {
+            m_neopixel_index = 0;
         }
         m_neopixel_tick_count = 0;
     }
@@ -548,7 +548,7 @@ void keyboard_init(keyboard_t keyboard) {
     if(my_keyboard.neopixel_length) {
         //neopixel_data_init();
         neopixel_init(my_keyboard.neopixel_pin, NULL);
-        neopixel_index = 0;
+        m_neopixel_index = 0;
     }
     //layer_history[0] = 0;
     current_layer = my_keyboard.default_layer;

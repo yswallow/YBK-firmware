@@ -130,12 +130,20 @@ void save_neopixel(void) {
 
 void raw_hid_receive_neopixel(uint8_t *data, uint8_t length) {
     neopixel_user_defined_config_t *conf;
+#ifdef KEYBOARD_CENTRAL
+    uint8_t uart_data[8];
+#endif
+
     switch( *data ) {
     case id_get_keyboard_value:
         switch( *(data+1) ) {
         case KBD_NEOPIXEL:
             save_neopixel();
             *(data+2) = NEOPIXEL_MAX_CHAINS;
+#ifdef KEYBOARD_CENTRAL
+            uart_data[0] = UART_NEOPIXEL_SAVE_ID;
+            uart_send_central(uart_data,1);
+#endif
             break;
         
 #ifdef KEYBOARD_CENTRAL

@@ -145,3 +145,8 @@ void neopixel_write_uint32(uint32_t *colors, uint32_t leds_count) {
 
     (void)nrfx_pwm_simple_playback(&m_pwm0, &seq0, 1, NRFX_PWM_FLAG_STOP);
 }
+
+void neopixel_sync(void) {
+    m_neopixel_tick_count = 0;
+    m_neopixel_index = 0;
+}

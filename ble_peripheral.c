@@ -64,7 +64,10 @@ static void uart_receive_peripheral(uint8_t* p_data, uint16_t len) {
     NRF_LOG_HEXDUMP_DEBUG(p_data,len)
     switch(p_data[0]) {
     case UART_NEOPIXEL_SYNC_TIMING_ID:
-        m_neopixel_tick_count = 0;
+        neopixel_sync();
+        break;
+    case UART_NEOPIXEL_SAVE_ID:
+        save_neopixel();
         break;
     case UART_NEOPIXEL_SYNC_PATTERN_ID:
         if( p_data[1]<NEOPIXEL_USER_DEFINED_COUNT ) {
@@ -81,7 +84,6 @@ static void uart_receive_peripheral(uint8_t* p_data, uint16_t len) {
 
     case UART_NEOPIXEL_GET_PATTERN_CONF_ID:
     case UART_NEOPIXEL_GET_PATTERN_ID:
-    case UART_NEOPIXEL_SAVE_ID:
         p_data[0] = id_get_keyboard_value;
         p_data[1] -= 2;
         raw_hid_receive_neopixel(p_data, len);
