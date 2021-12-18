@@ -39,5 +39,6 @@ extern uint8_t neopixel_user_defined[NEOPIXEL_USER_DEFINED_COUNT][NEOPIXEL_MAX_F
 void neopixel_fds_init(void);
 void raw_hid_receive_neopixel(uint8_t *data, uint8_t length);
 void save_neopixel(void);
+void save_neopixel_one_frame(void);
 
 #endif // __NEOPIXEL_FDS_H

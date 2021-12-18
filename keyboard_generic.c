@@ -242,12 +242,13 @@ void kbd_tick_handler(void* p_context) {
         }
     }
     if(my_keyboard.neopixel_length &&
-       (++m_neopixel_tick_count%(neopixel_user_defined_config[m_neopixel_pattern].interval_ticks)==0)) {
+            (++m_neopixel_tick_count%(neopixel_user_defined_config[m_neopixel_pattern].interval_ticks)==0)) {
         neopixel_write_uint8( neopixel_user_defined[m_neopixel_pattern][m_neopixel_index], my_keyboard.neopixel_length);
         m_neopixel_index++;
         if( neopixel_user_defined_config[m_neopixel_pattern].frame_count <= m_neopixel_index ) {
             m_neopixel_index = 0;
         }
+        save_neopixel_one_frame();
         m_neopixel_tick_count = 0;
     }
 }

@@ -14,6 +14,7 @@ static fds_record_desc_t neopixel_conf_desc;
 
 neopixel_user_defined_config_t neopixel_user_defined_config[NEOPIXEL_USER_DEFINED_COUNT];
 uint8_t neopixel_user_defined[NEOPIXEL_USER_DEFINED_COUNT][NEOPIXEL_MAX_FRAMES][NEOPIXEL_FRAME_BYTES];
+static bool neopixel_user_defined_saving_frames = false; 
 /*
 static fds_record_t fds_neopixel_records[NEOPIXEL_USER_DEFINED_COUNT];
 static fds_record_t fds_neopixel_record_base = {
@@ -114,17 +115,36 @@ void save_neopixel(void) {
         update_fds_entry(&neopixel_conf_desc, &fds_neopixel_conf_record);
         neopixel_user_defined_config_updated = false;
     }
+    
+    neopixel_user_defined_saving_frames = true;
+    
+    CRITICAL_REGION_EXIT();
+}
 
-    for(uint8_t i=0;i<NEOPIXEL_USER_DEFINED_COUNT;i++) {
-        for(uint8_t j=0;j<NEOPIXEL_MAX_FRAMES;j++) {
-            if(neopixel_user_defined_pattern_updated[i] & (1<<j)) {
-                update_fds_entry(&neopixel_frame_desc[i][j], &fds_neopixel_frame_records[i][j]);
-                neopixel_user_defined_pattern_updated[i] &= ~(1<<j);
+void save_neopixel_one_frame(void) {
+    bool updated = false;
+    if(neopixel_user_defined_saving_frames) {
+        CRITICAL_REGION_ENTER();
+        for(uint8_t i=0;i<NEOPIXEL_USER_DEFINED_COUNT;i++) {
+            for(uint8_t j=0;j<NEOPIXEL_MAX_FRAMES;j++) {
+                if(neopixel_user_defined_pattern_updated[i] & (1<<j)) {
+                    update_fds_entry(&neopixel_frame_desc[i][j], &fds_neopixel_frame_records[i][j]);
+                    neopixel_user_defined_pattern_updated[i] &= ~(1<<j);
+                    updated = true;
+                    break;
+                }
+            }
+            if(updated) {
+                break;
             }
         }
+    
+        CRITICAL_REGION_EXIT();
+        if(! updated) {
+            neopixel_user_defined_saving_frames = false;
+        }
+        return;
     }
-
-    CRITICAL_REGION_EXIT();
 }
 
 
