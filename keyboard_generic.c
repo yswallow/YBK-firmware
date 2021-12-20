@@ -21,9 +21,11 @@
 #include "neopixel.h"
 //#include "neopixel_data.h"
 #include "neopixel_fds.h"
+#include "neopixel_time.h"
 
 #define DEBOUNCING_TICK_INVALID 0xFFFFFFFFUL
 #define KC_INVALID 0xFF
+#define SECOND_INCREMENT_TICKS 200
 
 #ifndef KEYBOARD_PERIPH
 #ifdef KEYBOARD_TIMEOUT
@@ -39,8 +41,11 @@ uint8_t kc_release_next_tick[PRESS_KEYS_MAX];
 uint8_t current_layer;
 
 uint8_t m_neopixel_tick_count;
-uint8_t m_neopixel_pattern = 0;
+uint8_t m_neopixel_pattern = 5;
 uint8_t m_neopixel_index;
+uint8_t m_second;
+uint8_t m_minute;
+uint8_t m_hour;
 
 
 keyboard_hid_functions_t hid_functions = {
@@ -241,15 +246,41 @@ void kbd_tick_handler(void* p_context) {
             }
         }
     }
-    if(my_keyboard.neopixel_length &&
-            (++m_neopixel_tick_count%(neopixel_user_defined_config[m_neopixel_pattern].interval_ticks)==0)) {
-        neopixel_write_uint8( neopixel_user_defined[m_neopixel_pattern][m_neopixel_index], my_keyboard.neopixel_length);
-        m_neopixel_index++;
-        if( neopixel_user_defined_config[m_neopixel_pattern].frame_count <= m_neopixel_index ) {
-            m_neopixel_index = 0;
+    if(my_keyboard.neopixel_length) {
+        ++m_neopixel_tick_count;
+        if(m_neopixel_pattern < NEOPIXEL_USER_DEFINED_COUNT) {
+            if(m_neopixel_tick_count%(neopixel_user_defined_config[m_neopixel_pattern].interval_ticks)==0) {
+                neopixel_write_uint8( neopixel_user_defined[m_neopixel_pattern][m_neopixel_index], my_keyboard.neopixel_length);
+                m_neopixel_index++;
+                if( neopixel_user_defined_config[m_neopixel_pattern].frame_count <= m_neopixel_index ) {
+                    m_neopixel_index = 0;
+                }
+                save_neopixel_one_frame();
+                m_neopixel_tick_count = 0;
+            }
+        } else {
+            if(m_neopixel_tick_count==SECOND_INCREMENT_TICKS) {
+                m_neopixel_tick_count = 0;
+                m_second++;
+                if(m_second==60) {
+                    m_second = 0;
+                    m_minute++;
+                    if(m_minute==60) {
+                        m_minute = 0;
+                        m_hour++;
+                        if(m_hour==24) {
+                            m_hour = 0;
+                        }
+                    }
+                }
+                if(m_second%2) {
+                    setNumber(m_minute,0x00FF0000,0x0000FFFF, 0x00404040);
+                } else {
+                    setNumber(m_hour, 0x0000FF00,0x00FFFF00, 0x00404040);
+                }
+                neopixel_write_uint8(neopixel_time_data, my_keyboard.neopixel_length);
+            }
         }
-        save_neopixel_one_frame();
-        m_neopixel_tick_count = 0;
     }
 }
 

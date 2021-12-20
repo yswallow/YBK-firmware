@@ -459,6 +459,9 @@ void raw_hid_receive_kb(uint8_t *data, uint8_t length) {
         case KBD_NEOPIXEL:
         case KBD_NEOPIXEL_PERIPH_CONF:
         case KBD_NEOPIXEL_PERIPH:
+        case KBD_NEOPIXEL_ARRAY:
+        case KBD_NEOPIXEL_ARRAY_CONF:
+        case KBD_NEOPIXEL_TIME:
             raw_hid_receive_neopixel(data,length);
             break;
 
@@ -492,6 +495,9 @@ void raw_hid_receive_kb(uint8_t *data, uint8_t length) {
         case KBD_NEOPIXEL:
         case KBD_NEOPIXEL_PERIPH_CONF:
         case KBD_NEOPIXEL_PERIPH:
+        case KBD_NEOPIXEL_ARRAY:
+        case KBD_NEOPIXEL_ARRAY_CONF:
+        case KBD_NEOPIXEL_TIME:
             raw_hid_receive_neopixel(data,length);
             break;
 

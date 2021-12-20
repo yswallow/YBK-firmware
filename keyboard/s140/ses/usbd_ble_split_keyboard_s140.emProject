@@ -153,6 +153,7 @@
         <file file_name="../../../via_fds.h" />
         <file file_name="../../../lib/neopixel_fds.h" />
         <file file_name="../../../ble_central.h" />
+        <file file_name="../../../lib/neopixel_time.h" />
       </folder>
       <folder Name="Data">
         <file file_name="../../../lib/data/neopixel_data.h" />
@@ -166,6 +167,7 @@
         </file>
       </folder>
       <file file_name="../../../lib/neopixel_fds.c" />
+      <file file_name="../../../lib/neopixel_time.c" />
     </folder>
     <folder Name="nRF_Segger_RTT">
       <file file_name="../../../../../../external/segger_rtt/SEGGER_RTT.c" />
