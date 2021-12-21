@@ -79,7 +79,8 @@ ret_code_t keyboard_sleep_prepare(void);
 
 void keypress(uint8_t row, uint8_t col, bool debouncing);
 void keyrelease(uint8_t row, uint8_t col, bool debouncing);
-uint8_t get_active_layer(void);void release_prev_tick_kc(void);
+uint8_t get_active_layer(void);
+void release_prev_tick_kc(void);
 
 void restart_timeout_timer(void);
 void sleep_mode_enter(void *ptr);

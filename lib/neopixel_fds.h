@@ -4,6 +4,7 @@
 
 #include <stdint.h> 
 #include "neopixel.h"
+#include "via_fds.h"
 
 #define NEOPIXEL_USER_DEFINED_COUNT 3
 
@@ -53,7 +54,7 @@ extern neopixel_array_config_t neopixel_array_config;
 extern uint8_t neopixel_array[NEOPIXEL_ARRAY_COLS_MAX*NEOPIXEL_ARRAY_ROWS_MAX];
 
 void neopixel_fds_init(void);
-void raw_hid_receive_neopixel(uint8_t *data, uint8_t length);
+raw_hid_receive_t raw_hid_receive_neopixel(uint8_t *data, uint8_t length);
 void save_neopixel(void);
 void save_neopixel_one_frame(void);
 
