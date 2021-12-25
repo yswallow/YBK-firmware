@@ -21,7 +21,7 @@ typedef struct {
     uint8_t row;
     uint8_t col;
     uint32_t tick;
-} debounceing_keys_t;
+} debouncing_keys_t;
 
 typedef struct {
     ret_code_t (*keycode_append)(uint8_t);

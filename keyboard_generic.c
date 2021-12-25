@@ -43,6 +43,7 @@ uint8_t current_layer;
 uint8_t m_neopixel_tick_count;
 uint8_t m_neopixel_pattern = 5;
 uint8_t m_neopixel_index;
+uint8_t m_clock_tick_count = 0;
 uint8_t m_second;
 uint8_t m_minute;
 uint8_t m_hour;
@@ -221,8 +222,7 @@ void press_key(keys_t *p_key) {
     }
 }
 
-debounceing_keys_t debouncing_keys[PRESS_KEYS_MAX];
-
+debouncing_keys_t debouncing_keys[PRESS_KEYS_MAX];
 void kbd_tick_handler(void* p_context) {
     //called every TAPPING_TERM_TICK_MS msecs
     for(uint8_t i=0; (keypress_status[i].kc||keypress_status[i].application) && i<PRESS_KEYS_MAX; i++) {
@@ -246,6 +246,22 @@ void kbd_tick_handler(void* p_context) {
             }
         }
     }
+    ++m_clock_tick_count;
+    if(m_clock_tick_count==SECOND_INCREMENT_TICKS) {
+        m_clock_tick_count = 0;
+        m_second++;
+        if(m_second==60) {
+            m_second = 0;
+            m_minute++;
+            if(m_minute==60) {
+                m_minute = 0;
+                m_hour++;
+                if(m_hour==24) {
+                    m_hour = 0;
+                }
+            }
+        }
+    }
     if(my_keyboard.neopixel_length) {
         ++m_neopixel_tick_count;
         if(m_neopixel_pattern < NEOPIXEL_USER_DEFINED_COUNT) {
@@ -259,20 +275,7 @@ void kbd_tick_handler(void* p_context) {
                 m_neopixel_tick_count = 0;
             }
         } else {
-            if(m_neopixel_tick_count==SECOND_INCREMENT_TICKS) {
-                m_neopixel_tick_count = 0;
-                m_second++;
-                if(m_second==60) {
-                    m_second = 0;
-                    m_minute++;
-                    if(m_minute==60) {
-                        m_minute = 0;
-                        m_hour++;
-                        if(m_hour==24) {
-                            m_hour = 0;
-                        }
-                    }
-                }
+            if(m_clock_tick_count==0) {
                 if(m_second%2) {
                     setNumber(m_minute,0x00FF0000,0x0000FFFF, 0x00404040);
                 } else {
@@ -426,10 +429,16 @@ void keypress(uint8_t row, uint8_t col, bool debouncing) {
             handle_keycode(keypress_status[i].kc, true);
             break;
         case 0x50:
-            if( action == 0x0C && keypress_status[i].kc == 0x00 ) {
-                // RESET
-                keyboard_init(my_keyboard);
-                hid_functions.reset();
+            if( action == 0x0C ) {
+                if( keypress_status[i].kc == 0x00 ) {
+                    // RESET
+                    keyboard_init(my_keyboard);
+                    hid_functions.reset();
+                    break;
+                } else if( (kc&0xF0)==0xD0 ) {
+                    m_neopixel_pattern = kc & 0x0F;
+                    break;
+                }
                 break;
             } else if( action == 0x02 ) {
                 my_keyboard.default_layer = kc;
