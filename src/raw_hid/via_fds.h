@@ -26,6 +26,7 @@
 #define KBD_SETTING_ADDITIONAL_NEOPIXEL_PIN_INDEX 8
 #define KBD_SETTING_SIZE (0x60)
 
+typedef bool raw_hid_receive_t;
 
 static volatile bool m_fds_initialized;
 extern uint8_t kbd_setting[KBD_SETTING_SIZE];

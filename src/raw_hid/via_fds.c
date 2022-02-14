@@ -52,6 +52,7 @@
 #define KBD_SETTING_ID_HEATMAP 0x80
 #define KBD_SETTING_ID_DEBUG_SETTING 0x88
 #define KBD_SETTING_ID_DEBUG_RECEIVED 0x89
+#define CALL_FUNCTION_AND_BREAK_IF_TRUE(func) executed=func(data,length);if(executed){break;}
 
 static fds_record_desc_t eeprom_desc;
 static fds_record_desc_t setting_desc;
@@ -423,6 +424,8 @@ static bool kbd_setting_updated;
 void raw_hid_receive_kb(uint8_t *data, uint8_t length) {
     uint8_t *command_id = &(data[0]);
     uint8_t setting_id = data[1];
+    bool executed = false;
+
     switch(*command_id) {
     case id_get_keyboard_value:
         if( kbd_setting_updated ) {
@@ -454,7 +457,7 @@ void raw_hid_receive_kb(uint8_t *data, uint8_t length) {
         case KBD_SETTING_ID_DEBUG_RECEIVED:
             KEYBOARD_DEBUG_HID_RESPONSE(data, length);
             break;
-
+/*
         case KBD_NEOPIXEL_CONF:
         case KBD_NEOPIXEL:
         case KBD_NEOPIXEL_PERIPH_CONF:
@@ -464,8 +467,9 @@ void raw_hid_receive_kb(uint8_t *data, uint8_t length) {
         case KBD_NEOPIXEL_TIME:
             raw_hid_receive_neopixel(data,length);
             break;
-
+*/
         default:
+            CALL_FUNCTION_AND_BREAK_IF_TRUE(raw_hid_receive_neopixel);
             *command_id         = id_unhandled;
             break;
         }
@@ -490,7 +494,7 @@ void raw_hid_receive_kb(uint8_t *data, uint8_t length) {
             memcpy(kbd_setting+0x50, data+2, (length-2)<KBD_SETTING_ADDITIONAL_LEN ? length-2 : KBD_SETTING_ADDITIONAL_LEN);
             kbd_setting_updated = true;
             break;
-
+/*
         case KBD_NEOPIXEL_CONF:
         case KBD_NEOPIXEL:
         case KBD_NEOPIXEL_PERIPH_CONF:
@@ -500,13 +504,15 @@ void raw_hid_receive_kb(uint8_t *data, uint8_t length) {
         case KBD_NEOPIXEL_TIME:
             raw_hid_receive_neopixel(data,length);
             break;
-
+*/
         default:
+            CALL_FUNCTION_AND_BREAK_IF_TRUE(raw_hid_receive_neopixel);
             *command_id         = id_unhandled;
             break;
         }
         break;
     default:
+        CALL_FUNCTION_AND_BREAK_IF_TRUE(raw_hid_receive_neopixel);
         *command_id         = id_unhandled;
         break;
     }
