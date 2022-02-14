@@ -69,6 +69,7 @@
 #include "keyboard_generic.h"
 #include "ble_central.h"
 #include "ble_setting.h" // for KEYBOARD_PERIPH_NAME
+#include "neopixel.h"
 
 #include "keyboard_config.h"
 #include "debug_message_hid.h"
@@ -88,6 +89,8 @@
 #define PAIRING_TIMEOUT_TICKS   APP_TIMER_TICKS(2000)
 #define KEYBOARD_CENTRAL_SCAN_TIMEOUT_TICKS   APP_TIMER_TICKS(60000)
 
+#define UART_CACHE_SIZE 16
+
 BLE_NUS_C_DEF(m_ble_nus_c);                                             /**< BLE Nordic UART Service (NUS) client instance. */
 NRF_BLE_GATT_DEF(m_gatt_c);                                               /**< GATT module instance. */
 BLE_DB_DISCOVERY_DEF(m_db_disc);                                        /**< Database discovery module instance. */
@@ -100,6 +103,10 @@ APP_TIMER_DEF(m_central_scan_timer);
 
 static uint16_t m_ble_nus_max_data_len = BLE_GATT_ATT_MTU_DEFAULT - OPCODE_LENGTH - HANDLE_LENGTH; /**< Maximum length of data (in bytes) that can be transmitted to the peer by the Nordic UART service module. */
 ble_data_t m_scan_adv_report_buffer[BLE_GAP_SCAN_BUFFER_MAX];
+
+static uint8_t m_uart_send_buffer[UART_CACHE_SIZE];
+static uint8_t m_uart_send_len;
+static bool m_periph_connected = false;
 
 /**@brief NUS UUID. */
 static ble_uuid_t const m_nus_uuid =
@@ -429,6 +436,7 @@ static void ble_nus_chars_received_keyboard(uint8_t * p_data, uint16_t data_len)
 static void ble_nus_c_evt_handler(ble_nus_c_t * p_ble_nus_c, ble_nus_c_evt_t const * p_ble_nus_evt)
 {
     ret_code_t err_code;
+    uint8_t save_data[1] = { UART_NEOPIXEL_SYNC_TIMING_ID };
 
     switch (p_ble_nus_evt->evt_type)
     {
@@ -440,14 +448,16 @@ static void ble_nus_c_evt_handler(ble_nus_c_t * p_ble_nus_c, ble_nus_c_evt_t con
             err_code = ble_nus_c_tx_notif_enable(p_ble_nus_c);
             APP_ERROR_CHECK(err_code);
             NRF_LOG_INFO("Connected to device with Nordic UART Service.");
+            m_periph_connected = true;
             
             err_code = app_timer_stop(m_pairing_timer);
             APP_ERROR_CHECK(err_code);
             err_code = app_timer_stop(m_central_scan_timer);
             APP_ERROR_CHECK(err_code);
 
-            err_code = ble_nus_c_string_send(p_ble_nus_c, "init", 4);
+            err_code = ble_nus_c_string_send(p_ble_nus_c, save_data, 1);
             APP_ERROR_CHECK(err_code);
+            neopixel_sync();
             
             advertising_start(true, BLE_ADV_MODE_FAST);
             break;
@@ -458,7 +468,13 @@ static void ble_nus_c_evt_handler(ble_nus_c_t * p_ble_nus_c, ble_nus_c_evt_t con
 
         case BLE_NUS_C_EVT_DISCONNECTED:
             NRF_LOG_INFO("Disconnected.");
+            for(uint8_t i=my_keyboard.split_keyboard.central_cols_count; i<my_keyboard.kbd_cols_count; i++) {
+                for(uint8_t j=0;j<my_keyboard.kbd_rows_count;j++) {
+                    keyrelease(j,i,false);
+                }
+            }
             KEYBOARD_DEBUG_HID_REGISTER_STRING("NUS Disconnected.", 14);
+            m_periph_connected = false;
             scan_start();
             break;
     }
@@ -807,6 +823,18 @@ static void idle_state_handle(void)
     if (NRF_LOG_PROCESS() == false)
     {
         nrf_pwr_mgmt_run();
+    }
+}
+
+
+void uart_send_central(uint8_t *p_data, uint8_t len) {
+    ret_code_t ret;
+    if( m_periph_connected ) {
+        m_uart_send_len = len>UART_CACHE_SIZE ? UART_CACHE_SIZE : len;
+        memcpy(m_uart_send_buffer, p_data, m_uart_send_len);
+
+        ret = ble_nus_c_string_send(&m_ble_nus_c,m_uart_send_buffer, m_uart_send_len);
+        APP_ERROR_CHECK(ret);
     }
 }
 

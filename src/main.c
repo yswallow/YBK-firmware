@@ -81,9 +81,7 @@
 #include "app_usbd_core.h"
 #include "app_usbd.h"
 #include "app_usbd_string_desc.h"
-#include "app_usbd_cdc_acm.h"
 #include "app_usbd_serial_num.h"
-#include "app_scheduler.h"
 #include "app_usbd_hid.h"
 #include "app_usbd_hid_generic.h"
 #include "app_usbd_hid_kbd.h"
@@ -95,18 +93,27 @@
 #include "ble_setting.h"
 #include "ble_hiddevice.h"
 #include "usb_mouse.h"
-#include "ble_central.h"
 #include "via_fds.h"
 #include "debug_message_hid.h"
 
-#ifdef ENABLE_USB_CDC_ACM
-#define LED_CDC_ACM_CONN (BSP_BOARD_LED_2)
-#define LED_CDC_ACM_RX   (BSP_BOARD_LED_3)
+#ifdef KEYBOARD_CENTRAL
+#include "ble_central.h"
+#elif KEYBOARD_PERIPH
+#include "ble_peripheral.h"
 #endif
 
-#define LED_BLINK_INTERVAL 800
+#ifdef ENABLE_USB_CDC_ACM
+#include "app_usbd_cdc_acm.h"
+#define LED_CDC_ACM_CONN (BSP_BOARD_LED_2)
+#define LED_CDC_ACM_RX   (BSP_BOARD_LED_3)
 
+#define LED_BLINK_INTERVAL 800
 #define ENDLINE_STRING "\r\n"
+#endif
+
+
+APP_TIMER_DEF(m_keyboard_job_timer);
+static bool m_usb_connected = false;
 
 
 /** @brief Function for initializing the timer module. */
@@ -140,6 +147,7 @@ static void power_manage(void)
  *
  * @details If there is no pending log operation, then sleep until next the next event occurs.
  */
+/*
 void idle_state_handle(void)
 {
     app_sched_execute();
@@ -148,10 +156,9 @@ void idle_state_handle(void)
         nrf_pwr_mgmt_run();
     }
 }
-
+*/
 
 // USB CODE START
-static bool m_usb_connected = false;
 
 #ifdef ENABLE_USB_CDC_ACM
 
@@ -344,6 +351,27 @@ static void power_management_init(void)
 }
 
 
+static void keyboard_job(void* ptr) {
+    release_prev_tick_kc();
+    keyboard_scan(my_keyboard);
+    
+    kbd_tick_handler(NULL);
+
+#ifdef KEYBOARD_CENTRAL
+    cache_pop_central();
+#elif KEYBOARD_PERIPH
+    cache_pop_peripheral();
+#endif
+}
+
+void keyboard_job_timer_start(void) {
+    ret_code_t err_code;
+    err_code = app_timer_create(&m_keyboard_job_timer, APP_TIMER_MODE_REPEATED, keyboard_job);
+    APP_ERROR_CHECK(err_code);
+    err_code = app_timer_start(m_keyboard_job_timer, APP_TIMER_TICKS(5), NULL);
+    APP_ERROR_CHECK(err_code);
+}
+
 /** @brief Application main function. */
 int main(void)
 {
@@ -390,7 +418,7 @@ int main(void)
     APP_ERROR_CHECK(ret);
     keyboard_init(my_keyboard);
     KEYBOARD_DEBUG_HID_INIT();
-    
+    keyboard_job_timer_start();
     
 #ifdef KEYBOARD_CENTRAL
     ble_central_start();
@@ -408,11 +436,9 @@ int main(void)
         {
             /* Nothing to do */
         }
-        keyboard_scan(my_keyboard);
-#ifdef KEYBOARD_CENTRAL
-        cache_pop_central();
-#endif
-        idle_state_handle();
+        
+        power_manage();
+        NRF_LOG_PROCESS();
     }
 }
 

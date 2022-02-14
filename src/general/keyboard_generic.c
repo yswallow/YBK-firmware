@@ -1,6 +1,5 @@
 #include "keyboard_generic.h"
 #include "nrf_gpio.h"
-//#include "main.h"
 #include "usb_keyboard.h"
 #include "dynamic_keymap.h"
 #include "app_timer.h"
@@ -9,6 +8,7 @@
 #include "via_fds.h"
 #include "nrf_log.h"
 #include "nrf_power.h"
+#include "nrfx_rtc.h"
 
 #include "heatmap.h"
 #include "debug_message_hid.h"
@@ -18,10 +18,15 @@
 #endif
 
 #include "ble_setting.h"
+#include "neopixel.h"
+//#include "neopixel_data.h"
+#include "neopixel_fds.h"
+#include "neopixel_time.h"
 
 #define DEBOUNCING_TICK_INVALID 0xFFFFFFFFUL
+#define KC_INVALID 0xFF
+#define SECOND_INCREMENT_TICKS 200
 
-APP_TIMER_DEF(m_tick_kbd);
 #ifndef KEYBOARD_PERIPH
 #ifdef KEYBOARD_TIMEOUT
 APP_TIMER_DEF(m_keyboard_timeout);
@@ -31,8 +36,18 @@ APP_TIMER_DEF(m_keyboard_timeout);
 uint32_t debouncing_bitmap[KBD_SETTING_ROW_PINS_MAX];
 uint32_t keypress_bitmap[KBD_SETTING_ROW_PINS_MAX];
 keys_t keypress_status[PRESS_KEYS_MAX];
+uint8_t kc_release_next_tick[PRESS_KEYS_MAX];
 //uint8_t layer_history[DYNAMIC_KEYMAP_LAYER_COUNT];
 uint8_t current_layer;
+
+uint8_t m_neopixel_tick_count;
+uint8_t m_neopixel_pattern = 5;
+uint8_t m_neopixel_index;
+uint8_t m_clock_tick_count = 0;
+uint8_t m_second;
+uint8_t m_minute;
+uint8_t m_hour;
+
 
 keyboard_hid_functions_t hid_functions = {
     .keycode_append = keycode_append_usb,
@@ -207,8 +222,7 @@ void press_key(keys_t *p_key) {
     }
 }
 
-debounceing_keys_t debouncing_keys[PRESS_KEYS_MAX];
-
+debouncing_keys_t debouncing_keys[PRESS_KEYS_MAX];
 void kbd_tick_handler(void* p_context) {
     //called every TAPPING_TERM_TICK_MS msecs
     for(uint8_t i=0; (keypress_status[i].kc||keypress_status[i].application) && i<PRESS_KEYS_MAX; i++) {
@@ -232,16 +246,55 @@ void kbd_tick_handler(void* p_context) {
             }
         }
     }
+    ++m_clock_tick_count;
+    if(m_clock_tick_count==SECOND_INCREMENT_TICKS) {
+        m_clock_tick_count = 0;
+        m_second++;
+        if(m_second==60) {
+            m_second = 0;
+            m_minute++;
+            if(m_minute==60) {
+                m_minute = 0;
+                m_hour++;
+                if(m_hour==24) {
+                    m_hour = 0;
+                }
+            }
+        }
+    }
+    if(my_keyboard.neopixel_length) {
+        ++m_neopixel_tick_count;
+        if(m_neopixel_pattern < NEOPIXEL_USER_DEFINED_COUNT) {
+            if(m_neopixel_tick_count%(neopixel_user_defined_config[m_neopixel_pattern].interval_ticks)==0) {
+                neopixel_write_uint8( neopixel_user_defined[m_neopixel_pattern][m_neopixel_index], my_keyboard.neopixel_length);
+                m_neopixel_index++;
+                if( neopixel_user_defined_config[m_neopixel_pattern].frame_count <= m_neopixel_index ) {
+                    m_neopixel_index = 0;
+                }
+                save_neopixel_one_frame();
+                m_neopixel_tick_count = 0;
+            }
+        } else {
+            if(m_clock_tick_count==0) {
+                if(m_second%2) {
+                    setNumber(m_minute,0x00FF0000,0x0000FFFF, 0x00404040);
+                } else {
+                    setNumber(m_hour, 0x0000FF00,0x00FFFF00, 0x00404040);
+                }
+                neopixel_write_uint8(neopixel_time_data, my_keyboard.neopixel_length);
+            }
+        }
+    }
 }
 
-void register_debounce(uint8_t row, uint8_t col) {
+void register_debounce(uint8_t row, uint8_t col, bool press) {
     debouncing_bitmap[row] |= (1<<col);
     
     for(uint8_t i=0; i<PRESS_KEYS_MAX; i++) {
         if( debouncing_keys[i].tick == DEBOUNCING_TICK_INVALID ) {
             debouncing_keys[i].row = row;
             debouncing_keys[i].col = col;
-            debouncing_keys[i].tick = 0;
+            debouncing_keys[i].tick = press ? 0 : 0;
             break;
         }
     }
@@ -342,7 +395,7 @@ void keypress(uint8_t row, uint8_t col, bool debouncing) {
 #endif
     if(debouncing) {
         //nrf_delay_ms(DEBOUNCING_DELAY_MS);
-        register_debounce(row, col);
+        register_debounce(row, col, true);
     }
     keycode = dynamic_keymap_get_keycode(get_active_layer(),row,col);
 #ifdef KEYBOARD_PERIPH
@@ -376,10 +429,16 @@ void keypress(uint8_t row, uint8_t col, bool debouncing) {
             handle_keycode(keypress_status[i].kc, true);
             break;
         case 0x50:
-            if( action == 0x0C && keypress_status[i].kc == 0x00 ) {
-                // RESET
-                keyboard_init(my_keyboard);
-                hid_functions.reset();
+            if( action == 0x0C ) {
+                if( keypress_status[i].kc == 0x00 ) {
+                    // RESET
+                    keyboard_init(my_keyboard);
+                    hid_functions.reset();
+                    break;
+                } else if( (kc&0xF0)==0xD0 ) {
+                    m_neopixel_pattern = kc & 0x0F;
+                    break;
+                }
                 break;
             } else if( action == 0x02 ) {
                 my_keyboard.default_layer = kc;
@@ -394,6 +453,14 @@ void keypress(uint8_t row, uint8_t col, bool debouncing) {
         handle_keycode(keypress_status[i].kc, true);
     }
 }
+
+
+void register_kc_release_next_tick(uint8_t kc){
+    uint8_t i=0;
+    for(;kc_release_next_tick[i]!=KC_INVALID;i++){}
+    kc_release_next_tick[i]=kc;
+}
+
 
 void keyrelease(uint8_t row, uint8_t col, bool debouncing) {
     uint8_t removes_count = 0;
@@ -433,7 +500,7 @@ void keyrelease(uint8_t row, uint8_t col, bool debouncing) {
                         layer_history_remove(action);
                     } else {
                         handle_keycode(keypress_status[i].kc, true);
-                        handle_keycode(keypress_status[i].kc, false);
+                        register_kc_release_next_tick(keypress_status[i].kc);
                     }
                     break;
                 case 0x50:
@@ -450,7 +517,7 @@ void keyrelease(uint8_t row, uint8_t col, bool debouncing) {
                         }
                     } else {
                         handle_keycode(keypress_status[i].kc, true);
-                        handle_keycode(keypress_status[i].kc, false);
+                        register_kc_release_next_tick(keypress_status[i].kc);
                     }
                     break;
                 case 0x70:
@@ -462,7 +529,7 @@ void keyrelease(uint8_t row, uint8_t col, bool debouncing) {
                         }
                     } else {
                         handle_keycode(keypress_status[i].kc, true);
-                        handle_keycode(keypress_status[i].kc, false);
+                        register_kc_release_next_tick(keypress_status[i].kc);
                     }
                     break;
                 case 0xC0:
@@ -485,7 +552,7 @@ void keyrelease(uint8_t row, uint8_t col, bool debouncing) {
 #endif
             memset(keypress_status+i, 0, sizeof(keys_t));
             if(debouncing) {
-                register_debounce(row,col);
+                register_debounce(row,col,false);
                 //nrf_delay_ms(DEBOUNCING_DELAY_MS);
             }
             
@@ -505,17 +572,28 @@ void keyboard_scan(keyboard_t keyboard) {
     (keyboard.scan_method)(keyboard.keyboard_type,keyboard.keyboard_definision);
 }
 
+
+void release_prev_tick_kc(void){
+    for(uint8_t i=0;kc_release_next_tick[i]!=KC_INVALID;i++){
+        hid_functions.keycode_remove(kc_release_next_tick[i]);kc_release_next_tick[i]=KC_INVALID;
+    }
+}
+
 void keyboard_init(keyboard_t keyboard) {
     memset(keypress_status, 0, sizeof(keypress_status));
     //memset(layer_history, 255, sizeof(uint8_t)*DYNAMIC_KEYMAP_LAYER_COUNT);
     memset(keypress_bitmap, 0, sizeof(keypress_bitmap));
     memset(debouncing_bitmap, 0, sizeof(debouncing_bitmap));
+    memset(kc_release_next_tick,KC_INVALID,PRESS_KEYS_MAX);
     heatmap_init();
+    if(my_keyboard.neopixel_length) {
+        //neopixel_data_init();
+        neopixel_init(my_keyboard.neopixel_pin, NULL);
+        m_neopixel_index = 0;
+    }
     //layer_history[0] = 0;
     current_layer = my_keyboard.default_layer;
     
-    app_timer_create(&m_tick_kbd, APP_TIMER_MODE_REPEATED, kbd_tick_handler);
-    app_timer_start(m_tick_kbd, APP_TIMER_TICKS(TAPPING_TERM_TICK_MS),NULL);
     (keyboard.init_method)(keyboard.keyboard_type,keyboard.keyboard_definision);
 #ifndef KEYBOARD_PERIPH
 #ifdef KEYBOARD_TIMEOUT

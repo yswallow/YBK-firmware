@@ -4,6 +4,7 @@
 #include "via_fds.h"
 #include "dynamic_keymap.h"
 #include "app_timer.h"
+#include "nrfx_rtc.h"
 
 #ifndef __KEYBOARD_H
 #define __KEYBOARD_H
@@ -20,7 +21,7 @@ typedef struct {
     uint8_t row;
     uint8_t col;
     uint32_t tick;
-} debounceing_keys_t;
+} debouncing_keys_t;
 
 typedef struct {
     ret_code_t (*keycode_append)(uint8_t);
@@ -65,6 +66,8 @@ typedef struct {
     uint8_t kbd_power_led;
     uint8_t kbd_power_led_enable;
     uint8_t default_layer;
+    uint8_t neopixel_pin;
+    uint8_t neopixel_length;
     void (*scan_method)(keyboard_type_t, keyboard_definision_t);
     void (*init_method)(keyboard_type_t, keyboard_definision_t);
     ret_code_t (*sleep_prepare)(keyboard_type_t, keyboard_definision_t);
@@ -77,14 +80,16 @@ ret_code_t keyboard_sleep_prepare(void);
 void keypress(uint8_t row, uint8_t col, bool debouncing);
 void keyrelease(uint8_t row, uint8_t col, bool debouncing);
 uint8_t get_active_layer(void);
+void release_prev_tick_kc(void);
 
 void restart_timeout_timer(void);
 void sleep_mode_enter(void *ptr);
+void kbd_tick_handler(void* p_context);
 
 #define PRESS_KEYS_MAX 10
 #define DEBOUNCING_DELAY_MS 30
-#define DEBOUNCING_TICKS 2
-#define TAPPING_TERM_TICK_MS 50
+#define DEBOUNCING_TICKS 8
+#define TAPPING_TERM_TICK_MS 5
 #define MOUSE_MOVE_INTERVAL_TICKS ( MOUSE_MOVE_INTERVAL / TAPPING_TERM_TICK_MS )
 #define KEYBOARD_TIMEOUT_TICKS APP_TIMER_TICKS(600000)
 
