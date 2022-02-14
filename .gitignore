@@ -1,14 +1,9 @@
-cpkb/
-16mm-kb.c
-16mm-kb.h
-cpkb.c
-cpkb.h
 .*
 !.keep
 !.gitignore
 keyboard/s140/ses/Output/*
+ses/Output/*
 *.jlink
-keyboard/s140/dust/
 *.emSession
 *.uf2
 *.zip
