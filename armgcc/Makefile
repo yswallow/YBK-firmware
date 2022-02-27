@@ -349,7 +349,7 @@ central: KEYBOARD_TYPE = central
 central: CFLAGS += -DKEYBOARD_CENTRAL -DBLE_RAW_HID
 
 peripheral: KEYBOARD_TYPE = peripheral
-peripheral: CFLAGS += -DKEYBOARD_PERIPHERAL
+peripheral: CFLAGS += -DKEYBOARD_PERIPH
 
 integrated: KEYBOARD_TYPE = integrated
 integrated: CFLAGS += -DBLE_RAW_HID

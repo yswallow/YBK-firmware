@@ -33,7 +33,6 @@ static uint16_t uart_cache_usage = 0;
  */
 static void nus_data_handler(ble_nus_evt_t * p_evt)
 {
-    ret_code_t ret;
     const uint8_t *data;
     uint16_t len;
 
@@ -55,6 +54,8 @@ static void nus_data_handler(ble_nus_evt_t * p_evt)
             }
         }
         
+        break;
+    default:
         break;
     }
 }
@@ -139,7 +140,7 @@ void send_place_ble(uint8_t row, uint8_t col, bool press) {
     message[4] = '\r';
     message[5] = '\n';
     message[6] = '\0';
-    ble_nus_data_send(&m_nus, message, &message_sent, m_conn_handle);
+    ble_nus_data_send(&m_nus, (uint8_t *)message, &message_sent, m_conn_handle);
     if(press) {
         NRF_LOG_DEBUG("Send KeyPress");
     } else {
