@@ -145,7 +145,7 @@
         <file file_name="../src/scan_method/matrix_keyboard.h" />
         <file file_name="../src/neopixel/neopixel.h" />
         <file file_name="../src/raw_hid/raw_hid.h" />
-        <file file_name="../config/sdk_config.h" />
+        <file file_name="../src/config/sdk_config.h" />
         <file file_name="../src/usb/usb_config.h" />
         <file file_name="../src/usb/usb_mouse.h" />
         <file file_name="../src/usb/usb_keyboard.h" />

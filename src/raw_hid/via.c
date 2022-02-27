@@ -151,14 +151,14 @@ void raw_hid_receive(uint8_t *data, uint8_t length) {
             break;
         }
         case id_dynamic_keymap_macro_get_buffer: {
-            uint16_t offset = (command_data[0] << 8) | command_data[1];
-            uint16_t size   = command_data[2];  // size <= 28
+            //uint16_t offset = (command_data[0] << 8) | command_data[1];
+            //uint16_t size   = command_data[2];  // size <= 28
             //dynamic_keymap_macro_get_buffer(offset, size, &command_data[3]);
             break;
         }
         case id_dynamic_keymap_macro_set_buffer: {
-            uint16_t offset = (command_data[0] << 8) | command_data[1];
-            uint16_t size   = command_data[2];  // size <= 28
+            //uint16_t offset = (command_data[0] << 8) | command_data[1];
+            //uint16_t size   = command_data[2];  // size <= 28
             //dynamic_keymap_macro_set_buffer(offset, size, &command_data[3]);
             break;
         }

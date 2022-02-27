@@ -63,9 +63,6 @@
 void hid_raw_ev_handler(app_usbd_class_inst_t const * p_inst,
                                 app_usbd_hid_user_event_t event);
 
-APP_USBD_HID_GENERIC_SUBCLASS_REPORT_DESC(raw_desc, RAW_REPORT_DSC());
-
-static const app_usbd_hid_subclass_desc_t * raw_reps[] = {&raw_desc};
 //extern bool m_pending_report_raw;
 
 
@@ -74,7 +71,7 @@ static const app_usbd_hid_subclass_desc_t * raw_reps[] = {&raw_desc};
 typedef uint8_t matrix_row_t;
 
 void raw_hid_send(uint8_t *data, uint8_t length);
-static ret_code_t idle_handle_raw(app_usbd_class_inst_t const * p_inst, uint8_t report_id);
+//static ret_code_t idle_handle_raw(app_usbd_class_inst_t const * p_inst, uint8_t report_id);
 //app_usbd_hid_generic_t * get_raw_inst(void);
 
 void update_keycode(uint8_t kc);

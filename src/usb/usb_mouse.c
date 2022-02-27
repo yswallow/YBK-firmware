@@ -135,7 +135,7 @@ ret_code_t tick_handler_mouse_usb(keys_t *p_key) {
 }
 
 
-ret_code_t usb_mouse_init(void) {
+void usb_mouse_init(void) {
     ret_code_t ret;
     app_usbd_class_inst_t const * class_inst_mouse;
     class_inst_mouse = app_usbd_hid_mouse_class_inst_get(&m_app_hid_mouse);

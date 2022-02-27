@@ -143,7 +143,7 @@ void layer_history_append(uint8_t layer) {
 }
 
 void layer_history_remove(uint8_t layer) {
-    uint8_t backword_count = 0;
+    //uint8_t backword_count = 0;
     NRF_LOG_INFO("removing layer:");
     NRF_LOG_HEXDUMP_INFO(&layer, 1);
     if( layer == get_active_layer() ) {
@@ -358,8 +358,9 @@ ret_code_t handle_keycode(uint16_t keycode, bool press) {
         }
     } else if( kc>=0xF0 ) {
         return hid_functions.handle_mouse(kc,press);
+    } else {
+        return NRF_SUCCESS;
     }
-
 }
 
 void keypress(uint8_t row, uint8_t col, bool debouncing) {
