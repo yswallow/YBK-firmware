@@ -232,7 +232,7 @@ void update_fds_entry(fds_record_desc_t* p_desc, fds_record_t* p_record) {
 void save_keymap(void) {
     ret_code_t ret;
     fds_find_token_t tok;
-    if( eeprom_desc.p_record = 0 ) {
+    if( eeprom_desc.p_record == 0 ) {
         ret=fds_record_find(CONFIG_FILE, CONFIG_REC_KEY, &eeprom_desc, &tok);
         if( ret == FDS_ERR_NOT_FOUND ) {
             NRF_LOG_ERROR("EEPROM record Not Found.");

@@ -8,6 +8,10 @@
 #include "ble_hiddevice.h"
 #endif
 
+APP_USBD_HID_GENERIC_SUBCLASS_REPORT_DESC(raw_desc, RAW_REPORT_DSC());
+
+static const app_usbd_hid_subclass_desc_t * raw_reps[] = {&raw_desc};
+
 APP_USBD_HID_GENERIC_GLOBAL_DEF(m_app_hid_raw,
                                 HID_RAW_INTERFACE,
                                 hid_raw_ev_handler,

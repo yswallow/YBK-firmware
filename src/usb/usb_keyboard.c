@@ -86,11 +86,12 @@ ret_code_t keyboard_report_send_usb(void) {
         USB_HID_KBD_REP_LEN);
 }
 
+/*
 static ret_code_t idle_handle_keyboard(app_usbd_class_inst_t const * p_inst, uint8_t report_id)
 {
     return NRF_ERROR_NOT_SUPPORTED;   
 }
-
+*/
 
 static void hid_keyboard_ev_handler(app_usbd_class_inst_t const * p_inst,
                                 app_usbd_hid_user_event_t event)

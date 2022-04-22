@@ -114,13 +114,13 @@ static ble_uuid_t const m_nus_uuid =
     .uuid = BLE_UUID_NUS_SERVICE,
     .type = NUS_SERVICE_UUID_TYPE
 };
-
+/*
 static ble_uuid_t const m_hid_uuid =
 {
     .uuid = BLE_UUID_HUMAN_INTERFACE_DEVICE_SERVICE, 
     .type = BLE_UUID_TYPE_BLE
 };
-
+*/
 
 ble_gap_scan_params_t gap_c_scan_params = {
     .active = 0,
@@ -397,7 +397,6 @@ static char m_ble_received_cache[18];
 static uint8_t m_ble_received_cache_end;
 static void ble_nus_chars_received_keyboard(uint8_t * p_data, uint16_t data_len)
 {
-    ret_code_t ret_val;
     uint16_t i=0;
     NRF_LOG_DEBUG("Receiving data.");
     NRF_LOG_HEXDUMP_DEBUG(p_data, data_len);
@@ -415,7 +414,7 @@ static void ble_nus_chars_received_keyboard(uint8_t * p_data, uint16_t data_len)
  
     for(; i<data_len; i+=6 ) {
         if( i+5<data_len ) {
-            send_keycode_central(p_data+i);
+            send_keycode_central((char*)p_data+i);
         } else {
             for(; i<data_len;i++) {
                 m_ble_received_cache[m_ble_received_cache_end++] = p_data[i];
@@ -770,24 +769,6 @@ static void buttons_leds_init(void)
 }
 */
 
-/**@brief Function for initializing the timer. */
-static void timer_init(void)
-{
-    ret_code_t err_code = app_timer_init();
-    APP_ERROR_CHECK(err_code);
-}
-
-
-/**@brief Function for initializing the nrf log module. */
-static void log_init(void)
-{
-    ret_code_t err_code = NRF_LOG_INIT(NULL);
-    APP_ERROR_CHECK(err_code);
-
-    NRF_LOG_DEFAULT_BACKENDS_INIT();
-}
-
-
 /**@brief Function for initializing power management.
  */
  /*
@@ -817,7 +798,7 @@ static void db_discovery_init(void)
 /**@brief Function for handling the idle state (main loop).
  *
  * @details Handles any pending log operations, then sleeps until the next event occurs.
- */
+
 static void idle_state_handle(void)
 {
     if (NRF_LOG_PROCESS() == false)
@@ -825,7 +806,7 @@ static void idle_state_handle(void)
         nrf_pwr_mgmt_run();
     }
 }
-
+ */
 
 void uart_send_central(uint8_t *p_data, uint8_t len) {
     ret_code_t ret;

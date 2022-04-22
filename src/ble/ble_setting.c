@@ -224,7 +224,7 @@ static int whitelist_set_one_device(uint8_t index)
 /**@brief Function for setting filtered device identities.
  *
  * @param[in] skip  Filter passed to @ref pm_peer_id_list.
- */
+
 static void identities_set(pm_peer_id_list_skip_t skip)
 {
     pm_peer_id_t peer_ids[BLE_GAP_DEVICE_IDENTITIES_MAX_COUNT];
@@ -236,10 +236,10 @@ static void identities_set(pm_peer_id_list_skip_t skip)
     err_code = pm_device_identities_list_set(peer_ids, peer_id_count);
     APP_ERROR_CHECK(err_code);
 }
-
+ */
 
 /**@brief Clear bond information from persistent storage.
- */
+
 static void delete_bonds(void)
 {
     ret_code_t err_code;
@@ -249,9 +249,9 @@ static void delete_bonds(void)
     err_code = pm_peers_delete();
     APP_ERROR_CHECK(err_code);
 
-    pm_whitelist_set(NULL,NULL);
+    pm_whitelist_set(NULL,(void *)NULL);
 }
-
+ */
 
 /**@brief Function for starting advertising.
  */
@@ -294,7 +294,7 @@ static void pm_evt_handler(pm_evt_t const * p_evt)
     pm_handler_on_pm_evt(p_evt);
     pm_handler_disconnect_on_sec_failure(p_evt);
     pm_handler_flash_clean(p_evt);
-    ret_code_t err_code;
+    
     switch (p_evt->evt_id)
     {
         case PM_EVT_CONN_SEC_SUCCEEDED:

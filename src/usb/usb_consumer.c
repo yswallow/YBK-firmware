@@ -58,10 +58,12 @@ APP_USBD_HID_GENERIC_GLOBAL_DEF(m_app_hid_consumer,
                                 APP_USBD_HID_PROTO_GENERIC);
 
 
+/*
 static ret_code_t idle_handle_consumer(app_usbd_class_inst_t const * p_inst, uint8_t report_id)
 {
     return NRF_ERROR_NOT_SUPPORTED;
 }
+*/
 
 static void hid_consumer_ev_handler(app_usbd_class_inst_t const * p_inst,
                                 app_usbd_hid_user_event_t event)

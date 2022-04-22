@@ -22,7 +22,7 @@ void setSegment(uint8_t c0, uint8_t c1, uint8_t r0, uint8_t r1, uint32_t color) 
 void setSegments(uint8_t number, uint8_t width, uint8_t shift, uint32_t color) {
     const uint8_t seg = segData[number];
     const uint8_t rows = neopixel_array_config.rows;
-    const uint8_t cols = neopixel_array_config.cols;
+    //const uint8_t cols = neopixel_array_config.cols;
     
     const uint8_t col_width = width/3;
     const uint8_t col_amari = width - col_width*3;
