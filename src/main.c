@@ -387,6 +387,24 @@ int main(void)
     power_management_init();
     app_usbd_serial_num_generate();
 
+    // if power supply from VDDH and output voltage is not configured (is reset state),
+    // configure output voltage 3V3
+    if( (NRF_UICR->REGOUT0 & UICR_REGOUT0_VOUT_Msk)==UICR_REGOUT0_VOUT_DEFAULT && (NRF_POWER->MAINREGSTATUS & 1) ) {
+        NRF_NVMC->CONFIG = NVMC_CONFIG_WEN_Wen;
+        while( NRF_NVMC->READY == NVMC_READY_READY_Busy ) {
+        }
+
+        NRF_UICR->REGOUT0 = UICR_REGOUT0_VOUT_3V3 << UICR_REGOUT0_VOUT_Pos;
+        __DMB();
+
+        while( NRF_NVMC->READY == NVMC_READY_READY_Busy ) {
+        }
+        NRF_NVMC->CONFIG = NVMC_CONFIG_WEN_Ren;
+
+        // Must reset to enable change.
+        NVIC_SystemReset();
+    }
+
     ret = nrf_drv_clock_init();
     APP_ERROR_CHECK(ret);
 
