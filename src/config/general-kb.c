@@ -1,5 +1,6 @@
 #include "matrix_keyboard.h"
 #include "general-kb.h"
+#include "nrf_gpio.h"
 
 matrix_keyboard_t definision = {
     .col2row = 1

@@ -1,6 +1,6 @@
 #ifdef KEYBOARD_DEBUG_HID
 #include "raw_hid.h"
-#include "usb_keyboard.h"
+#include "usb_hiddevice.h"
 #include "ble_hiddevice.h"
 #include "keyboard_generic.h"
 #include "via.h"

@@ -20,9 +20,13 @@
 #include "keyboard_config.h"
 #include "via_fds.h"
 
+enum {
+    ID_UPTIME = 0x01,
+    ID_LAYOUT_OPTIONS,
+    ID_SWITCH_MATRIX_STATE,
+};
 
 bool keymap_updated = false;
-
 
 // This is generalized so the layout options EEPROM usage can be
 // variable, between 1 and 4 bytes.
@@ -61,14 +65,14 @@ void raw_hid_receive(uint8_t *data, uint8_t length) {
     uint8_t *command_id   = &(data[0]);
     uint8_t *command_data = &(data[1]);
     switch (*command_id) {
-        case id_get_protocol_version: {
+        case ID_GET_PROTOCOL_VERSION: {
             command_data[0] = VIA_PROTOCOL_VERSION >> 8;
             command_data[1] = VIA_PROTOCOL_VERSION & 0xFF;
             break;
         }
-        case id_get_keyboard_value: {
+        case ID_GET_KEYBOARD_VALUE: {
             switch (command_data[0]) {
-                case id_uptime: {
+                case ID_UPTIME: {
                     uint32_t value  = 0xC0FFEE;//timer_read32();
                     command_data[1] = (value >> 24) & 0xFF;
                     command_data[2] = (value >> 16) & 0xFF;
@@ -76,7 +80,7 @@ void raw_hid_receive(uint8_t *data, uint8_t length) {
                     command_data[4] = value & 0xFF;
                     break;
                 }
-                case id_layout_options: {
+                case ID_LAYOUT_OPTIONS: {
                     uint32_t value  = via_get_layout_options();
                     command_data[1] = (value >> 24) & 0xFF;
                     command_data[2] = (value >> 16) & 0xFF;
@@ -84,8 +88,7 @@ void raw_hid_receive(uint8_t *data, uint8_t length) {
                     command_data[4] = value & 0xFF;
                     break;
                 }
-                case id_switch_matrix_state: {
-                    
+                case ID_SWITCH_MATRIX_STATE: {
                     if ((my_keyboard.kbd_cols_count / 8 + 1) * my_keyboard.kbd_rows_count <= 28) {
                         uint8_t i = 1;
                         for (uint8_t row = 0; row < my_keyboard.kbd_rows_count; row++) {
@@ -111,9 +114,9 @@ void raw_hid_receive(uint8_t *data, uint8_t length) {
             }
             break;
         }
-        case id_set_keyboard_value: {
+        case ID_SET_KEYBOARD_VALUE: {
             switch (command_data[0]) {
-                case id_layout_options: {
+                case ID_LAYOUT_OPTIONS: {
                     uint32_t value = ((uint32_t)command_data[1] << 24) | ((uint32_t)command_data[2] << 16) | ((uint32_t)command_data[3] << 8) | (uint32_t)command_data[4];
                     via_set_layout_options(value);
                     break;
@@ -125,52 +128,52 @@ void raw_hid_receive(uint8_t *data, uint8_t length) {
             }
             break;
         }
-        case id_dynamic_keymap_get_keycode: {
+        case ID_KEYMAP_GET_KEYCODE: {
             uint16_t keycode = dynamic_keymap_get_keycode(command_data[0], command_data[1], command_data[2]);
             command_data[3]  = keycode >> 8;
             command_data[4]  = keycode & 0xFF;
             break;
         }
-        case id_dynamic_keymap_set_keycode: {
+        case ID_KEYMAP_SET_KEYCODE: {
             dynamic_keymap_set_keycode(command_data[0], command_data[1], command_data[2], (command_data[3] << 8) | command_data[4]);
             keymap_updated = true;
             break;
         }
-        case id_dynamic_keymap_reset: {
+        case ID_KEYMAP_RESET: {
             //dynamic_keymap_reset();
             break;
         }
-        case id_dynamic_keymap_macro_get_count: {
+        case ID_MACRO_GET_COUNT: {
             command_data[0] = 0; //dynamic_keymap_macro_get_count();
             break;
         }
-        case id_dynamic_keymap_macro_get_buffer_size: {
+        case ID_MACRO_GET_BUFFER_SIZE: {
             uint16_t size   = 0x0;//dynamic_keymap_macro_get_buffer_size();
             command_data[0] = size >> 8;
             command_data[1] = size & 0xFF;
             break;
         }
-        case id_dynamic_keymap_macro_get_buffer: {
+        case ID_MACRO_GET_BUFFER: {
             //uint16_t offset = (command_data[0] << 8) | command_data[1];
             //uint16_t size   = command_data[2];  // size <= 28
             //dynamic_keymap_macro_get_buffer(offset, size, &command_data[3]);
             break;
         }
-        case id_dynamic_keymap_macro_set_buffer: {
+        case ID_MACRO_SET_BUFFER: {
             //uint16_t offset = (command_data[0] << 8) | command_data[1];
             //uint16_t size   = command_data[2];  // size <= 28
             //dynamic_keymap_macro_set_buffer(offset, size, &command_data[3]);
             break;
         }
-        case id_dynamic_keymap_macro_reset: {
+        case ID_MACRO_RESET: {
             //dynamic_keymap_macro_reset();
             break;
         }
-        case id_dynamic_keymap_get_layer_count: {
+        case ID_KEYMAP_GET_LAYER_COUNT: {
             command_data[0] = dynamic_keymap_get_layer_count();
             break;
         }
-        case id_dynamic_keymap_get_buffer: {
+        case ID_KEYMAP_GET_BUFFER: {
             uint16_t offset = (command_data[0] << 8) | command_data[1];
             uint16_t size   = command_data[2];  // size <= 28
             dynamic_keymap_get_buffer(offset, size, &command_data[3]);
@@ -180,7 +183,7 @@ void raw_hid_receive(uint8_t *data, uint8_t length) {
             }
             break;
         }
-        case id_dynamic_keymap_set_buffer: {
+        case ID_KEYMAP_SET_BUFFER: {
             uint16_t offset = (command_data[0] << 8) | command_data[1];
             uint16_t size   = command_data[2];  // size <= 28
             dynamic_keymap_set_buffer(offset, size, &command_data[3]);
@@ -190,7 +193,7 @@ void raw_hid_receive(uint8_t *data, uint8_t length) {
         default: {
             // The command ID is not known
             // Return the unhandled state
-            *command_id = id_unhandled;
+            *command_id = ID_UNHANDLED;
             break;
         }
     }
@@ -200,7 +203,7 @@ void raw_hid_receive(uint8_t *data, uint8_t length) {
     if(length > RAW_REP_SIZE) {
         length = RAW_REP_SIZE;
     }
-    if(data[0] != id_unhandled) {
+    if(data[0] != ID_UNHANDLED) {
         raw_hid_send(data, length);
     }
 }

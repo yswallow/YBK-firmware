@@ -8,7 +8,9 @@
 #include "app_usbd_hid_types.h"
 
 #include "usb_config.h"
-#include "usb_mouse.h"
+
+#define USB_HID_MOUSE_BUTTONS_INDEX 2
+#define USB_HID_MOUSE_REP_LEN 4
 
 static void hid_mouse_ev_handler(app_usbd_class_inst_t const * p_inst,
                                 app_usbd_hid_user_event_t event);

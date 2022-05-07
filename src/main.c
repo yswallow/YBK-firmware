@@ -87,12 +87,10 @@
 #include "app_usbd_hid_kbd.h"
 #include "app_usbd_hid_kbd_desc.h"
 
-#include "raw_hid.h"
 #include "keyboard_generic.h"
-#include "usb_keyboard.h"
+#include "usb_hiddevice.h"
 #include "ble_setting.h"
 #include "ble_hiddevice.h"
-#include "usb_mouse.h"
 #include "via_fds.h"
 #include "debug_message_hid.h"
 

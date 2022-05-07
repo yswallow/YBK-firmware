@@ -78,14 +78,14 @@ static void uart_receive_peripheral(uint8_t* p_data, uint16_t len) {
 
     case UART_NEOPIXEL_SET_PATTERN_ID:
     case UART_NEOPIXEL_SET_PATTERN_CONF_ID:
-        p_data[0] = id_set_keyboard_value;
+        p_data[0] = ID_SET_KEYBOARD_VALUE;
         p_data[1] -= 2;
         raw_hid_receive_neopixel(p_data, len);
         break;
 
     case UART_NEOPIXEL_GET_PATTERN_CONF_ID:
     case UART_NEOPIXEL_GET_PATTERN_ID:
-        p_data[0] = id_get_keyboard_value;
+        p_data[0] = ID_GET_KEYBOARD_VALUE;
         p_data[1] -= 2;
         raw_hid_receive_neopixel(p_data, len);
         break;

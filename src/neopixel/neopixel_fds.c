@@ -10,6 +10,21 @@
 #include "ble_central.h"
 #endif //KEYBOARD_CENTRAL
 
+// migration
+#define NEOPIXEL_FDS_FRAME_FILE_ID_8140 (0x8140)
+#define NEOPIXEL_MAX_CHAINS_8140 120
+#define NEOPIXEL_FRAME_BYTES_8140 ( NEOPIXEL_BYTES_PER_PIXEL * NEOPIXEL_MAX_CHAINS_8140 )
+
+#define NEOPIXEL_FDS_FRAME_FILE_ID (0x8141)
+#define NEOPIXEL_FDS_FRAME_REC_KEY_BASE (0x0001)
+#define FDS_NEOPIXEL_REC_KEY (0x0001)
+#define FDS_NEOPIXEL_CONF_FILE_ID (0x8139)
+#define FDS_NEOPIXEL_CONF_REC_KEY (0x0010)
+
+#define FDS_NEOPIXEL_ARRAY_FILE_ID (0x8200)
+#define FDS_NEOPIXEL_ARRAY_REC_KEY (0x0001)
+#define FDS_NEOPIXEL_ARRAY_CONF_REC_KEY (0x0010)
+
 
 static fds_record_desc_t neopixel_frame_desc[NEOPIXEL_USER_DEFINED_COUNT][NEOPIXEL_MAX_FRAMES];
 static fds_record_desc_t neopixel_conf_desc;
@@ -219,7 +234,7 @@ raw_hid_receive_t raw_hid_receive_neopixel(uint8_t *data, uint8_t length) {
 #endif
 
     switch( *data ) {
-    case id_get_keyboard_value:
+    case ID_GET_KEYBOARD_VALUE:
         switch( *(data+1) ) {
         case KBD_NEOPIXEL:
             save_neopixel();
@@ -245,7 +260,7 @@ raw_hid_receive_t raw_hid_receive_neopixel(uint8_t *data, uint8_t length) {
         case KBD_NEOPIXEL_PERIPH:
             *data = UART_NEOPIXEL_GET_PATTERN_ID;
             uart_send_central(data, length);
-            *data = id_get_keyboard_value;
+            *data = ID_GET_KEYBOARD_VALUE;
             return true;
 #endif //KEYBOARD_CENTRAL
         default:
@@ -253,7 +268,7 @@ raw_hid_receive_t raw_hid_receive_neopixel(uint8_t *data, uint8_t length) {
         }
         break;
 
-    case id_set_keyboard_value:
+    case ID_SET_KEYBOARD_VALUE:
         switch( *(data+1) ) {
         case KBD_NEOPIXEL:
             memcpy(
@@ -261,20 +276,20 @@ raw_hid_receive_t raw_hid_receive_neopixel(uint8_t *data, uint8_t length) {
                 data+5,
                 length-5
                 );
-            *data = id_unhandled;
+            *data = ID_UNHANDLED;
             neopixel_user_defined_pattern_updated[*(data+2)] |= 1<<(*(data+3));
             return true;
         case KBD_NEOPIXEL_CONF:
             conf = &neopixel_user_defined_config[*(data+2)];
             conf->frame_count = *(data+3);
             conf->interval_ticks = *(data+4);
-            *data = id_unhandled;
+            *data = ID_UNHANDLED;
             neopixel_user_defined_config_updated = true;
             return true;
         case KBD_NEOPIXEL_ARRAY_CONF:
             neopixel_array_config.rows = *(data+2);
             neopixel_array_config.cols = *(data+3);
-            *data = id_unhandled;
+            *data = ID_UNHANDLED;
             return true;
         case KBD_NEOPIXEL_ARRAY:
             memcpy(
@@ -282,7 +297,7 @@ raw_hid_receive_t raw_hid_receive_neopixel(uint8_t *data, uint8_t length) {
                 data+3,
                 neopixel_array_config.cols
                 );
-            *data = id_unhandled;
+            *data = ID_UNHANDLED;
             neopixel_array_updated = true;
             return true;
         case KBD_NEOPIXEL_TIME:
@@ -294,12 +309,12 @@ raw_hid_receive_t raw_hid_receive_neopixel(uint8_t *data, uint8_t length) {
         case KBD_NEOPIXEL_PERIPH:
             *data = UART_NEOPIXEL_SET_PATTERN_ID;
             uart_send_central(data, length);
-            *data = id_unhandled;
+            *data = ID_UNHANDLED;
             return true;
         case KBD_NEOPIXEL_PERIPH_CONF:
             *data = UART_NEOPIXEL_SET_PATTERN_CONF_ID;
             uart_send_central(data, length);
-            *data = id_unhandled;
+            *data = ID_UNHANDLED;
             return true;
 #endif //KEYBOARD_CENTRAL
         default:

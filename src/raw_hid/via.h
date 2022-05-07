@@ -18,6 +18,28 @@
 #include "raw_hid.h"
 #include "via_fds.h"
 //#include "tmk_core/common/eeconfig.h"  // for EECONFIG_SIZE
+enum {
+    ID_GET_PROTOCOL_VERSION = 0x01,
+    ID_GET_KEYBOARD_VALUE,
+    ID_SET_KEYBOARD_VALUE,
+    ID_KEYMAP_GET_KEYCODE,
+    ID_KEYMAP_SET_KEYCODE,
+    ID_KEYMAP_RESET,
+    ID_LIGHTING_SET_VALUE,
+    ID_LIGHTING_GET_VALUE,
+    ID_LIGHTING_SAVE,
+    ID_EEPROM_RESET,
+    ID_BOOTLOADER_JUMP,
+    ID_MACRO_GET_COUNT,
+    ID_MACRO_GET_BUFFER_SIZE,
+    ID_MACRO_GET_BUFFER,
+    ID_MACRO_SET_BUFFER,
+    ID_MACRO_RESET,
+    ID_KEYMAP_GET_LAYER_COUNT,
+    ID_KEYMAP_GET_BUFFER,
+    ID_KEYMAP_SET_BUFFER,
+    ID_UNHANDLED = 0xFF,
+};
 
 // Keyboard level code can change where VIA stores the magic.
 // The magic is the build date YYMMDD encoded as BCD in 3 bytes,
@@ -58,32 +80,6 @@
 // This is changed only when the command IDs change,
 // so VIA Configurator can detect compatible firmware.
 #define VIA_PROTOCOL_VERSION 0x0009
-
-#define  id_get_protocol_version                  0x01
-#define    id_get_keyboard_value                    0x02
-    #define id_set_keyboard_value                    0x03
-    #define id_dynamic_keymap_get_keycode            0x04
-    #define id_dynamic_keymap_set_keycode            0x05
-    #define id_dynamic_keymap_reset                  0x06
-    #define id_lighting_set_value                    0x07
-    #define id_lighting_get_value                    0x08
-    #define id_lighting_save                         0x09
-    #define id_eeprom_reset                          0x0A
-    #define id_bootloader_jump                       0x0B
-    #define id_dynamic_keymap_macro_get_count        0x0C
-    #define id_dynamic_keymap_macro_get_buffer_size  0x0D
-    #define id_dynamic_keymap_macro_get_buffer       0x0E
-    #define id_dynamic_keymap_macro_set_buffer       0x0F
-    #define id_dynamic_keymap_macro_reset            0x10
-    #define id_dynamic_keymap_get_layer_count        0x11
-    #define id_dynamic_keymap_get_buffer             0x12
-    #define id_dynamic_keymap_set_buffer             0x13
-    #define id_unhandled                             0xFF
-
-    #define id_uptime               0x01
-    #define id_layout_options       0x02
-    #define id_switch_matrix_state  0x03
-
 
 /*
 // Can be called in an overriding via_init_kb() to test if keyboard level code usage of

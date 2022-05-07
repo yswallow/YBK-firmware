@@ -1,10 +1,9 @@
 #include "nrf_drv_usbd.h"
-#include "nordic_common.h"
 #include "app_usbd_hid_generic.h"
 #include "keyboard_config.h"
 
-#ifndef __MAIN_H
-#define __MAIN_H
+#ifndef __USB_CONFIG_H
+#define __USB_CONFIG_H
 
 #define ENABLE_USB_HID_KBD
 #define ENABLE_USB_HID_RAW
@@ -72,12 +71,5 @@ enum USBD_EPOUT_NUMS {
 #define HID_CONSUMER_EPIN NRF_DRV_USBD_EPIN(EPIN_NUM_HID_CONSUMER)
 #endif
 
-// fds configuration
 
-/* Flag to check fds initialization. */
-
-
-
-
-
-#endif // ifndef __MAIN_H
+#endif // ifndef __USB_CONFIG_H

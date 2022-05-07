@@ -1,5 +1,6 @@
 #include "keyboard_generic.h"
 #include "keyboard_config.h"
+#include "nrf_gpio.h"
 
 void matrix_scan(keyboard_type_t type, void* ptr) {
     matrix_keyboard_t defs = *(matrix_keyboard_t*) ptr;

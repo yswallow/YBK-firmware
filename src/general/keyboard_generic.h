@@ -1,4 +1,3 @@
-#include "nrf_gpio.h"
 #include "sdk_errors.h"
 #include "keyboard_config.h"
 #include "via_fds.h"
@@ -27,7 +26,6 @@ typedef struct {
     ret_code_t (*keycode_append)(uint8_t);
     ret_code_t (*keycode_remove)(uint8_t);
     ret_code_t (*send_consumer)(uint8_t,bool);
-    //ret_code_t (*handle_keycode)(uint16_t, bool);
     ret_code_t (*reset)(void);
     ret_code_t (*handle_mouse)(uint16_t,bool);
     ret_code_t (*tick_handler_mouse)(keys_t*);
@@ -98,6 +96,5 @@ extern uint32_t keypress_bitmap[KBD_SETTING_ROW_PINS_MAX];
 extern uint32_t debouncing_bitmap[KBD_SETTING_ROW_PINS_MAX];
 
 extern keys_t keypress_status[PRESS_KEYS_MAX];
-//extern uint8_t layer_history[DYNAMIC_KEYMAP_LAYER_COUNT];
 
 #endif //__KEYBOARD_H

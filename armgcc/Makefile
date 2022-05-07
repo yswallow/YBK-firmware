@@ -17,7 +17,6 @@ $(OUTPUT_DIRECTORY)/peripheral.out: \
 # Source files common to all targets
 SRC_FILES += \
   $(PROJ_SRC_DIR)/main.c \
-  $(PROJ_SRC_DIR)/raw_hid/raw_hid.c \
   $(PROJ_SRC_DIR)/raw_hid/via.c \
   $(PROJ_SRC_DIR)/raw_hid/via_fds.c \
   $(PROJ_SRC_DIR)/raw_hid/heatmap.c \
@@ -27,6 +26,7 @@ SRC_FILES += \
   $(PROJ_SRC_DIR)/usb/usb_mouse.c \
   $(PROJ_SRC_DIR)/usb/usb_keyboard.c \
   $(PROJ_SRC_DIR)/usb/usb_consumer.c \
+  $(PROJ_SRC_DIR)/usb/usb_raw_hid.c \
   $(PROJ_SRC_DIR)/scan_method/matrix_keyboard.c \
   $(PROJ_SRC_DIR)/ble/ble_setting.c \
   $(PROJ_SRC_DIR)/ble/ble_hiddevice.c \
@@ -363,6 +363,10 @@ LIB_FILES += -lc -lnosys -lm
 # Print all targets that can be built
 help:
 	@echo following targets are available:
+	@echo		central
+	@echo		peripheral
+	@echo		integrated
+	@echo
 	@echo		nrf52840_xxaa
 	@echo		flash_softdevice
 	@echo		sdk_config - starting external tool for editing sdk_config.h

@@ -49,6 +49,12 @@
 #include "neopixel_fds.h"
 #include "nrf_soc.h"
 
+
+#define CONFIG_FILE     (0x8010)
+#define CONFIG_REC_KEY  (0x7010)
+#define KBD_SETTING_FILE (0x8989)
+#define KBD_SETTING_REC_KEY (0x1212)
+
 #define KBD_SETTING_ID_HEATMAP 0x80
 #define KBD_SETTING_ID_DEBUG_SETTING 0x88
 #define KBD_SETTING_ID_DEBUG_RECEIVED 0x89
@@ -427,7 +433,7 @@ void raw_hid_receive_kb(uint8_t *data, uint8_t length) {
     bool executed = false;
 
     switch(*command_id) {
-    case id_get_keyboard_value:
+    case ID_GET_KEYBOARD_VALUE:
         if( kbd_setting_updated ) {
             save_kbd_setting();
             apply_kbd_setting();
@@ -457,24 +463,14 @@ void raw_hid_receive_kb(uint8_t *data, uint8_t length) {
         case KBD_SETTING_ID_DEBUG_RECEIVED:
             KEYBOARD_DEBUG_HID_RESPONSE(data, length);
             break;
-/*
-        case KBD_NEOPIXEL_CONF:
-        case KBD_NEOPIXEL:
-        case KBD_NEOPIXEL_PERIPH_CONF:
-        case KBD_NEOPIXEL_PERIPH:
-        case KBD_NEOPIXEL_ARRAY:
-        case KBD_NEOPIXEL_ARRAY_CONF:
-        case KBD_NEOPIXEL_TIME:
-            raw_hid_receive_neopixel(data,length);
-            break;
-*/
+
         default:
             CALL_FUNCTION_AND_BREAK_IF_TRUE(raw_hid_receive_neopixel);
-            *command_id         = id_unhandled;
+            *command_id         = ID_UNHANDLED;
             break;
         }
         break;
-    case id_set_keyboard_value:
+    case ID_SET_KEYBOARD_VALUE:
         switch(setting_id) {
         case KBD_SETTING_ID_COL_PINS:
             memcpy(kbd_setting, data+2, (length-2)<KBD_SETTING_COL_PINS_MAX ? length-2 : KBD_SETTING_COL_PINS_MAX);
@@ -494,26 +490,16 @@ void raw_hid_receive_kb(uint8_t *data, uint8_t length) {
             memcpy(kbd_setting+0x50, data+2, (length-2)<KBD_SETTING_ADDITIONAL_LEN ? length-2 : KBD_SETTING_ADDITIONAL_LEN);
             kbd_setting_updated = true;
             break;
-/*
-        case KBD_NEOPIXEL_CONF:
-        case KBD_NEOPIXEL:
-        case KBD_NEOPIXEL_PERIPH_CONF:
-        case KBD_NEOPIXEL_PERIPH:
-        case KBD_NEOPIXEL_ARRAY:
-        case KBD_NEOPIXEL_ARRAY_CONF:
-        case KBD_NEOPIXEL_TIME:
-            raw_hid_receive_neopixel(data,length);
-            break;
-*/
+
         default:
             CALL_FUNCTION_AND_BREAK_IF_TRUE(raw_hid_receive_neopixel);
-            *command_id         = id_unhandled;
+            *command_id         = ID_UNHANDLED;
             break;
         }
         break;
     default:
         CALL_FUNCTION_AND_BREAK_IF_TRUE(raw_hid_receive_neopixel);
-        *command_id         = id_unhandled;
+        *command_id         = ID_UNHANDLED;
         break;
     }
     

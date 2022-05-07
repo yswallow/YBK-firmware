@@ -1,5 +1,5 @@
 #include "heatmap.h"
-#include "string.h"
+#include <string.h>
 
 uint16_t m_heatmap[KBD_SETTING_ROW_PINS_MAX][KBD_SETTING_ROW_PINS_MAX];
 void response_heatmap(uint8_t *data, uint8_t length) {

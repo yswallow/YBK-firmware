@@ -8,10 +8,15 @@
 #include "app_usbd_hid_types.h"
 
 #include "usb_config.h"
-#include "usb_keyboard.h"
-#include "usb_mouse.h"
-#include "raw_hid.h"
+#include "usb_hiddevice.h"
 
+
+#define USB_HID_KBD_IN_QUEUE_SIZE 1
+#define USB_HID_KBD_OUT_REP_MAXSIZE 1
+#define USB_HID_KBD_FEATURE_REP_MAXSIZE 1
+
+#define USB_HID_KBD_MODS_INDEX 0
+#define USB_HID_KBD_KEYS_START 2
 #define ENDPOINT_LIST_KEYBOARD() ( HID_KEYBOARD_EPIN, HID_KEYBOARD_EPOUT )
 
 static void hid_keyboard_ev_handler(app_usbd_class_inst_t const * p_inst,
@@ -211,11 +216,4 @@ void usb_keyboard_init(void) {
     //APP_ERROR_CHECK(ret);
     ret = app_usbd_class_append(class_inst_keyboard);
     APP_ERROR_CHECK(ret);
-}
-
-void usb_hid_init(void) {
-    usb_keyboard_init();
-    usb_hid_raw_init();
-    usb_mouse_init();
-    usb_hid_consumer_init();
 }

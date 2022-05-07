@@ -4,27 +4,67 @@
 #include "raw_hid.h"
 #include "usb_config.h"
 
-#ifdef BLE_RAW_HID
-#include "ble_hiddevice.h"
-#endif
+/**
+ * @brief Number of reports defined in report descriptor.
+ */
+#define RAW_REPORT_IN_QUEUE_SIZE    1
+
+/**
+ * @brief Size of maximum output report. HID generic class will reserve
+ *        this buffer size + 1 memory space. 
+ *
+ * Maximum value of this define is 63 bytes. Library automatically adds
+ * one byte for report ID. This means that output report size is limited
+ * to 64 bytes.
+ */
+#define RAW_REPORT_OUT_MAXSIZE  32
+
+/**
+ * @brief Feature report maximum size. HID generic class will reserve
+ *        this buffer size + 1 memory space. 
+ */
+#define RAW_REPORT_FEATURE_MAXSIZE  0
+
+#define ENDPOINT_LIST_RAW() \
+( \
+    HID_RAW_EPIN, HID_RAW_EPOUT \
+)
+
+#define RAW_REPORT_DSC() { \
+  0x06, 0x60, 0xFF, \
+  0x09, 0x61, \
+  0xa1, 0x01, \
+  0x09, 0x62, \
+  0x15, 0x00, \
+  0x26, 0xFF, 0x00, \
+  0x95, 0x20, \
+  0x75, 0x08, \
+  0x81, 0x06, \
+\
+  0x09, 0x63, \
+  0x15, 0x00, \
+  0x26, 0xFF, 0x00, \
+  0x95, 0x20, /*REPORT_COUNT(32)*/ \
+  0x75, 0x08, /*REPORT_SIZE(8)*/ \
+  0x91, 0x06, \
+  0xC0 \
+}
+
+void hid_raw_ev_handler(app_usbd_class_inst_t const * p_inst,
+                                app_usbd_hid_user_event_t event);
 
 APP_USBD_HID_GENERIC_SUBCLASS_REPORT_DESC(raw_desc, RAW_REPORT_DSC());
-
-static const app_usbd_hid_subclass_desc_t * raw_reps[] = {&raw_desc};
-
+static const app_usbd_hid_subclass_desc_t* raw_reps[] = {&raw_desc};
 APP_USBD_HID_GENERIC_GLOBAL_DEF(m_app_hid_raw,
                                 HID_RAW_INTERFACE,
                                 hid_raw_ev_handler,
                                 ENDPOINT_LIST_RAW(),
                                 raw_reps,
-                                REPORT_IN_QUEUE_SIZE,
-                                REPORT_OUT_MAXSIZE,
-                                REPORT_FEATURE_MAXSIZE,
+                                RAW_REPORT_IN_QUEUE_SIZE,
+                                RAW_REPORT_OUT_MAXSIZE,
+                                RAW_REPORT_FEATURE_MAXSIZE,
                                 APP_USBD_HID_SUBCLASS_NONE,
                                 APP_USBD_HID_PROTO_GENERIC);
-
-
-bool m_pending_report_raw = false;
 
 static ret_code_t idle_handle_raw(app_usbd_class_inst_t const * p_inst, uint8_t report_id)
 {
@@ -48,7 +88,6 @@ void hid_raw_ev_handler(app_usbd_class_inst_t const * p_inst,
         case APP_USBD_HID_USER_EVT_IN_REPORT_DONE:
         {
             NRF_LOG_INFO("RAW INPUT DONE");
-            m_pending_report_raw = false;
             break;
         }
         case APP_USBD_HID_USER_EVT_SET_BOOT_PROTO:
@@ -67,15 +106,8 @@ void hid_raw_ev_handler(app_usbd_class_inst_t const * p_inst,
             break;
     }
 }
-/*
-app_usbd_hid_generic_t * get_raw_inst(void) {
-    return &m_app_hid_raw;
-}
-*/
-void raw_hid_send(uint8_t *data, uint8_t length) {
-#ifdef BLE_RAW_HID
-    raw_hid_send_ble(data, length);
-#endif
+
+void raw_hid_send_usb(uint8_t *data, uint8_t length) {
     app_usbd_hid_generic_in_report_set(
         &m_app_hid_raw,
         data,
