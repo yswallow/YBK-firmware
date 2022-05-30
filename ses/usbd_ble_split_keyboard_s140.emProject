@@ -79,7 +79,6 @@
       <file file_name="../../../../components/libraries/experimental_section_vars/nrf_section_iter.c" />
       <file file_name="../../../../components/libraries/sortlist/nrf_sortlist.c" />
       <file file_name="../../../../components/libraries/strerror/nrf_strerror.c" />
-      <file file_name="../../../../components/libraries/uart/retarget.c" />
       <file file_name="../../../../components/libraries/usbd/class/hid/kbd/app_usbd_hid_kbd.c" />
       <file file_name="../../../../components/libraries/usbd/class/hid/app_usbd_hid.c" />
       <file file_name="../../../../components/libraries/usbd/class/hid/generic/app_usbd_hid_generic.c" />
@@ -101,7 +100,6 @@
       <file file_name="../../../../integration/nrfx/legacy/nrf_drv_uart.c" />
       <file file_name="../../../../modules/nrfx/soc/nrfx_atomic.c" />
       <file file_name="../../../../modules/nrfx/drivers/src/nrfx_clock.c" />
-      <file file_name="../../../../modules/nrfx/drivers/src/nrfx_gpiote.c" />
       <file file_name="../../../../modules/nrfx/drivers/src/nrfx_power.c" />
       <file file_name="../../../../modules/nrfx/drivers/src/prs/nrfx_prs.c" />
       <file file_name="../../../../modules/nrfx/drivers/src/nrfx_systick.c" />
@@ -112,12 +110,12 @@
     </folder>
     <folder Name="Application">
       <file file_name="../src/main.c" />
-      <file file_name="../src/raw_hid/raw_hid.c" />
       <file file_name="../src/raw_hid/via.c" />
       <file file_name="../src/raw_hid/via_fds.c" />
       <file file_name="../src/general/dynamic_keymap.c" />
       <file file_name="../src/usb/usb_mouse.c" />
       <file file_name="../src/usb/usb_keyboard.c" />
+      <file file_name="../src/usb/usb_raw_hid.c" />
       <file file_name="../src/ble/ble_central.c" />
       <file file_name="../src/scan_method/matrix_keyboard.c" />
       <file file_name="../src/general/keyboard_generic.c" />
@@ -252,6 +250,9 @@
       c_preprocessor_definitions="NRF_SD_BLE_API_VERSION=6;KEYBOARD_DEBUG_HID;BLE_RAW_HID"
       linker_section_placement_macros="FLASH_START=0x26000;FLASH_SIZE=0xCD000"
       post_build_command="python $(ProjectDir)/../lib/uf2/utils/uf2conv.py $(ProjectDir)/$(OutDir)/$(ProjectName).hex -c -b 0x26000 -o $(ProjectDir)/uf2/$(Configuration).uf2 -f 0xADA52840 &amp;&amp; adafruit-nrfutil dfu genpkg --dev-type 0x052 --application $(ProjectDir)/$(OutDir)/$(ProjectName).hex $(ProjectDir)/dfu-zip/$(Configuration).zip" />
+    <folder Name="Patch">
+      <file file_name="../src/patch/retarget.c" />
+    </folder>
   </project>
   <configuration Name="CentralDebug" inherited_configurations="Debug" />
   <configuration Name="PeripheralDebug" inherited_configurations="Debug" />
