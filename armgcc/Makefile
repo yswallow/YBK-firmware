@@ -91,7 +91,6 @@ SRC_FILES += \
   $(SDK_ROOT)/integration/nrfx/legacy/nrf_drv_uart.c \
   $(SDK_ROOT)/modules/nrfx/soc/nrfx_atomic.c \
   $(SDK_ROOT)/modules/nrfx/drivers/src/nrfx_clock.c \
-  $(SDK_ROOT)/modules/nrfx/drivers/src/nrfx_gpiote.c \
   $(SDK_ROOT)/modules/nrfx/drivers/src/nrfx_power.c \
   $(SDK_ROOT)/modules/nrfx/drivers/src/prs/nrfx_prs.c \
   $(SDK_ROOT)/modules/nrfx/drivers/src/nrfx_systick.c \
@@ -164,7 +163,6 @@ INC_FOLDERS += \
   $(SDK_ROOT)/components/libraries/fstorage \
   $(SDK_ROOT)/components/nfc/ndef/text \
   $(SDK_ROOT)/components/libraries/mutex \
-  $(SDK_ROOT)/components/libraries/gpiote \
   $(SDK_ROOT)/components/libraries/bootloader/ble_dfu \
   $(SDK_ROOT)/components/nfc/ndef/connection_handover/common \
   $(SDK_ROOT)/components/boards \
@@ -305,8 +303,8 @@ CFLAGS += -DSOFTDEVICE_PRESENT
 CFLAGS += -mcpu=cortex-m4
 CFLAGS += -mthumb -mabi=aapcs
 CFLAGS += -Wall -Werror
-ifeq ($(IGNORE_MAYBE_UNINITIALIZED),1)
-CFLAGS += -Wno-maybe-uninitialized
+ifeq ($(USE_RECENT_ARMGCC),1)
+CFLAGS += -Wno-maybe-uninitialized -Wno-array-bounds
 endif
 CFLAGS += -mfloat-abi=hard -mfpu=fpv4-sp-d16
 # keep every function in a separate section, this allows linker to discard unused ones
