@@ -166,6 +166,7 @@
       </folder>
       <file file_name="../src/neopixel/neopixel_fds.c" />
       <file file_name="../src/neopixel/neopixel_time.c" />
+      <file file_name="../src/scan_method/steno_matrix.c" />
     </folder>
     <folder Name="nRF_Segger_RTT">
       <file file_name="../../../../external/segger_rtt/SEGGER_RTT.c" />
@@ -220,6 +221,11 @@
     <folder Name="Keyboard Definision">
       <file file_name="../src/config/general-kb.c" />
       <file file_name="../src/config/general-kb.h" />
+      <file file_name="../src/config/steno-kb.c">
+        <configuration
+          Name="StenoCentralDebug"
+          c_preprocessor_definitions="" />
+      </file>
     </folder>
     <configuration
       Name="CentralDebug"
@@ -253,6 +259,9 @@
     <folder Name="Patch">
       <file file_name="../src/patch/retarget.c" />
     </folder>
+    <configuration
+      Name="StenoCentralDebug"
+      c_preprocessor_definitions="SCAN_MATRIX_STENO;KEYBOARD_CENTRAL" />
   </project>
   <configuration Name="CentralDebug" inherited_configurations="Debug" />
   <configuration Name="PeripheralDebug" inherited_configurations="Debug" />
@@ -266,4 +275,5 @@
     inherited_configurations="Release" />
   <configuration Name="Debug" hidden="Yes" />
   <configuration Name="Release" hidden="Yes" />
+  <configuration Name="StenoCentralDebug" inherited_configurations="Debug" />
 </solution>

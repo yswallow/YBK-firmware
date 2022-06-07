@@ -238,6 +238,8 @@ void update_fds_entry(fds_record_desc_t* p_desc, fds_record_t* p_record) {
 void save_keymap(void) {
     ret_code_t ret;
     fds_find_token_t tok;
+    memset(&tok, 0, sizeof(fds_find_token_t));
+
     if( eeprom_desc.p_record == 0 ) {
         ret=fds_record_find(CONFIG_FILE, CONFIG_REC_KEY, &eeprom_desc, &tok);
         if( ret == FDS_ERR_NOT_FOUND ) {
@@ -246,13 +248,10 @@ void save_keymap(void) {
         
         APP_ERROR_CHECK(ret);
     }
-    memset(&tok, 0, sizeof(fds_find_token_t));
     
-    CRITICAL_REGION_ENTER();
     ret = fds_record_update(&eeprom_desc, &m_eeprom_record);
-    CRITICAL_REGION_EXIT();
-
-    if ((ret != NRF_SUCCESS) && (ret == FDS_ERR_NO_SPACE_IN_FLASH))
+    
+    if ( ret == FDS_ERR_NO_SPACE_IN_FLASH )
     {
         ret = fds_gc();
         wait_for_fds_gc_complete();
@@ -260,8 +259,7 @@ void save_keymap(void) {
         if(ret!=NRF_SUCCESS) {
             NRF_LOG_INFO("No space in flash, delete some records to update the config file.");
         }
-    }
-    else
+    } else
     {
         APP_ERROR_CHECK(ret);
     }
@@ -329,6 +327,11 @@ void via_fds_init(void) {
     NRF_LOG_INFO("Found %d valid records.", stat.valid_records);
     NRF_LOG_INFO("Found %d dirty records (ready to be garbage collected).", stat.dirty_records);
 
+    if(stat.dirty_records) {
+        ret = fds_gc();
+        wait_for_fds_gc_complete();
+    }
+    
     ret = fds_record_find(CONFIG_FILE, CONFIG_REC_KEY, &eeprom_desc, &tok);
 
     if (ret == NRF_SUCCESS)
@@ -341,7 +344,7 @@ void via_fds_init(void) {
        
         /* Copy the configuration from flash into m_dummy_cfg. */
         memcpy(eeprom, config.p_data, sizeof(eeprom));
-        
+        fds_record_close(&eeprom_desc);
     }
     else
     {
@@ -373,6 +376,7 @@ void via_fds_init(void) {
         /* Copy the configuration from flash into m_dummy_cfg. */
         memcpy(kbd_setting, config.p_data, sizeof(kbd_setting));
         apply_kbd_setting();
+        fds_record_close(&setting_desc);
     }
     else
     {

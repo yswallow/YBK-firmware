@@ -33,7 +33,8 @@ typedef struct {
 
 typedef enum  {
     KEYBOARD_TYPE_MATRIX,
-    KEYBOARD_TYPE_DIRECTPIN
+    KEYBOARD_TYPE_DIRECTPIN,
+    KEYBOARD_TYPE_STENO,
 } keyboard_type_t;
 
 typedef struct {

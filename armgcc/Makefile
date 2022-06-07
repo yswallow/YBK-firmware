@@ -1,7 +1,7 @@
 include ./Makefile.posix
 
 PROJECT_NAME     := ybk_usbd_ble_split_keyboard_s140
-TARGETS          := central peripheral integrated
+TARGETS          := central peripheral integrated steno_integrated steno_central steno_peripheral
 OUTPUT_DIRECTORY := build
 
 SDK_ROOT := ../../../..
@@ -12,6 +12,12 @@ $(OUTPUT_DIRECTORY)/integrated.out: \
 $(OUTPUT_DIRECTORY)/central.out: \
   LINKER_SCRIPT  := ybk_usbd_ble_split_keyboard_s140.ld
 $(OUTPUT_DIRECTORY)/peripheral.out: \
+  LINKER_SCRIPT  := ybk_usbd_ble_split_keyboard_s140.ld
+$(OUTPUT_DIRECTORY)/steno_integrated.out: \
+  LINKER_SCRIPT  := ybk_usbd_ble_split_keyboard_s140.ld
+$(OUTPUT_DIRECTORY)/steno_central.out: \
+  LINKER_SCRIPT  := ybk_usbd_ble_split_keyboard_s140.ld
+$(OUTPUT_DIRECTORY)/steno_peripheral.out: \
   LINKER_SCRIPT  := ybk_usbd_ble_split_keyboard_s140.ld
   
 # Source files common to all targets
@@ -28,6 +34,7 @@ SRC_FILES += \
   $(PROJ_SRC_DIR)/usb/usb_consumer.c \
   $(PROJ_SRC_DIR)/usb/usb_raw_hid.c \
   $(PROJ_SRC_DIR)/scan_method/matrix_keyboard.c \
+  $(PROJ_SRC_DIR)/scan_method/steno_matrix.c \
   $(PROJ_SRC_DIR)/ble/ble_setting.c \
   $(PROJ_SRC_DIR)/ble/ble_hiddevice.c \
   $(PROJ_SRC_DIR)/neopixel/neopixel.c \
@@ -35,6 +42,7 @@ SRC_FILES += \
   $(PROJ_SRC_DIR)/neopixel/neopixel_time.c \
   $(PROJ_SRC_DIR)/data/neopixel_data.c \
   $(PROJ_SRC_DIR)/config/general-kb.c \
+  $(PROJ_SRC_DIR)/config/steno-kb.c \
   $(SDK_ROOT)/modules/nrfx/mdk/gcc_startup_nrf52840.S \
   $(SDK_ROOT)/components/libraries/log/src/nrf_log_backend_rtt.c \
   $(SDK_ROOT)/components/libraries/log/src/nrf_log_backend_serial.c \
@@ -347,7 +355,8 @@ ASMFLAGS += -D__STACK_SIZE=8192
 #CFLAGS += -D
 
 central: KEYBOARD_TYPE = central
-central: CFLAGS += -DKEYBOARD_CENTRAL -DBLE_RAW_HID
+central: CFLAGS += -DKEYBOARD_CENTRAL
+central: CFLAGS += -DBLE_RAW_HID
 
 peripheral: KEYBOARD_TYPE = peripheral
 peripheral: CFLAGS += -DKEYBOARD_PERIPH
@@ -355,11 +364,20 @@ peripheral: CFLAGS += -DKEYBOARD_PERIPH
 integrated: KEYBOARD_TYPE = integrated
 integrated: CFLAGS += -DBLE_RAW_HID
 
+steno_integrated: KEYBOARD_TYPE = steno_integrated
+steno_integrated: CFLAGS += -DSCAN_MATRIX_STENO
+
+steno_central: KEYBOARD_TYPE = steno_central
+steno_central: CFLAGS += -DKEYBOARD_CENTRAL -DBLE_RAW_HID -DSCAN_MATRIX_STENO
+
+steno_peripheral: KEYBOARD_TYPE = steno_peripheral
+steno_peripheral: CFLAGS += -DKEYBOARD_PERIPH -DSCAN_MATRIX_STENO
+
 # Add standard libraries at the very end of the linker input, after all objects
 # that may need symbols provided by these libraries.
 LIB_FILES += -lc -lnosys -lm
 
-.PHONY: help default central peripheral integrated
+.PHONY: help default central peripheral integrated steno_integrated steno_central steno_peripheral
 
 # Print all targets that can be built
 help:
@@ -378,7 +396,7 @@ default:
 	python ../lib/uf2/utils/uf2conv.py $(OUTPUT_DIRECTORY)/$(KEYBOARD_TYPE).hex -c -b 0x26000 -o $(OUTPUT_DIRECTORY)/$(KEYBOARD_TYPE).uf2 -f 0xADA52840
 	adafruit-nrfutil dfu genpkg --dev-type 0x052 --application $(OUTPUT_DIRECTORY)/$(KEYBOARD_TYPE).hex $(OUTPUT_DIRECTORY)/$(KEYBOARD_TYPE).zip
 
-central peripheral integrated: default
+central peripheral integrated steno steno_central steno_peripheral: default
 
 #TEMPLATE_PATH := $(SDK_ROOT)/components/toolchain/gcc
 TEMPLATE_PATH := .
