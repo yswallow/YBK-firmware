@@ -94,9 +94,9 @@ void neopixel_fds_init(void){
     }
 
     // not to conf.interval_ticks==0
-    memset(neopixel_user_defined_config, 0x02, sizeof(neopixel_user_defined_config_t)*sizeof(neopixel_user_defined_config));
-    memset(neopixel_user_defined_pattern_updated, 0, sizeof(neopixel_user_defined_pattern_updated)*sizeof(uint32_t));
-    memset(neopixel_array, NEOPIXEL_PLACE_INVALID, sizeof(neopixel_array)*sizeof(uint8_t));
+    memset(neopixel_user_defined_config, 0x02, sizeof(neopixel_user_defined_config_t));
+    memset(neopixel_user_defined_pattern_updated, 0, sizeof(neopixel_user_defined_pattern_updated));
+    memset(neopixel_array, NEOPIXEL_PLACE_INVALID, sizeof(neopixel_array));
     memset(&neopixel_array_config, 0, sizeof(neopixel_array_config_t));
 
     ret = fds_record_find(FDS_NEOPIXEL_CONF_FILE_ID, FDS_NEOPIXEL_CONF_REC_KEY, &neopixel_conf_desc, &tok);
@@ -106,7 +106,7 @@ void neopixel_fds_init(void){
         ret = fds_record_open(&neopixel_conf_desc, &config);
         APP_ERROR_CHECK(ret);
        
-        memcpy(neopixel_user_defined_config, config.p_data, sizeof(neopixel_user_defined_config_t)*sizeof(neopixel_user_defined_config));
+        memcpy(neopixel_user_defined_config, config.p_data, sizeof(neopixel_user_defined_config_t));
     }
     else
     {
@@ -124,7 +124,7 @@ void neopixel_fds_init(void){
                 ret = fds_record_open(&neopixel_frame_desc[i][j], &config);
                 APP_ERROR_CHECK(ret);
        
-                memcpy(neopixel_user_defined[i][j], config.p_data, sizeof(uint8_t)*NEOPIXEL_FRAME_BYTES);
+                memcpy(neopixel_user_defined[i][j], config.p_data, NEOPIXEL_FRAME_BYTES);
             }
             else
             {
@@ -134,7 +134,7 @@ void neopixel_fds_init(void){
                     ret = fds_record_open(&neopixel_frame_desc[i][j], &config);
                     APP_ERROR_CHECK(ret);
        
-                    memcpy(neopixel_user_defined[i][j], config.p_data, sizeof(uint8_t)*NEOPIXEL_FRAME_BYTES_8140);
+                    memcpy(neopixel_user_defined[i][j], config.p_data, NEOPIXEL_FRAME_BYTES_8140);
                     ret = fds_record_delete(&neopixel_frame_desc[i][j]);
                     APP_ERROR_CHECK(ret);
                 }
@@ -167,7 +167,7 @@ void neopixel_fds_init(void){
         ret = fds_record_open(&neopixel_array_desc, &config);
         APP_ERROR_CHECK(ret);
        
-        memcpy(neopixel_array, config.p_data, sizeof(uint8_t)*sizeof(neopixel_array));
+        memcpy(neopixel_array, config.p_data, sizeof(neopixel_array));
     }
     else
     {
