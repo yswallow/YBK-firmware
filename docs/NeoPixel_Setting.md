@@ -1,5 +1,7 @@
 # NeoPixel設定
 
+https://yswallow.github.io/javascript/simple/webhid/NeoPixel-color.html
+
 ## NeoPixel配列ファイルを作る
 
 * NeoPixelのインデックスを小さい順にカンマ区切りで書きます。
@@ -27,10 +29,10 @@
 
 1. [Connect Keyboard]を押す
 2. 設定するキーボードを選択する
-3. ファイル選択から先ほど作成したNeoPixel配列ファイルを選択する
+3. [Select Left NeoPixel Map]をクリックしてNeoPixel配列ファイルを選択する
 4. [Sequence ID]にシークエンスの番号を入力する(デフォルト→0)
 5. [Frame count]にフレームの総数を入力する
-6. [Interval in ticks]に切り替え間隔を入力する(5倍の値[ms])
+6. [Interval in ticks]に切り替え間隔(/5[ms])を入力する
 7. 色を決める
 8. [Send Report]を押す
 9. キーボードに反映される **まだ永続記憶には保存されていません**
