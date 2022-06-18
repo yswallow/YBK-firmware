@@ -1,3 +1,0 @@
-GNU_INSTALL_ROOT = /usr/local/gcc-arm-none-eabi-9-2020-q2-update/bin/
-GNU_PREFIX = arm-none-eabi
-USE_RECENT_ARMGCC = 0

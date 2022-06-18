@@ -1,5 +1,0 @@
-GNU_INSTALL_ROOT = /usr/bin
-GNU_VERSION = 12.1.0
-GNU_PREFIX = arm-none-eabi
-USE_RECENT_ARMGCC := 1
-
