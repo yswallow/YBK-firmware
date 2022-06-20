@@ -69,7 +69,10 @@
 #include "keyboard_generic.h"
 #include "ble_central.h"
 #include "ble_setting.h" // for KEYBOARD_PERIPH_NAME
+
+#ifndef NO_NEOPIXEL
 #include "neopixel.h"
+#endif
 
 #include "keyboard_config.h"
 #include "debug_message_hid.h"
@@ -435,8 +438,9 @@ static void ble_nus_chars_received_keyboard(uint8_t * p_data, uint16_t data_len)
 static void ble_nus_c_evt_handler(ble_nus_c_t * p_ble_nus_c, ble_nus_c_evt_t const * p_ble_nus_evt)
 {
     ret_code_t err_code;
+#ifndef NO_NEOPIXEL
     uint8_t save_data[1] = { UART_NEOPIXEL_SYNC_TIMING_ID };
-
+#endif
     switch (p_ble_nus_evt->evt_type)
     {
         case BLE_NUS_C_EVT_DISCOVERY_COMPLETE:
@@ -453,11 +457,12 @@ static void ble_nus_c_evt_handler(ble_nus_c_t * p_ble_nus_c, ble_nus_c_evt_t con
             APP_ERROR_CHECK(err_code);
             err_code = app_timer_stop(m_central_scan_timer);
             APP_ERROR_CHECK(err_code);
-
+#ifndef NO_NEOPIXEL
             err_code = ble_nus_c_string_send(p_ble_nus_c, save_data, 1);
             APP_ERROR_CHECK(err_code);
             neopixel_sync();
-            
+#endif
+
             advertising_start(true, BLE_ADV_MODE_FAST);
             break;
 

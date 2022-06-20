@@ -1,4 +1,4 @@
-KEYBOARD_TYPES   := central peripheral integrated
+KEYBOARD_TYPES   := central peripheral integrated peripheral-s132 integrated-s132 central-s132
 SCAN_TYPES       := steno matrix
 SD_VERSIONS		 := 6 7
 
@@ -16,6 +16,7 @@ SDK_ROOT 	 ?= ../../../..
 include ./FileList.mk
 
 LINKER_SCRIPT_BASE := ybk_usbd_ble_split_keyboard_s140
+LINKER_SCRIPT_S132 := ybk_ble_split_keyboard_s132.ld
 ALL_TYPES :=
 SRC_FILES := 
 
@@ -35,8 +36,6 @@ GCC_COMMON_FLAGS += -DAPP_TIMER_V2
 GCC_COMMON_FLAGS += -DAPP_TIMER_V2_RTC1_ENABLED
 GCC_COMMON_FLAGS += -DCONFIG_GPIO_AS_PINRESET
 GCC_COMMON_FLAGS += -DFLOAT_ABI_HARD
-GCC_COMMON_FLAGS += -DNRF52840_XXAA
-GCC_COMMON_FLAGS += -DS140
 GCC_COMMON_FLAGS += -DSOFTDEVICE_PRESENT
 GCC_COMMON_FLAGS += -D__HEAP_SIZE=8192
 GCC_COMMON_FLAGS += -D__STACK_SIZE=8192
@@ -53,6 +52,26 @@ C_COMMON_FLAGS += -Wall -Werror
 ifeq ($(USE_RECENT_ARMGCC),1)
 C_COMMON_FLAGS += -Wno-maybe-uninitialized -Wno-array-bounds
 endif
+
+NRF52832_FLAGS += \
+	-DNRF52 \
+	-DNRF52832_XXAA \
+	-DNRF52_PAN_74 \
+	-DS132 \
+	-DNRFX_USBD_ENABLED=0 \
+	-DUSBD_ENABLED=0 \
+	-DAPP_USBD_ENABLED=0 \
+	-DNO_NEOPIXEL \
+	-DDEBUG_52832 \
+	-DNRF_CLOCK_LF_SRC=0 \
+	-DNRFX_CLOCK_CONFIG_LF_SRC=0 \
+	-DNRF_SDH_CLOCK_LF_SRC=0 \
+	-DNRF_SDH_CLOCK_LF_ACCURACY=7 \
+	-DNRF_SDH_CLOCK_LF_RC_TEMP_CTIV=2 \
+	-DNRF_SDH_CLOCK_LF_RC_CTIV=16 \
+	-Wno-unused-function \
+	-Wno-cpp \
+
 
 # C++ flags common to all targets
 CXXFLAGS += $(OPT)
@@ -188,11 +207,12 @@ check_outdir:
 # $1: KeyboardType_MatrixType_SoftDeviceVersion
 # out: target-specific source files
 define get_target_src
-$(if $(filter central,$(word 1,$(subst _, ,$(1)))),$(CENTRAL_FILES)) \
-$(if $(filter peripheral,$(word 1,$(subst _, ,$(1)))),$(PERIPH_FILES),$(BLE_HID_FILES)) \
-$(if $(filter integrated,$(word 1,$(subst _, ,$(1)))), ,$(SPLIT_FILES)) \
+$(if $(filter central%,$(word 1,$(subst _, ,$(1)))),$(CENTRAL_FILES)) \
+$(if $(filter peripheral%,$(word 1,$(subst _, ,$(1)))),$(PERIPH_FILES),$(BLE_HID_FILES)) \
+$(if $(filter integrated%,$(word 1,$(subst _, ,$(1)))), ,$(SPLIT_FILES)) \
 \
 $(if $(filter steno,$(word 2,$(subst _, ,$(1)))),$(STENO_FILES),$(MATRIX_FILES)) \
+$(if $(filter %-s132,$(subst _, ,$(1))),$(NRF52832_FILES),$(NRF52840_FILES) $(USB_FILES) $(NEOPIXEL_FILES)) \
 
 endef
 
@@ -201,10 +221,11 @@ endef
 # $3: SoftDeviceVersion
 # out: additional cflags
 define get_target_flags
-$(if $(filter central,$(1)), -DKEYBOARD_CENTRAL) \
-$(if $(filter peripheral,$(1)), -DKEYBOARD_PERIPH, -DBLE_RAW_HID) \
+$(if $(filter central%,$(1)), -DKEYBOARD_CENTRAL) \
+$(if $(filter peripheral%,$(1)), -DKEYBOARD_PERIPH, -DBLE_RAW_HID) \
 \
 $(if $(filter steno,$(2)), -DSCAN_MATRIX_STENO) \
+$(if $(filter %-s132,$(1)),$(NRF52832_FLAGS), -DNRF52840_XXAA -DS140) \
 
 endef
 
@@ -216,10 +237,14 @@ define define_co_conf
 ALL_TYPES += $(1)\:$(2)\:$(3)
 $(1)_$(2)_$(3).out: $(addsuffix .o,$(call get_target_src,$(1)_$(2)_$(3)) $(COMMON_SRC))
 	@echo "Linking $(1)_$(2)_$(3).out"
-	$(call exec_command,$(CC) $(LDFLAGS) -T$(LINKER_SCRIPT_BASE)_v$(3).ld $(addprefix $(OUTPUT_DIRECTORY_BASE)/$(1)_$(2)_$(3)/,$(notdir $(addsuffix .o,$(call get_target_src,$(1)_$(2)_$(3)) $(COMMON_SRC)))) -W -o ,$(OUTPUT_DIRECTORY_BASE)/$(1)_$(2)_$(3)/$(1)_$(2)_$(3).out,Linking)
+	$(call exec_command,$(CC) $(LDFLAGS) $(if $(filter %-s132,$(1)),-T$(LINKER_SCRIPT_S132),-T$(LINKER_SCRIPT_BASE)_v$(3).ld) $(addprefix $(OUTPUT_DIRECTORY_BASE)/$(1)_$(2)_$(3)/,$(notdir $(addsuffix .o,$(call get_target_src,$(1)_$(2)_$(3)) $(COMMON_SRC)))) -W -o ,$(OUTPUT_DIRECTORY_BASE)/$(1)_$(2)_$(3)/$(1)_$(2)_$(3).out,Linking)
 	$(NO_ECHO)$(SIZE) $(OUTPUT_DIRECTORY_BASE)/$(1)_$(2)_$(3)/$(1)_$(2)_$(3).out
 
-.PHONY: $(1)\:$(2)\:$(3)
+.PHONY: $(1)\:$(2)\:$(3) check\:$(1)\:$(2)\:$(3)
+check\:$(1)\:$(2)\:$(3):
+	@echo "SRC: $(call get_target_src,$(1)_$(2)_$(3)) $(COMMON_SRC)"
+	@echo "FLAGS: $(call get_target_flags,$(1),$(2),$(3))"
+	@echo "TARGET_SPECIFIC_INC_FOLDERS: $(if $(filter %-s132,$(1)),$(INC_FOLDERS_S132),$(INC_FOLDERS_S140))"
 
 $(1)\:$(2)\:$(3): CFLAGS := $(C_COMMON_FLAGS) -DNRF_SD_BLE_API_VERSION=$(3)
 $(1)\:$(2)\:$(3): CFLAGS_PROJ := $(call get_target_flags,$(1),$(2),$(3))
@@ -227,6 +252,7 @@ $(1)\:$(2)\:$(3): ASMFLAGS += $(call get_target_flags,$(1),$(2),$(3))
 $(1)\:$(2)\:$(3): TARGET_FILES := $(addsuffix .o,$(call get_target_src,$(1)_$(2)_$(3)) $(COMMON_SRC))
 $(1)\:$(2)\:$(3): OUTPUT_DIRECTORY := $(OUTPUT_DIRECTORY_BASE)/$(1)_$(2)_$(3)
 $(1)\:$(2)\:$(3): SOFTDEVICE_VERSION := $(3)
+$(1)\:$(2)\:$(3): INC_FOLDERS += $(if $(filter %-s132,$(1)),$(INC_FOLDERS_S132),$(INC_FOLDERS_S140))
 
 $(1)\:$(2)\:$(3): check_outdir $(1)_$(2)_$(3).uf2
 	mv $(1)_$(2)_$(3).uf2 $(UF2_OUTPUT_DIR)/

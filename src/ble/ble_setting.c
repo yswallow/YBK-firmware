@@ -570,7 +570,6 @@ static void ble_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
 #endif
 }
 
-
 /**@brief Function for initializing the BLE stack.
  *
  * @details Initializes the SoftDevice and the BLE event interrupt.
@@ -822,21 +821,30 @@ static void conn_params_init(void)
     err_code = ble_conn_params_init(&cp_init);
     APP_ERROR_CHECK(err_code);
 }
-
+#define NRF_LOG_DEBUG_EXEC_FLUSH(x) do {\
+    __DMB();\
+    for(uint8_t i=0;i<10;i++) {\
+        NRF_LOG_PROCESS();\
+    }\
+    x();\
+    NRF_LOG_DEBUG(#x);\
+    NRF_LOG_PROCESS();\
+} while(0)
 
 void ble_device_init(void) {
-    ble_conn_state_init();
-    ble_stack_init();
+    NRF_LOG_DEBUG_EXEC_FLUSH(ble_conn_state_init);
+    NRF_LOG_DEBUG_EXEC_FLUSH(ble_stack_init);
+
     //scheduler_init();
-    gap_params_init();
-    gatt_init();
-    services_init();
-    advertising_init();
-    conn_params_init();
-    peer_manager_init();
+    NRF_LOG_DEBUG_EXEC_FLUSH(gap_params_init);
+    NRF_LOG_DEBUG_EXEC_FLUSH(gatt_init);
+    NRF_LOG_DEBUG_EXEC_FLUSH(services_init);
+    NRF_LOG_DEBUG_EXEC_FLUSH(advertising_init);
+    NRF_LOG_DEBUG_EXEC_FLUSH(conn_params_init);
+    NRF_LOG_DEBUG_EXEC_FLUSH(peer_manager_init);
 
 #ifndef KEYBOARD_PERIPH
-    ble_keyboard_init();
+    NRF_LOG_DEBUG_EXEC_FLUSH(ble_keyboard_init);
 #endif
 }
 

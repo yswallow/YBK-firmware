@@ -28,6 +28,37 @@ CENTRAL_FILES = \
   $(SDK_ROOT)/components/ble/ble_services/ble_nus_c/ble_nus_c.c \
   $(SDK_ROOT)/components/ble/ble_db_discovery/ble_db_discovery.c \
 
+NRF52832_FILES = \
+	$(PROJ_SRC_DIR)/dummy/dummy_hid.c \
+  $(SDK_ROOT)/modules/nrfx/mdk/gcc_startup_nrf52.S \
+  $(SDK_ROOT)/modules/nrfx/mdk/system_nrf52.c \
+
+NEOPIXEL_FILES = \
+  $(PROJ_SRC_DIR)/neopixel/neopixel.c \
+  $(PROJ_SRC_DIR)/neopixel/neopixel_fds.c \
+  $(PROJ_SRC_DIR)/neopixel/neopixel_time.c \
+  $(PROJ_SRC_DIR)/data/neopixel_data.c \
+
+USB_FILES = \
+	$(PROJ_SRC_DIR)/usb/usb_mouse.c \
+	$(PROJ_SRC_DIR)/usb/usb_keyboard.c \
+	$(PROJ_SRC_DIR)/usb/usb_consumer.c \
+	$(PROJ_SRC_DIR)/usb/usb_raw_hid.c \
+  $(SDK_ROOT)/components/libraries/usbd/app_usbd.c \
+	$(SDK_ROOT)/components/libraries/usbd/app_usbd_core.c \
+	$(SDK_ROOT)/components/libraries/usbd/app_usbd_serial_num.c \
+	$(SDK_ROOT)/components/libraries/usbd/app_usbd_string_desc.c \
+	$(SDK_ROOT)/components/libraries/usbd/class/hid/kbd/app_usbd_hid_kbd.c \
+  $(SDK_ROOT)/components/libraries/usbd/class/hid/mouse/app_usbd_hid_mouse.c \
+	$(SDK_ROOT)/components/libraries/usbd/class/hid/app_usbd_hid.c \
+	$(SDK_ROOT)/components/libraries/usbd/class/hid/generic/app_usbd_hid_generic.c \
+  $(SDK_ROOT)/modules/nrfx/drivers/src/nrfx_usbd.c \
+
+NRF52840_FILES = \
+	$(SDK_ROOT)/modules/nrfx/mdk/system_nrf52840.c \
+  $(SDK_ROOT)/modules/nrfx/mdk/gcc_startup_nrf52840.S \
+  $(SDK_ROOT)/integration/nrfx/legacy/nrf_drv_power.c \
+
 COMMON_SRC = \
   $(PROJ_SRC_DIR)/main.c \
   $(PROJ_SRC_DIR)/raw_hid/via.c \
@@ -36,16 +67,7 @@ COMMON_SRC = \
   $(PROJ_SRC_DIR)/raw_hid/debug_message_hid.c \
   $(PROJ_SRC_DIR)/general/dynamic_keymap.c \
   $(PROJ_SRC_DIR)/general/keyboard_generic.c \
-  $(PROJ_SRC_DIR)/usb/usb_mouse.c \
-  $(PROJ_SRC_DIR)/usb/usb_keyboard.c \
-  $(PROJ_SRC_DIR)/usb/usb_consumer.c \
-  $(PROJ_SRC_DIR)/usb/usb_raw_hid.c \
   $(PROJ_SRC_DIR)/ble/ble_setting.c \
-  $(PROJ_SRC_DIR)/neopixel/neopixel.c \
-  $(PROJ_SRC_DIR)/neopixel/neopixel_fds.c \
-  $(PROJ_SRC_DIR)/neopixel/neopixel_time.c \
-  $(PROJ_SRC_DIR)/data/neopixel_data.c \
-  $(SDK_ROOT)/modules/nrfx/mdk/gcc_startup_nrf52840.S \
   $(SDK_ROOT)/components/libraries/log/src/nrf_log_backend_rtt.c \
   $(SDK_ROOT)/components/libraries/log/src/nrf_log_backend_serial.c \
   $(SDK_ROOT)/components/libraries/log/src/nrf_log_backend_uart.c \
@@ -59,10 +81,6 @@ COMMON_SRC = \
   $(SDK_ROOT)/components/libraries/fifo/app_fifo.c \
   $(SDK_ROOT)/components/libraries/scheduler/app_scheduler.c \
   $(SDK_ROOT)/components/libraries/timer/app_timer2.c \
-  $(SDK_ROOT)/components/libraries/usbd/app_usbd.c \
-  $(SDK_ROOT)/components/libraries/usbd/app_usbd_core.c \
-  $(SDK_ROOT)/components/libraries/usbd/app_usbd_serial_num.c \
-  $(SDK_ROOT)/components/libraries/usbd/app_usbd_string_desc.c \
   $(SDK_ROOT)/components/libraries/uart/app_uart_fifo.c \
   $(SDK_ROOT)/components/libraries/util/app_util_platform.c \
   $(SDK_ROOT)/components/libraries/timer/drv_rtc.c \
@@ -82,23 +100,16 @@ COMMON_SRC = \
   $(SDK_ROOT)/components/libraries/experimental_section_vars/nrf_section_iter.c \
   $(SDK_ROOT)/components/libraries/sortlist/nrf_sortlist.c \
   $(SDK_ROOT)/components/libraries/strerror/nrf_strerror.c \
-  $(SDK_ROOT)/components/libraries/usbd/class/hid/kbd/app_usbd_hid_kbd.c \
-  $(SDK_ROOT)/components/libraries/usbd/class/hid/app_usbd_hid.c \
-  $(SDK_ROOT)/components/libraries/usbd/class/hid/generic/app_usbd_hid_generic.c \
   $(SDK_ROOT)/components/libraries/queue/nrf_queue.c \
   $(SDK_ROOT)/components/libraries/fds/fds.c \
   $(SDK_ROOT)/components/libraries/crc16/crc16.c \
-  $(SDK_ROOT)/components/libraries/usbd/class/hid/mouse/app_usbd_hid_mouse.c \
   $(SDK_ROOT)/components/libraries/sensorsim/sensorsim.c \
-  $(SDK_ROOT)/modules/nrfx/mdk/system_nrf52840.c \
   $(SDK_ROOT)/integration/nrfx/legacy/nrf_drv_clock.c \
-  $(SDK_ROOT)/integration/nrfx/legacy/nrf_drv_power.c \
   $(SDK_ROOT)/modules/nrfx/soc/nrfx_atomic.c \
   $(SDK_ROOT)/modules/nrfx/drivers/src/nrfx_clock.c \
   $(SDK_ROOT)/modules/nrfx/drivers/src/nrfx_power.c \
   $(SDK_ROOT)/modules/nrfx/drivers/src/prs/nrfx_prs.c \
   $(SDK_ROOT)/modules/nrfx/drivers/src/nrfx_systick.c \
-  $(SDK_ROOT)/modules/nrfx/drivers/src/nrfx_usbd.c \
   $(SDK_ROOT)/modules/nrfx/drivers/src/nrfx_pwm.c \
   $(SDK_ROOT)/external/segger_rtt/SEGGER_RTT.c \
   $(SDK_ROOT)/external/segger_rtt/SEGGER_RTT_Syscalls_GCC.c \
@@ -130,6 +141,14 @@ COMMON_SRC = \
   $(SDK_ROOT)/components/softdevice/common/nrf_sdh_ble.c \
   $(SDK_ROOT)/components/softdevice/common/nrf_sdh_soc.c \
 
+INC_FOLDERS_S140 := \
+  $(SDK_ROOT)/components/softdevice/s140/headers \
+  $(SDK_ROOT)/components/softdevice/s140/headers/nrf52 \
+
+INC_FOLDERS_S132 := \
+  $(SDK_ROOT)/components/softdevice/s132/headers \
+  $(SDK_ROOT)/components/softdevice/s132/headers/nrf52 \
+
 INC_FOLDERS += \
   $(PROJ_SRC_DIR)/ble \
   $(PROJ_SRC_DIR)/config \
@@ -139,6 +158,7 @@ INC_FOLDERS += \
   $(PROJ_SRC_DIR)/scan_method \
   $(PROJ_SRC_DIR)/usb \
   $(PROJ_SRC_DIR)/data \
+  $(PROJ_SRC_DIR)/dummy \
   $(SDK_ROOT)/components/nfc/ndef/generic/message \
   $(SDK_ROOT)/components/nfc/t2t_lib \
   $(SDK_ROOT)/components/nfc/t4t_parser/hl_detection_procedure \
@@ -167,7 +187,6 @@ INC_FOLDERS += \
   $(SDK_ROOT)/modules/nrfx/drivers/include \
   $(SDK_ROOT)/components/libraries/experimental_task_manager \
   $(SDK_ROOT)/components/ble/ble_services/ble_hrs_c \
-  $(SDK_ROOT)/components/softdevice/s140/headers/nrf52 \
   $(SDK_ROOT)/components/nfc/ndef/connection_handover/le_oob_rec \
   $(SDK_ROOT)/components/libraries/queue \
   $(SDK_ROOT)/components/libraries/pwr_mgmt \
@@ -215,7 +234,6 @@ INC_FOLDERS += \
   $(SDK_ROOT)/components/libraries/hci \
   $(SDK_ROOT)/components/libraries/usbd/class/hid/kbd \
   $(SDK_ROOT)/components/libraries/timer \
-  $(SDK_ROOT)/components/softdevice/s140/headers \
   $(SDK_ROOT)/integration/nrfx \
   $(SDK_ROOT)/components/nfc/t4t_parser/tlv \
   $(SDK_ROOT)/components/libraries/sortlist \

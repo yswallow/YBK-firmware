@@ -63,6 +63,8 @@ static void nus_data_handler(ble_nus_evt_t * p_evt)
 
 static void uart_receive_peripheral(uint8_t* p_data, uint16_t len) {
     NRF_LOG_HEXDUMP_DEBUG(p_data,len)
+
+#ifndef NO_NEOPIXEL
     switch(p_data[0]) {
     case UART_NEOPIXEL_SYNC_TIMING_ID:
         neopixel_sync();
@@ -90,7 +92,7 @@ static void uart_receive_peripheral(uint8_t* p_data, uint16_t len) {
         raw_hid_receive_neopixel(p_data, len);
         break;
     }
-
+#endif // NO_NEOPIXEL
 }
 
 

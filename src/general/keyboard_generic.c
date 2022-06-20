@@ -8,7 +8,6 @@
 #include "nrfx_rtc.h"
 
 #include "keyboard_generic.h"
-#include "usb_hiddevice.h"
 #include "dynamic_keymap.h"
 #include "via_fds.h"
 
@@ -20,10 +19,12 @@
 
 #include "ble_setting.h"
 
+#ifndef NO_NEOPIXEL
 #include "neopixel.h"
 //#include "neopixel_data.h"
 #include "neopixel_fds.h"
 #include "neopixel_time.h"
+#endif // NO_NEOPIXEL
 
 #define KEYCODE_PERIPH 0xFFFF
 #define DEBOUNCING_TICK_INVALID 0xFFFFFFFFUL
@@ -51,15 +52,7 @@ uint8_t m_minute;
 uint8_t m_hour;
 
 
-keyboard_hid_functions_t hid_functions = {
-    .keycode_append = keycode_append_usb,
-    .keycode_remove = keycode_remove_usb,
-    .send_consumer = send_consumer_usb,
-    .reset = keyboard_reset_usb,
-    .handle_mouse = handle_keycode_mouse_usb,
-    .tick_handler_mouse = tick_handler_mouse_usb
-};
-
+keyboard_hid_functions_t hid_functions;
 
 /**@brief Function for putting the chip into sleep mode.
  *
@@ -69,7 +62,11 @@ void sleep_mode_enter(void *ptr)
 {
     ret_code_t err_code;
     NRF_LOG_DEBUG("sleep mode enter");
+#ifdef NRF52840_XXAA
     if(! ( NRF_POWER_USBREGSTATUS_VBUSDETECT_MASK & nrf_power_usbregstatus_get() ) ) {
+#else
+    {
+#endif
         NRF_LOG_INFO("Going to Sleep...");
         hid_functions.reset();
         // Prepare wakeup buttons.
@@ -251,7 +248,16 @@ void kbd_tick_handler(void* p_context) {
                 }
             }
         }
+#ifdef DEBUG_52832
+        if( m_second%2 ) {
+            nrf_gpio_pin_set(19);
+        } else {
+            nrf_gpio_pin_clear(19);
+        }
+#endif // DEBUG_52832
     }
+
+#ifndef NO_NEOPIXEL
     if(my_keyboard.neopixel_length) {
         ++m_neopixel_tick_count;
         if(m_neopixel_pattern < NEOPIXEL_USER_DEFINED_COUNT) {
@@ -275,6 +281,7 @@ void kbd_tick_handler(void* p_context) {
             }
         }
     }
+#endif
 }
 
 void register_debounce(uint8_t row, uint8_t col, bool press) {
@@ -573,11 +580,15 @@ void keyboard_init(keyboard_t keyboard) {
     memset(debouncing_bitmap, 0, sizeof(debouncing_bitmap));
     memset(kc_release_next_tick,KC_INVALID,PRESS_KEYS_MAX);
     heatmap_init();
+
+#ifndef NO_NEOPIXEL
     if(my_keyboard.neopixel_length) {
         //neopixel_data_init();
         neopixel_init(my_keyboard.neopixel_pin, NULL);
         m_neopixel_index = 0;
     }
+#endif
+
     current_layer = my_keyboard.default_layer;
     
     (keyboard.init_method)(keyboard.keyboard_type,keyboard.keyboard_definision);
@@ -591,4 +602,7 @@ void keyboard_init(keyboard_t keyboard) {
         nrf_gpio_cfg_output(keyboard.kbd_power_led);
         nrf_gpio_pin_set(keyboard.kbd_power_led);
     }
+#ifdef DEBUG_52832
+    nrf_gpio_cfg_output(19);
+#endif
 }

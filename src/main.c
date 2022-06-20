@@ -61,15 +61,11 @@
 #include "nrf_sdh_soc.h"
 #include "nrf_sdh_ble.h"
 #include "nrf_ble_gatt.h"
-#include "app_timer.h"
-#include "ble_nus.h"
-#include "app_util_platform.h"
 
 #include "nrf_log.h"
 #include "nrf_log_ctrl.h"
 #include "nrf_log_default_backends.h"
 
-#include "nrf_drv_usbd.h"
 #include "nrf_drv_clock.h"
 #include "nrf_gpio.h"
 #include "nrf_delay.h"
@@ -78,6 +74,11 @@
 
 #include "app_error.h"
 #include "app_util.h"
+
+#ifdef NRF52840_XXAA
+#include "app_timer.h"
+#include "app_util_platform.h"
+#include "nrf_drv_usbd.h"
 #include "app_usbd_core.h"
 #include "app_usbd.h"
 #include "app_usbd_string_desc.h"
@@ -86,18 +87,26 @@
 #include "app_usbd_hid_generic.h"
 #include "app_usbd_hid_kbd.h"
 #include "app_usbd_hid_kbd_desc.h"
+#include "usb_hiddevice.h"
+#else
+#include "dummy_hid.h"
+#endif // NRF52840_XXAA
 
 #include "keyboard_generic.h"
-#include "usb_hiddevice.h"
 #include "ble_setting.h"
-#include "ble_hiddevice.h"
 #include "via_fds.h"
 #include "debug_message_hid.h"
 
+#ifndef KEYBOARD_PERIPH
+#include "ble_hiddevice.h"
+#endif
+
 #ifdef KEYBOARD_CENTRAL
 #include "ble_central.h"
+#include "ble_nus.h"
 #elif KEYBOARD_PERIPH
 #include "ble_peripheral.h"
+#include "ble_nus.h"
 #endif
 
 #ifdef ENABLE_USB_CDC_ACM
@@ -109,10 +118,19 @@
 #define ENDLINE_STRING "\r\n"
 #endif
 
+#define NRF_LOG_DEBUG_FLUSH(x) do {\
+    __DMB();\
+    for(uint8_t i=0;i<10;i++) {\
+        NRF_LOG_PROCESS();\
+    }\
+    NRF_LOG_DEBUG(x);\
+    NRF_LOG_PROCESS();\
+} while(0)
 
 APP_TIMER_DEF(m_keyboard_job_timer);
+#ifdef NRF52840_XXAA
 static bool m_usb_connected = false;
-
+#endif
 
 /** @brief Function for initializing the timer module. */
 static void timers_init(void)
@@ -158,6 +176,7 @@ void idle_state_handle(void)
 
 // USB CODE START
 
+#ifdef NRF52840_XXAA
 #ifdef ENABLE_USB_CDC_ACM
 
 /** @brief User event handler @ref app_usbd_cdc_acm_user_ev_handler_t */
@@ -272,7 +291,8 @@ static void cdc_acm_user_ev_handler(app_usbd_class_inst_t const * p_inst,
             break;
     }
 }
-#endif
+#endif // ENABLE_USB_CDC_ACM
+
 static void usbd_user_ev_handler(app_usbd_event_type_t event)
 {
     switch (event)
@@ -336,7 +356,7 @@ static void usbd_user_ev_handler(app_usbd_event_type_t event)
             break;
     }
 }
-
+#endif // NRF52840_XXAA
 // USB CODE END
 
 /**@brief Function for initializing power management.
@@ -362,6 +382,7 @@ static void keyboard_job(void* ptr) {
 #endif
 }
 
+
 void keyboard_job_timer_start(void) {
     ret_code_t err_code;
     err_code = app_timer_create(&m_keyboard_job_timer, APP_TIMER_MODE_REPEATED, keyboard_job);
@@ -374,15 +395,19 @@ void keyboard_job_timer_start(void) {
 int main(void)
 {
     ret_code_t ret;
-    static const app_usbd_config_t usbd_config = {
-        .ev_state_proc = usbd_user_ev_handler
-    };
+
     // Initialize.
     log_init();
-    timers_init();
+    NRF_LOG_DEBUG_FLUSH("LOG INIT");
 
+    via_fds_init();
+    NRF_LOG_DEBUG_FLUSH("FDS INIT");
+
+    timers_init();
+    NRF_LOG_DEBUG_FLUSH("TIMER INIT");
     //buttons_leds_init();
-    power_management_init();
+
+#ifdef NRF52840_XXAA
     app_usbd_serial_num_generate();
 
     // if power supply from VDDH and output voltage is not configured (is reset state),
@@ -402,40 +427,55 @@ int main(void)
         // Must reset to enable change.
         NVIC_SystemReset();
     }
-
+#endif
     ret = nrf_drv_clock_init();
     APP_ERROR_CHECK(ret);
+    NRF_LOG_DEBUG_FLUSH("CLOCK INIT");
 
     NRF_LOG_INFO("USBD BLE UART Keyboard started.");
-    NRF_LOG_INFO(DEVICE_NAME);
+    NRF_LOG_DEBUG_FLUSH(DEVICE_NAME);
 
+#ifdef NRF52840_XXAA
+	static const app_usbd_config_t usbd_config = {
+        .ev_state_proc = usbd_user_ev_handler
+    };
     ret = app_usbd_init(&usbd_config);
     APP_ERROR_CHECK(ret);
+
+    usb_hid_init();
+#endif
 /*
     app_usbd_class_inst_t const * class_cdc_acm = app_usbd_cdc_acm_class_inst_get(&m_app_cdc_acm);
     ret = app_usbd_class_append(class_cdc_acm);
     APP_ERROR_CHECK(ret);
 */
-    usb_hid_init();
-    
-    via_fds_init();
-    
+
+    NRF_LOG_DEBUG_FLUSH("begin BLE INIT");
     ble_device_init();
+    NRF_LOG_DEBUG_FLUSH("BLE INIT");
+    power_management_init();
 #ifdef KEYBOARD_CENTRAL
     ble_central_init();
 #endif
     // Start execution.
-#ifdef KEYBOARD_PERIPH
-    hid_functions = usb_hid_functions;
-#else    
+
+#if !defined( KEYBOARD_PERIPH )
     hid_functions = ble_hid_functions;
+#elif defined( NRF52840_XXAA )
+    hid_functions = usb_hid_functions;
+#else
+	hid_functions = dummy_hid_functions;
 #endif
+
+#ifdef NRF52840_XXAA
     ret = app_usbd_power_events_enable();
     APP_ERROR_CHECK(ret);
+#endif
     keyboard_init(my_keyboard);
     KEYBOARD_DEBUG_HID_INIT();
     keyboard_job_timer_start();
-    
+    NRF_LOG_DEBUG_FLUSH("KEYBOARD INIT");
+
 #ifdef KEYBOARD_CENTRAL
     ble_central_start();
 #else
@@ -445,14 +485,16 @@ int main(void)
     advertising_start(true, BLE_ADV_MODE_FAST);
 #endif  
 #endif
+    NRF_LOG_DEBUG_FLUSH("Enter main loop");
     // Enter main loop.
     for (;;)
     {
+#ifdef NRF52840_XXAA
         while (app_usbd_event_queue_process())
         {
             /* Nothing to do */
         }
-        
+#endif
         power_manage();
         NRF_LOG_PROCESS();
     }

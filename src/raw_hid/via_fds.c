@@ -46,9 +46,11 @@
 #include "keyboard_config.h"
 #include "heatmap.h"
 #include "debug_message_hid.h"
-#include "neopixel_fds.h"
 #include "nrf_soc.h"
 
+#ifndef NO_NEOPIXEL
+#include "neopixel_fds.h"
+#endif
 
 #define CONFIG_FILE     (0x8010)
 #define CONFIG_REC_KEY  (0x7010)
@@ -393,7 +395,9 @@ void via_fds_init(void) {
             APP_ERROR_CHECK(ret);
         }
     }
+#ifndef NO_NEOPIXEL
     neopixel_fds_init();
+#endif
 }
 
 
@@ -434,7 +438,9 @@ static bool kbd_setting_updated;
 void raw_hid_receive_kb(uint8_t *data, uint8_t length) {
     uint8_t *command_id = &(data[0]);
     uint8_t setting_id = data[1];
+#ifndef NO_NEOPIXEL
     bool executed = false;
+#endif
 
     switch(*command_id) {
     case ID_GET_KEYBOARD_VALUE:
@@ -469,7 +475,9 @@ void raw_hid_receive_kb(uint8_t *data, uint8_t length) {
             break;
 
         default:
+#ifndef NO_NEOPIXEL
             CALL_FUNCTION_AND_BREAK_IF_TRUE(raw_hid_receive_neopixel);
+#endif
             *command_id         = ID_UNHANDLED;
             break;
         }
@@ -496,15 +504,18 @@ void raw_hid_receive_kb(uint8_t *data, uint8_t length) {
             break;
 
         default:
+#ifndef NO_NEOPIXEL
             CALL_FUNCTION_AND_BREAK_IF_TRUE(raw_hid_receive_neopixel);
+#endif
             *command_id         = ID_UNHANDLED;
             break;
         }
         break;
     default:
+#ifndef NO_NEOPIXEL
         CALL_FUNCTION_AND_BREAK_IF_TRUE(raw_hid_receive_neopixel);
+#endif
         *command_id         = ID_UNHANDLED;
         break;
     }
-    
 }
