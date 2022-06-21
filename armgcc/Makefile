@@ -12,6 +12,7 @@ UF2_OUTPUT_DIR ?= uf2
 VERBOSE      ?= 0
 PROJ_SRC_DIR := ../src
 SDK_ROOT 	 ?= ../../../..
+DEBUG 		 ?= 
 
 include ./FileList.mk
 
@@ -32,16 +33,18 @@ OPT = -O3 -g3
 #OPT += -flto
 
 # GCC flags common to C and ASM
-GCC_COMMON_FLAGS += -DAPP_TIMER_V2
-GCC_COMMON_FLAGS += -DAPP_TIMER_V2_RTC1_ENABLED
-GCC_COMMON_FLAGS += -DCONFIG_GPIO_AS_PINRESET
-GCC_COMMON_FLAGS += -DFLOAT_ABI_HARD
-GCC_COMMON_FLAGS += -DSOFTDEVICE_PRESENT
-GCC_COMMON_FLAGS += -D__HEAP_SIZE=8192
-GCC_COMMON_FLAGS += -D__STACK_SIZE=8192
-GCC_COMMON_FLAGS += -mcpu=cortex-m4
-GCC_COMMON_FLAGS += -mthumb -mabi=aapcs
-GCC_COMMON_FLAGS += -mfloat-abi=hard -mfpu=fpv4-sp-d16
+GCC_COMMON_FLAGS += \
+	-DAPP_TIMER_V2 \
+	-DAPP_TIMER_V2_RTC1_ENABLED \
+	-DCONFIG_GPIO_AS_PINRESET \
+	-DFLOAT_ABI_HARD \
+	-DSOFTDEVICE_PRESENT \
+	-D__HEAP_SIZE=8192 \
+	-D__STACK_SIZE=8192 \
+	-mcpu=cortex-m4 \
+	-mthumb -mabi=aapcs \
+	-mfloat-abi=hard -mfpu=fpv4-sp-d16 \
+
 
 # C flags common to all targets
 C_COMMON_FLAGS += $(OPT) $(GCC_COMMON_FLAGS) -std=c99
@@ -52,6 +55,7 @@ C_COMMON_FLAGS += -Wall -Werror
 ifeq ($(USE_RECENT_ARMGCC),1)
 C_COMMON_FLAGS += -Wno-maybe-uninitialized -Wno-array-bounds
 endif
+C_COMMON_FLAGS += $(if $(DEBUG),-DDEBUG)
 
 NRF52832_FLAGS += \
 	-DNRF52 \
@@ -213,6 +217,8 @@ $(if $(filter integrated%,$(word 1,$(subst _, ,$(1)))), ,$(SPLIT_FILES)) \
 \
 $(if $(filter steno,$(word 2,$(subst _, ,$(1)))),$(STENO_FILES),$(MATRIX_FILES)) \
 $(if $(filter %-s132,$(subst _, ,$(1))),$(NRF52832_FILES),$(NRF52840_FILES) $(USB_FILES) $(NEOPIXEL_FILES)) \
+\
+$(if $(DEBUG),$(if $(filter integrated%,$(word 1,$(subst _, ,$(1)))),$(SPLIT_FILES),)) \
 
 endef
 
