@@ -449,8 +449,6 @@ int main(void)
     ret = app_usbd_class_append(class_cdc_acm);
     APP_ERROR_CHECK(ret);
 */
-
-    NRF_LOG_DEBUG_FLUSH("begin BLE INIT");
     ble_device_init();
     NRF_LOG_DEBUG_FLUSH("BLE INIT");
     power_management_init();
