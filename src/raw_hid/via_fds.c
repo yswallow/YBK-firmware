@@ -52,6 +52,10 @@
 #include "neopixel_fds.h"
 #endif
 
+#ifdef KEYBOARD_CENTRAL
+#include "ble_central.h"
+#endif
+
 #define CONFIG_FILE     (0x8010)
 #define CONFIG_REC_KEY  (0x7010)
 #define KBD_SETTING_FILE (0x8989)
@@ -85,6 +89,7 @@ enum {
     KBD_SETTING_ID_ROW_PINS,
     KBD_SETTING_ID_PINS_COUNT,
     KBD_SETTING_ID_ADDITIONAL,
+    KBD_PERIPH_SETTING_ID = 0x81,
 };
 
 
@@ -438,13 +443,15 @@ static bool kbd_setting_updated;
 void raw_hid_receive_kb(uint8_t *data, uint8_t length) {
     uint8_t *command_id = &(data[0]);
     uint8_t setting_id = data[1];
-#ifndef NO_NEOPIXEL
+#if ( !defined(NO_NEOPIXEL) || defined(KEYBOARD_CENTRAL) )
     bool executed = false;
 #endif
 
     switch(*command_id) {
     case ID_GET_KEYBOARD_VALUE:
+        NRF_LOG_DEBUG("ID_GET_KEYBOARD_VALUE RECEIVED");
         if( kbd_setting_updated ) {
+            NRF_LOG_DEBUG("Updating setting...");
             save_kbd_setting();
             apply_kbd_setting();
             kbd_setting_updated = false;
@@ -478,11 +485,16 @@ void raw_hid_receive_kb(uint8_t *data, uint8_t length) {
 #ifndef NO_NEOPIXEL
             CALL_FUNCTION_AND_BREAK_IF_TRUE(raw_hid_receive_neopixel);
 #endif
+
+#ifdef KEYBOARD_CENTRAL
+            CALL_FUNCTION_AND_BREAK_IF_TRUE(raw_hid_receive_for_peripheral);
+#endif
             *command_id         = ID_UNHANDLED;
             break;
         }
         break;
     case ID_SET_KEYBOARD_VALUE:
+        NRF_LOG_DEBUG("ID_SET_KEYBOARD_VALUE RECEIVED");
         switch(setting_id) {
         case KBD_SETTING_ID_COL_PINS:
             memcpy(kbd_setting, data+2, (length-2)<KBD_SETTING_COL_PINS_MAX ? length-2 : KBD_SETTING_COL_PINS_MAX);
@@ -507,6 +519,10 @@ void raw_hid_receive_kb(uint8_t *data, uint8_t length) {
 #ifndef NO_NEOPIXEL
             CALL_FUNCTION_AND_BREAK_IF_TRUE(raw_hid_receive_neopixel);
 #endif
+
+#ifdef KEYBOARD_CENTRAL
+            CALL_FUNCTION_AND_BREAK_IF_TRUE(raw_hid_receive_for_peripheral);
+#endif
             *command_id         = ID_UNHANDLED;
             break;
         }
@@ -514,6 +530,10 @@ void raw_hid_receive_kb(uint8_t *data, uint8_t length) {
     default:
 #ifndef NO_NEOPIXEL
         CALL_FUNCTION_AND_BREAK_IF_TRUE(raw_hid_receive_neopixel);
+#endif
+
+#ifdef KEYBOARD_CENTRAL
+        CALL_FUNCTION_AND_BREAK_IF_TRUE(raw_hid_receive_for_peripheral);
 #endif
         *command_id         = ID_UNHANDLED;
         break;

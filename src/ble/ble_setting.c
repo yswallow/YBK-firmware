@@ -821,6 +821,8 @@ static void conn_params_init(void)
     err_code = ble_conn_params_init(&cp_init);
     APP_ERROR_CHECK(err_code);
 }
+
+
 #define NRF_LOG_DEBUG_EXEC_FLUSH(x) do {\
     __DMB();\
     for(uint8_t i=0;i<10;i++) {\

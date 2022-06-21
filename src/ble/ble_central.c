@@ -76,6 +76,8 @@
 
 #include "keyboard_config.h"
 #include "debug_message_hid.h"
+#include "raw_hid.h"
+#include "via.h"
 
 #define KBD_PERIPH_SHORT_NAME "nRF5"
 
@@ -396,33 +398,51 @@ static bool send_keycode_central(char* p_char) {
     }
 }
 
-static char m_ble_received_cache[18];
-static uint8_t m_ble_received_cache_end;
+static uint8_t periph_raw_rep_buffer[32];
+static bool uart_data_receive(char* p_data) {
+    if( p_data[0] != 'D' ) {
+        return false;
+    }
+    uint8_t len = p_data[1];
+    p_data[3] += 0x80;
+    memcpy(periph_raw_rep_buffer, p_data+2, len>32? 32 : len);
+    raw_hid_send(periph_raw_rep_buffer, len>32? 32 : len);
+    return true;
+}
+
+
+static uint8_t uart_received_data[UART_CACHE_SIZE];
+static uint8_t uart_received_data_head = 0;
+static void ble_nus_chars_received_keyboard(uint8_t * p_data, uint16_t data_len);
+static void uart_join_central(uint8_t* p_data, uint16_t len) {
+    bool is_start = (*p_data >> 7) & 0x01;
+    bool is_end = (*p_data >> 6) & 0x01;
+    uint8_t data_size = *p_data & 0x3F;
+
+    if(is_start) {
+        memcpy(uart_received_data, p_data+1, data_size);
+        uart_received_data_head = data_size;
+    } else {
+        memcpy(uart_received_data+uart_received_data_head, p_data+1, data_size);
+        uart_received_data_head += data_size;
+    }
+
+    if(is_end) {
+        ble_nus_chars_received_keyboard(uart_received_data, uart_received_data_head);
+        uart_received_data_head = 0;
+    }
+}
+
+
 static void ble_nus_chars_received_keyboard(uint8_t * p_data, uint16_t data_len)
 {
-    uint16_t i=0;
     NRF_LOG_DEBUG("Receiving data.");
     NRF_LOG_HEXDUMP_DEBUG(p_data, data_len);
     
-    if( m_ble_received_cache_end ) {
-        for(;i<data_len;i++) {
-            if( p_data[i] == 'P' || p_data[i]=='R' ) {
-                break;
-            }
-            m_ble_received_cache[m_ble_received_cache_end++] = p_data[i];
-        }
-        send_keycode_central(m_ble_received_cache);
-        m_ble_received_cache_end = 0;
-    }
- 
-    for(; i<data_len; i+=6 ) {
-        if( i+5<data_len ) {
-            send_keycode_central((char*)p_data+i);
-        } else {
-            for(; i<data_len;i++) {
-                m_ble_received_cache[m_ble_received_cache_end++] = p_data[i];
-            }
-        }
+    if( *((char*)p_data) == 'P' || *((char*)p_data) == 'R' ) {
+        send_keycode_central((char*)p_data);
+    } else if( *((char*)p_data) == 'D' ) {
+        uart_data_receive((char*)p_data);
     }
 }
 
@@ -467,7 +487,8 @@ static void ble_nus_c_evt_handler(ble_nus_c_t * p_ble_nus_c, ble_nus_c_evt_t con
             break;
 
         case BLE_NUS_C_EVT_NUS_TX_EVT:
-            ble_nus_chars_received_keyboard(p_ble_nus_evt->p_data, p_ble_nus_evt->data_len);
+            NRF_LOG_HEXDUMP_DEBUG(p_ble_nus_evt->p_data, p_ble_nus_evt->data_len);
+            uart_join_central(p_ble_nus_evt->p_data, p_ble_nus_evt->data_len);
             break;
 
         case BLE_NUS_C_EVT_DISCONNECTED:
@@ -815,12 +836,28 @@ static void idle_state_handle(void)
 
 void uart_send_central(uint8_t *p_data, uint8_t len) {
     ret_code_t ret;
+    uint8_t head = 0;
+    bool is_end = false;
+    bool is_start = true;
     if( m_periph_connected ) {
-        m_uart_send_len = len>UART_CACHE_SIZE ? UART_CACHE_SIZE : len;
-        memcpy(m_uart_send_buffer, p_data, m_uart_send_len);
+        for(uint8_t i=0;i<(len+UART_CACHE_SIZE-1)/UART_CACHE_SIZE;i++) {
+            if( (len-head)>(UART_CACHE_SIZE-1) ) {
+                m_uart_send_len = UART_CACHE_SIZE-1;
+            } else {
+                m_uart_send_len = len-head;
+            }
 
-        ret = ble_nus_c_string_send(&m_ble_nus_c,m_uart_send_buffer, m_uart_send_len);
-        APP_ERROR_CHECK(ret);
+            if( i==(len+UART_CACHE_SIZE-1)/UART_CACHE_SIZE-1 ) {
+                is_end = true;
+            } 
+            m_uart_send_buffer[0] = ( is_start ? 0x80 : 0 ) | ( is_end ? 0x40 : 0 ) | m_uart_send_len;
+            memcpy(m_uart_send_buffer+1, p_data+head, m_uart_send_len);
+            NRF_LOG_DEBUG("Sending..");
+            NRF_LOG_HEXDUMP_DEBUG(m_uart_send_buffer, m_uart_send_len);
+            ret = ble_nus_c_string_send(&m_ble_nus_c,m_uart_send_buffer, m_uart_send_len+1);
+            APP_ERROR_CHECK(ret);
+            is_start = false;
+        }
     }
 }
 
@@ -851,5 +888,18 @@ void ble_central_init(void)
 void ble_central_start(void)
 {
     scan_start();
+}
+
+#define SETTING (*(data+1))
+
+raw_hid_receive_t raw_hid_receive_for_peripheral(uint8_t *data, uint8_t length) {
+    if( 0x84<=SETTING && SETTING<=0x87 ) {
+        SETTING = SETTING - 0x80;
+        uart_send_central(data, length);
+        *data = ID_UNHANDLED;
+        return true;
+    } else {
+        return false;
+    }
 }
 #endif //KEYBOARD_CENTRAL
