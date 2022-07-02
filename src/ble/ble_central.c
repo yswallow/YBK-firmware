@@ -398,6 +398,14 @@ static bool send_keycode_central(char* p_char) {
     }
 }
 
+static void mouse_move_central(char* p_data) {
+    int16_t delta_x = p_data[1]<<8 | p_data[2];
+    int16_t delta_y = p_data[3]<<8 | p_data[4];
+    
+    int8_t wheel = delta_y >> 2;
+    hid_functions.mouse_move(delta_x, 0, wheel);
+}
+
 static uint8_t periph_raw_rep_buffer[32];
 static bool uart_data_receive(char* p_data) {
     if( p_data[0] != 'D' ) {
@@ -439,10 +447,19 @@ static void ble_nus_chars_received_keyboard(uint8_t * p_data, uint16_t data_len)
     NRF_LOG_DEBUG("Receiving data.");
     NRF_LOG_HEXDUMP_DEBUG(p_data, data_len);
     
-    if( *((char*)p_data) == 'P' || *((char*)p_data) == 'R' ) {
-        send_keycode_central((char*)p_data);
-    } else if( *((char*)p_data) == 'D' ) {
-        uart_data_receive((char*)p_data);
+    switch(*((char*)p_data)) {
+        case 'P':
+        case 'R':
+            send_keycode_central((char*)p_data);
+            break;
+        case 'D':
+            uart_data_receive((char*)p_data);
+            break;
+        case 'M':
+            mouse_move_central((char*)p_data);
+            break;
+        default:
+            break;
     }
 }
 

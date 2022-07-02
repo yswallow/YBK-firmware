@@ -264,6 +264,50 @@ static void read_pmw3610_regs(uint8_t address, uint8_t len, uint8_t* buf) {
     nrf_gpio_pin_set(DIO_PIN);
 }
 
+static void write_pmw3610_reg(uint8_t address, uint8_t data) {
+    address |= 0x80;
+    nrf_gpio_cfg_output(CLK_PIN);
+    nrf_gpio_pin_clear(CS_PIN);
+    nrf_gpio_cfg_output(DIO_PIN);
+    nrf_gpio_pin_clear(DIO_PIN);
+
+    for(uint8_t i=0x80;i;i>>=1) {
+        nrf_gpio_pin_clear(CLK_PIN);
+        
+        //nrf_delay_us(1);
+        
+        if( address & i ) {
+            nrf_gpio_pin_set(DIO_PIN);
+        } else {
+            nrf_gpio_pin_clear(DIO_PIN);
+        }
+        
+        //nrf_delay_us(1);
+        nrf_gpio_pin_set(CLK_PIN);
+        nrf_delay_us(1);
+    }
+
+    for(uint8_t i=0x80;i;i>>=1) {
+        nrf_gpio_pin_clear(CLK_PIN);
+        
+        //nrf_delay_us(1);
+        
+        if( data & i ) {
+            nrf_gpio_pin_set(DIO_PIN);
+        } else {
+            nrf_gpio_pin_clear(DIO_PIN);
+        }
+        
+        //nrf_delay_us(1);
+        nrf_gpio_pin_set(CLK_PIN);
+        nrf_delay_us(1);
+    }
+
+    nrf_gpio_pin_set(CS_PIN);
+    nrf_delay_us(4);
+    nrf_gpio_cfg_output(DIO_PIN);
+    nrf_gpio_pin_set(DIO_PIN);
+}
 
 #endif // TRACKBALL_ENABLE
 
@@ -293,6 +337,7 @@ void kbd_tick_handler(void* p_context) {
     }
 #ifdef TRACKBALL_ENABLE
     uint8_t buf[10];
+    char cdc_buf[64];
 
     read_pmw3610_regs(0x12, 4, buf);
             
@@ -309,10 +354,31 @@ void kbd_tick_handler(void* p_context) {
     }
     
     if( ( buf[0] & 0x80 ) ) {
+#ifdef KEYBOARD_PERIPH
+        send_mouse_periph(delta_x, delta_y);
+#else
         hid_functions.mouse_move(delta_x, delta_y, 0);
+#endif // KEYBOARD_PERIPH
+    } else if( buf[0] == 0x05 ) {
+        nrf_delay_us(10);
+        usb_cdc_write("resetting....\r\n", 18);
+        write_pmw3610_reg(0x3a, 0x5a); // soft reset
+        nrf_delay_ms(4);
+        write_pmw3610_reg(0x41, 0xba);
+        nrf_delay_ms(1);
+        write_pmw3610_reg(0x32, 0x10);
+        write_pmw3610_reg(0x10, 0x01);
+        nrf_delay_ms(1);
+
+        for(uint8_t i=0;i<4;i++) {
+            read_pmw3610_regs(0x0c+i, 1, buf);
+            size_t size = sprintf(cdc_buf, "CRC#%d: 0x%02x\r\n", i, buf[0]);
+            usb_cdc_write(cdc_buf, size);
+        }
+
+        write_pmw3610_reg(0x3a, 0x5a); // soft reset
     }
 
-    char cdc_buf[64];
     size_t size = sprintf(cdc_buf, "MOTION: %x, DX: %d, DY: %d\r\n", buf[0], (int16_t)delta_x, (int16_t)delta_y);
     usb_cdc_write(cdc_buf, size);
 #endif // TRACKBALL_ENABLE

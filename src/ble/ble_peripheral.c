@@ -91,6 +91,22 @@ void uart_send_peripheral(uint8_t *p_data, uint8_t len) {
     //}
 }
 
+void send_mouse_periph(int16_t x, int16_t y) {
+    char message[10];
+    uint16_t message_sent = 9;
+    message[0] = 0xC0 | message_sent;
+    message[1] = 'M';
+    message[2] = (x >> 8) & 0x00FF;
+    message[3] = x & 0x00FF;
+    message[4] = (y >> 8) & 0x00FF;
+    message[5] = y & 0x00FF;
+    message[6] = '\r';
+    message[7] = '\n';
+    message[8] = '\0';
+
+    ble_nus_data_send(&m_nus,(uint8_t *) message, &message_sent, m_conn_handle);
+}
+
 
 void send_data_ble(uint8_t* data, uint8_t len) {
     uint8_t message[40];
@@ -232,4 +248,4 @@ void send_place_ble(uint8_t row, uint8_t col, bool press) {
         NRF_LOG_DEBUG("Send KeyRelease");
     }
 }
-#endif
+#endif // KEYBOARD_PERIPH
