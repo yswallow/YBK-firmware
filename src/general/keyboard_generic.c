@@ -209,6 +209,64 @@ void press_key(keys_t *p_key) {
     }
 }
 
+#ifdef TRACKBALL_ENABLE
+#include "usb_cdc.h"
+
+// DIO and CLK can be used as ROW pin
+#define CLK_PIN 29
+#define DIO_PIN 2
+#define CS_PIN 13
+
+static void read_pmw3610_regs(uint8_t address, uint8_t len, uint8_t* buf) {
+    address &= ~0x80;
+    nrf_gpio_cfg_output(CLK_PIN);
+    nrf_gpio_pin_set(CLK_PIN);
+    nrf_gpio_pin_clear(CS_PIN);
+    nrf_gpio_cfg_output(DIO_PIN);
+    nrf_gpio_pin_clear(DIO_PIN);
+    for(uint8_t i=0x80;i;i>>=1) {
+        nrf_gpio_pin_clear(CLK_PIN);
+        
+        //nrf_delay_us(1);
+        
+        if( address & i ) {
+            nrf_gpio_pin_set(DIO_PIN);
+        } else {
+            nrf_gpio_pin_clear(DIO_PIN);
+        }
+        
+        //nrf_delay_us(1);
+        nrf_gpio_pin_set(CLK_PIN);
+        nrf_delay_us(1);
+    }
+
+    nrf_gpio_cfg_input(DIO_PIN, NRF_GPIO_PIN_NOPULL);
+    nrf_delay_us(8);
+    
+    for(uint8_t j=0;j<len;j++) {
+        uint8_t k = 0;
+        for(uint8_t i=0x80;i;i= i>>1) {
+            nrf_gpio_pin_clear(CLK_PIN);
+            //nrf_delay_us(1);
+            nrf_gpio_pin_set(CLK_PIN);
+            nrf_delay_us(1);
+            if( nrf_gpio_pin_read(DIO_PIN) ) {
+                k |= i;
+            } else {
+                k &= ~i;
+            }
+        }
+        buf[j] = k;
+    }
+    nrf_gpio_pin_set(CS_PIN);
+    nrf_delay_us(4);
+    nrf_gpio_cfg_output(DIO_PIN);
+    nrf_gpio_pin_set(DIO_PIN);
+}
+
+
+#endif // TRACKBALL_ENABLE
+
 debouncing_keys_t debouncing_keys[PRESS_KEYS_MAX];
 void kbd_tick_handler(void* p_context) {
     //called every TAPPING_TERM_TICK_MS msecs
@@ -233,6 +291,31 @@ void kbd_tick_handler(void* p_context) {
             }
         }
     }
+#ifdef TRACKBALL_ENABLE
+    uint8_t buf[10];
+
+    read_pmw3610_regs(0x12, 4, buf);
+            
+    uint16_t delta_x,delta_y;
+    delta_x = ((buf[3]&0xF0)<<4) | buf[1];
+    delta_y = ((buf[3]&0x0F)<<8) | buf[2];
+    
+    if(delta_x & 0x0800 ) {
+        delta_x |= 0xF000;
+    }
+
+    if(delta_y & 0x0800 ) {
+        delta_y |= 0xF000;
+    }
+    
+    if( ( buf[0] & 0x80 ) ) {
+        hid_functions.mouse_move(delta_x, delta_y, 0);
+    }
+
+    char cdc_buf[64];
+    size_t size = sprintf(cdc_buf, "MOTION: %x, DX: %d, DY: %d\r\n", buf[0], (int16_t)delta_x, (int16_t)delta_y);
+    usb_cdc_write(cdc_buf, size);
+#endif // TRACKBALL_ENABLE
     ++m_clock_tick_count;
     if(m_clock_tick_count==SECOND_INCREMENT_TICKS) {
         m_clock_tick_count = 0;
@@ -580,6 +663,10 @@ void keyboard_init(keyboard_t keyboard) {
     memset(debouncing_bitmap, 0, sizeof(debouncing_bitmap));
     memset(kc_release_next_tick,KC_INVALID,PRESS_KEYS_MAX);
     heatmap_init();
+#ifdef TRACKBALL_ENABLE
+    nrf_gpio_cfg_output(CS_PIN);
+    nrf_gpio_pin_set(CS_PIN);
+#endif
 
 #ifndef NO_NEOPIXEL
     if(my_keyboard.neopixel_length) {

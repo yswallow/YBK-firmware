@@ -68,6 +68,8 @@ COMMON_SRC = \
   $(PROJ_SRC_DIR)/general/dynamic_keymap.c \
   $(PROJ_SRC_DIR)/general/keyboard_generic.c \
   $(PROJ_SRC_DIR)/ble/ble_setting.c \
+  $(PROJ_SRC_DIR)/usb/usb_cdc.c \
+  $(SDK_ROOT)/components/libraries/usbd/class/cdc/acm/app_usbd_cdc_acm.c \
   $(SDK_ROOT)/components/libraries/log/src/nrf_log_backend_rtt.c \
   $(SDK_ROOT)/components/libraries/log/src/nrf_log_backend_serial.c \
   $(SDK_ROOT)/components/libraries/log/src/nrf_log_backend_uart.c \

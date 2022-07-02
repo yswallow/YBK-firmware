@@ -31,7 +31,10 @@ keyboard_hid_functions_t usb_hid_functions = {
     .send_consumer = send_consumer_usb,
     .reset = keyboard_reset_usb,
     .handle_mouse = handle_keycode_mouse_usb,
-    .tick_handler_mouse = tick_handler_mouse_usb
+    .tick_handler_mouse = tick_handler_mouse_usb,
+#ifdef TRACKBALL_ENABLE
+    .mouse_move = mouse_move_usb,
+#endif
 };
 
 #define USBD_HID_KBD_REPORT_DSC() {                                                    \

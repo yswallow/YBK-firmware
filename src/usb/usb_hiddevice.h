@@ -18,6 +18,9 @@ void usb_mouse_init(void);
 ret_code_t mouse_reset_usb(void);
 ret_code_t handle_keycode_mouse_usb(uint16_t keycode, bool press);
 ret_code_t tick_handler_mouse_usb(keys_t *p_key);
+#ifdef TRACKBALL_ENABLE
+ret_code_t mouse_move_usb(int8_t x, int8_t y, int8_t wheel);
+#endif
 
 void usb_hid_raw_init(void);
 void raw_hid_send_usb(uint8_t *data, uint8_t length);

@@ -147,3 +147,21 @@ void usb_mouse_init(void) {
     ret = app_usbd_class_append(class_inst_mouse);
     APP_ERROR_CHECK(ret);
 }
+
+#ifdef TRACKBALL_ENABLE
+ret_code_t mouse_move_usb(int8_t x, int8_t y, int8_t wheel) {
+    if(x) {
+        app_usbd_hid_mouse_x_move(&m_app_hid_mouse, x);
+    }
+
+    if(y) {
+        app_usbd_hid_mouse_y_move(&m_app_hid_mouse, y);
+    }
+
+    if(wheel) {
+        app_usbd_hid_mouse_scroll_move(&m_app_hid_mouse, wheel);
+    }
+    
+    return NRF_SUCCESS;
+}
+#endif // TRACKBALL_ENABLE

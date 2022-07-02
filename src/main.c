@@ -88,6 +88,7 @@
 #include "app_usbd_hid_kbd.h"
 #include "app_usbd_hid_kbd_desc.h"
 #include "usb_hiddevice.h"
+#include "usb_cdc.h"
 #else
 #include "dummy_hid.h"
 #endif // NRF52840_XXAA
@@ -443,6 +444,8 @@ int main(void)
     APP_ERROR_CHECK(ret);
 
     usb_hid_init();
+
+    usb_cdc_init();
 #endif
 /*
     app_usbd_class_inst_t const * class_cdc_acm = app_usbd_cdc_acm_class_inst_get(&m_app_cdc_acm);

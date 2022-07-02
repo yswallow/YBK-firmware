@@ -29,6 +29,9 @@ typedef struct {
     ret_code_t (*reset)(void);
     ret_code_t (*handle_mouse)(uint16_t,bool);
     ret_code_t (*tick_handler_mouse)(keys_t*);
+#ifdef TRACKBALL_ENABLE
+    ret_code_t (*mouse_move)(int8_t x, int8_t y, int8_t wheel);
+#endif // TRACKBALL_ENABLE
 } keyboard_hid_functions_t;
 
 typedef enum  {
