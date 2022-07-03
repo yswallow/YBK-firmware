@@ -53,6 +53,14 @@ uint8_t m_hour;
 
 
 keyboard_hid_functions_t hid_functions;
+#ifdef TRACKBALL_ENABLE
+// DIO and CLK can be used as ROW pin
+#define CLK_PIN 29
+#define DIO_PIN 2
+#define CS_PIN 13
+
+static void write_pmw3610_reg(uint8_t address, uint8_t data);
+#endif // TRACKBALL_ENABLE
 
 /**@brief Function for putting the chip into sleep mode.
  *
@@ -72,6 +80,11 @@ void sleep_mode_enter(void *ptr)
         // Prepare wakeup buttons.
         err_code = keyboard_sleep_prepare();
         APP_ERROR_CHECK(err_code);
+
+#ifdef TRACKBALL_ENABLE
+        write_pmw3610_reg(0x3b, 0xe7); // shutdown trackball
+        nrf_gpio_pin_set(CS_PIN);
+#endif // TRACKBALL_ENABLE
 
         // skip bootloader
         //NRF_POWER->GPREGRET = 0x6d;
@@ -212,11 +225,6 @@ void press_key(keys_t *p_key) {
 #ifdef TRACKBALL_ENABLE
 #include "usb_cdc.h"
 
-// DIO and CLK can be used as ROW pin
-#define CLK_PIN 29
-#define DIO_PIN 2
-#define CS_PIN 13
-
 static void read_pmw3610_regs(uint8_t address, uint8_t len, uint8_t* buf) {
     address &= ~0x80;
     nrf_gpio_cfg_output(CLK_PIN);
@@ -338,10 +346,12 @@ void kbd_tick_handler(void* p_context) {
 #ifdef TRACKBALL_ENABLE
     uint8_t buf[10];
     char cdc_buf[64];
+    static int8_t wheel_drop = 0;
 
     read_pmw3610_regs(0x12, 4, buf);
             
     uint16_t delta_x,delta_y;
+    int8_t wheel;
     delta_x = ((buf[3]&0xF0)<<4) | buf[1];
     delta_y = ((buf[3]&0x0F)<<8) | buf[2];
     
@@ -353,13 +363,16 @@ void kbd_tick_handler(void* p_context) {
         delta_y |= 0xF000;
     }
     
+    wheel = (delta_y + wheel_drop)>>3;
+    wheel_drop = (delta_y + wheel_drop) - (wheel<<3);
+
     if( ( buf[0] & 0x80 ) ) {
 #ifdef KEYBOARD_PERIPH
         send_mouse_periph(delta_x, delta_y);
 #else
-        hid_functions.mouse_move(delta_x, delta_y, 0);
+        hid_functions.mouse_move(delta_x, 0, wheel);
 #endif // KEYBOARD_PERIPH
-    } else if( buf[0] == 0x05 ) {
+    } else if( (buf[0]&0x0F) != 0x09 ) {
         nrf_delay_us(10);
         usb_cdc_write("resetting....\r\n", 18);
         write_pmw3610_reg(0x3a, 0x5a); // soft reset
@@ -382,6 +395,7 @@ void kbd_tick_handler(void* p_context) {
     size_t size = sprintf(cdc_buf, "MOTION: %x, DX: %d, DY: %d\r\n", buf[0], (int16_t)delta_x, (int16_t)delta_y);
     usb_cdc_write(cdc_buf, size);
 #endif // TRACKBALL_ENABLE
+
     ++m_clock_tick_count;
     if(m_clock_tick_count==SECOND_INCREMENT_TICKS) {
         m_clock_tick_count = 0;
@@ -732,6 +746,7 @@ void keyboard_init(keyboard_t keyboard) {
 #ifdef TRACKBALL_ENABLE
     nrf_gpio_cfg_output(CS_PIN);
     nrf_gpio_pin_set(CS_PIN);
+    write_pmw3610_reg(0x3a, 0x5a); // reset all
 #endif
 
 #ifndef NO_NEOPIXEL

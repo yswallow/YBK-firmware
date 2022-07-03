@@ -560,6 +560,19 @@ ret_code_t handle_keycode_mouse_ble(uint16_t keycode, bool press) {
     return mouse_report_send_ble();
 }
 
+#ifdef TRACKBALL_ENABLE
+ret_code_t mouse_move_ble(int8_t x, int8_t y, int8_t wheel) {
+    mouse_report_ble.x = x;
+    mouse_report_ble.y = y;
+    mouse_report_ble.wheel = wheel;
+
+    if( x || y || wheel ) {
+        mouse_report_send_ble();
+    }
+
+    return NRF_SUCCESS;
+}
+#endif // TRACKBALL_ENABLE
 
 ret_code_t tick_handler_mouse_ble(keys_t *p_key) {
     if( (p_key->kc&0x00F0)!=0x00F0 ) {
@@ -584,7 +597,10 @@ keyboard_hid_functions_t ble_hid_functions = {
     .send_consumer = send_consumer_ble,
     .reset = keyboard_reset_ble,
     .handle_mouse = handle_keycode_mouse_ble,
-    .tick_handler_mouse = tick_handler_mouse_ble
+    .tick_handler_mouse = tick_handler_mouse_ble,
+#ifdef TRACKBALL_ENABLE
+    .mouse_move = mouse_move_ble,
+#endif
 };
 
 #endif // n KEYBOARD_PERIPH

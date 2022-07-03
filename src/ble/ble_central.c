@@ -402,8 +402,8 @@ static void mouse_move_central(char* p_data) {
     int16_t delta_x = p_data[1]<<8 | p_data[2];
     int16_t delta_y = p_data[3]<<8 | p_data[4];
     
-    int8_t wheel = delta_y >> 2;
-    hid_functions.mouse_move(delta_x, 0, wheel);
+    int8_t wheel = 0; //delta_y >> 2;
+    hid_functions.mouse_move(delta_x, delta_y, wheel);
 }
 
 static uint8_t periph_raw_rep_buffer[32];
