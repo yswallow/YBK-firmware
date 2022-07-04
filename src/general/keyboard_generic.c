@@ -78,13 +78,14 @@ void sleep_mode_enter(void *ptr)
         NRF_LOG_INFO("Going to Sleep...");
         hid_functions.reset();
         // Prepare wakeup buttons.
-        err_code = keyboard_sleep_prepare();
-        APP_ERROR_CHECK(err_code);
-
 #ifdef TRACKBALL_ENABLE
         write_pmw3610_reg(0x3b, 0xe7); // shutdown trackball
         nrf_gpio_pin_set(CS_PIN);
 #endif // TRACKBALL_ENABLE
+
+
+        err_code = keyboard_sleep_prepare();
+        APP_ERROR_CHECK(err_code);
 
         // skip bootloader
         //NRF_POWER->GPREGRET = 0x6d;
@@ -631,7 +632,9 @@ void keyrelease(uint8_t row, uint8_t col, bool debouncing) {
         }
         if(keypress_status[i].row == row && keypress_status[i].col == col ) {
             removes_count += 1;
-            
+#ifdef KEYBOARD_PERIPH
+            send_place_ble(row, col, false);
+#endif
             if(keypress_status[i].application) {
                 uint8_t action = keypress_status[i].application & 0x0F;
                 switch(keypress_status[i].application & 0xF0) {
@@ -707,14 +710,11 @@ void keyrelease(uint8_t row, uint8_t col, bool debouncing) {
             } else {
                 handle_keycode(keypress_status[i].kc, false);
             }
-#ifdef KEYBOARD_PERIPH
-            send_place_ble(row, col, false);
-#endif
+
             memset(keypress_status+i, 0, sizeof(keys_t));
             if(debouncing) {
                 register_debounce(row,col,false);
             }
-            
         }
         if(removes_count) {
             if( (removes_count + i) < PRESS_KEYS_MAX ) {

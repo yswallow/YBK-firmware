@@ -54,20 +54,17 @@
 #include "nordic_common.h"
 #include "nrf.h"
 #include "ble_hci.h"
-#include "ble_advdata.h"
+//#include "nrf_sdh.h"
+//#include "nrf_sdh_soc.h"
+//#include "nrf_sdh_ble.h"
+//#include "nrf_ble_gatt.h"
 #include "ble_advertising.h"
-#include "ble_conn_params.h"
-#include "nrf_sdh.h"
-#include "nrf_sdh_soc.h"
-#include "nrf_sdh_ble.h"
-#include "nrf_ble_gatt.h"
 
 #include "nrf_log.h"
 #include "nrf_log_ctrl.h"
 #include "nrf_log_default_backends.h"
 
 #include "nrf_drv_clock.h"
-#include "nrf_gpio.h"
 #include "nrf_delay.h"
 #include "nrf_drv_power.h"
 #include "nrf_pwr_mgmt.h"
@@ -372,13 +369,15 @@ static void power_management_init(void)
 
 static void keyboard_job(void* ptr) {
     release_prev_tick_kc();
+
+#ifdef KEYBOARD_CENTRAL
+    cache_pop_central();
+#endif
     keyboard_scan(my_keyboard);
     
     kbd_tick_handler(NULL);
 
-#ifdef KEYBOARD_CENTRAL
-    cache_pop_central();
-#elif KEYBOARD_PERIPH
+#ifdef KEYBOARD_PERIPH
     cache_pop_peripheral();
 #endif
 }
