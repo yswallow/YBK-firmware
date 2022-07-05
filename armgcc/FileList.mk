@@ -53,6 +53,8 @@ USB_FILES = \
 	$(SDK_ROOT)/components/libraries/usbd/class/hid/app_usbd_hid.c \
 	$(SDK_ROOT)/components/libraries/usbd/class/hid/generic/app_usbd_hid_generic.c \
   $(SDK_ROOT)/modules/nrfx/drivers/src/nrfx_usbd.c \
+  $(PROJ_SRC_DIR)/usb/usb_cdc.c \
+  $(SDK_ROOT)/components/libraries/usbd/class/cdc/acm/app_usbd_cdc_acm.c \
 
 NRF52840_FILES = \
 	$(SDK_ROOT)/modules/nrfx/mdk/system_nrf52840.c \
@@ -68,8 +70,6 @@ COMMON_SRC = \
   $(PROJ_SRC_DIR)/general/dynamic_keymap.c \
   $(PROJ_SRC_DIR)/general/keyboard_generic.c \
   $(PROJ_SRC_DIR)/ble/ble_setting.c \
-  $(PROJ_SRC_DIR)/usb/usb_cdc.c \
-  $(SDK_ROOT)/components/libraries/usbd/class/cdc/acm/app_usbd_cdc_acm.c \
   $(SDK_ROOT)/components/libraries/log/src/nrf_log_backend_rtt.c \
   $(SDK_ROOT)/components/libraries/log/src/nrf_log_backend_serial.c \
   $(SDK_ROOT)/components/libraries/log/src/nrf_log_backend_uart.c \
