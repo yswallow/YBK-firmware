@@ -369,11 +369,13 @@ static void power_management_init(void)
 }
 
 
-static void keyboard_job(void* ptr) {
-    release_prev_tick_kc();
+static void keyboard_job(void) {
+    if( keyboard_tick ) {
+        keyboard_tick = false;
+        release_prev_tick_kc();
+        kbd_periodical_job();
+    }
     keyboard_scan(my_keyboard);
-    
-    kbd_tick_handler(NULL);
 
 #ifdef KEYBOARD_CENTRAL
     cache_pop_central();
@@ -383,9 +385,9 @@ static void keyboard_job(void* ptr) {
 }
 
 
-void keyboard_job_timer_start(void) {
+void keyboard_tick_timer_start(void) {
     ret_code_t err_code;
-    err_code = app_timer_create(&m_keyboard_job_timer, APP_TIMER_MODE_REPEATED, keyboard_job);
+    err_code = app_timer_create(&m_keyboard_job_timer, APP_TIMER_MODE_REPEATED, kbd_tick_handler);
     APP_ERROR_CHECK(err_code);
     err_code = app_timer_start(m_keyboard_job_timer, APP_TIMER_TICKS(5), NULL);
     APP_ERROR_CHECK(err_code);
@@ -471,7 +473,7 @@ int main(void)
 #endif
     keyboard_init(my_keyboard);
     KEYBOARD_DEBUG_HID_INIT();
-    keyboard_job_timer_start();
+    keyboard_tick_timer_start();
     NRF_LOG_DEBUG_FLUSH("KEYBOARD INIT");
 
 #ifdef KEYBOARD_CENTRAL
@@ -493,6 +495,7 @@ int main(void)
             /* Nothing to do */
         }
 #endif
+        keyboard_job();
         power_manage();
         NRF_LOG_PROCESS();
     }

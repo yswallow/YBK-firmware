@@ -209,8 +209,12 @@ void press_key(keys_t *p_key) {
     }
 }
 
+bool keyboard_tick = false;
+void kbd_tick_handler(void * p_context) {
+    keyboard_tick = true;
+}
 debouncing_keys_t debouncing_keys[PRESS_KEYS_MAX];
-void kbd_tick_handler(void* p_context) {
+void kbd_periodical_job(void) {
     //called every TAPPING_TERM_TICK_MS msecs
     for(uint8_t i=0; (keypress_status[i].kc||keypress_status[i].application) && i<PRESS_KEYS_MAX; i++) {
         if(! keypress_status[i].press) {

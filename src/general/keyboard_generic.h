@@ -83,6 +83,7 @@ void release_prev_tick_kc(void);
 
 void restart_timeout_timer(void);
 void sleep_mode_enter(void *ptr);
+void kbd_periodical_job(void);
 void kbd_tick_handler(void* p_context);
 
 #define PRESS_KEYS_MAX 10
@@ -97,5 +98,5 @@ extern uint32_t keypress_bitmap[KBD_SETTING_ROW_PINS_MAX];
 extern uint32_t debouncing_bitmap[KBD_SETTING_ROW_PINS_MAX];
 
 extern keys_t keypress_status[PRESS_KEYS_MAX];
-
+extern bool keyboard_tick;
 #endif //__KEYBOARD_H
