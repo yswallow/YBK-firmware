@@ -42,7 +42,7 @@ void matrix_init(keyboard_type_t type, keyboard_definision_t ptr) {
 
     if(defs.col2row) {
         for(uint8_t i=0; i<defs.row_pins_count; i++) {
-            nrf_gpio_cfg_output(defs.row_pins[i]);
+            nrf_gpio_cfg(defs.row_pins[i], NRF_GPIO_PIN_DIR_OUTPUT, NRF_GPIO_PIN_INPUT_DISCONNECT, NRF_GPIO_PIN_NOPULL, NRF_GPIO_PIN_S0D1, NRF_GPIO_PIN_NOSENSE);
             nrf_gpio_pin_set(defs.row_pins[i]);
         }
 
