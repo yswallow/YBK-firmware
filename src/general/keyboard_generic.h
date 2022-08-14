@@ -87,8 +87,7 @@ void kbd_periodical_job(void);
 void kbd_tick_handler(void* p_context);
 
 #define PRESS_KEYS_MAX 10
-#define DEBOUNCING_DELAY_MS 30
-#define DEBOUNCING_TICKS 8
+#define DEBOUNCING_TICKS 12
 #define TAPPING_TERM_TICK_MS 5
 #define MOUSE_MOVE_INTERVAL_TICKS ( MOUSE_MOVE_INTERVAL / TAPPING_TERM_TICK_MS )
 #define KEYBOARD_TIMEOUT_TICKS APP_TIMER_TICKS(600000)
