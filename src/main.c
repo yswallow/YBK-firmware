@@ -372,8 +372,8 @@ static void power_management_init(void)
 static void keyboard_job(void) {
     if( keyboard_tick ) {
         keyboard_tick = false;
-        release_prev_tick_kc();
         kbd_periodical_job();
+        release_prev_tick_kc();
     }
     keyboard_scan(my_keyboard);
 
