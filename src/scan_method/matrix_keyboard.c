@@ -8,7 +8,7 @@ void matrix_scan(keyboard_type_t type, void* ptr) {
         return;
     }
     for(uint8_t i=0; i<defs.row_pins_count; i++) {
-        //nrf_gpio_cfg_output(defs.row_pins[i]);
+        nrf_gpio_cfg_output(defs.row_pins[i]);
         nrf_gpio_pin_clear(defs.row_pins[i]);
 
         for(uint8_t j=0; j<defs.col_pins_count; j++) {
@@ -18,19 +18,17 @@ void matrix_scan(keyboard_type_t type, void* ptr) {
                 if(val == 0 ) {
                     if( keypress_bitmap[i] & (1UL<<j) ) {
                     } else {
-                        keypress_bitmap[i] |= (1UL<<j);
                         keypress(i,j, true);
                     }
                 } else {
                     if( keypress_bitmap[i] & (1UL<<j) ) {
-                        keypress_bitmap[i] &= ~(1UL<<j);
                         keyrelease(i,j, true);
                     }
                 }
             }
         }
 
-        nrf_gpio_pin_set(defs.row_pins[i]);
+        nrf_gpio_cfg_input(defs.row_pins[i], NRF_GPIO_PIN_PULLUP);
     }
 }
 
@@ -41,11 +39,12 @@ void matrix_init(keyboard_type_t type, keyboard_definision_t ptr) {
     }
 
     if(defs.col2row) {
+        /*
         for(uint8_t i=0; i<defs.row_pins_count; i++) {
             nrf_gpio_cfg_output(defs.row_pins[i]);
             nrf_gpio_pin_set(defs.row_pins[i]);
         }
-
+        */
         for(uint8_t i=0; i<defs.col_pins_count; i++) {
             nrf_gpio_cfg_input(defs.col_pins[i],NRF_GPIO_PIN_PULLUP);
         }

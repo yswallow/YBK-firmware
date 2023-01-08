@@ -37,7 +37,10 @@ APP_TIMER_DEF(m_keyboard_timeout);
 #endif
 #endif
 
+#define RELEASING_KEY_TICKS 4
+
 uint32_t debouncing_bitmap[KBD_SETTING_ROW_PINS_MAX];
+int8_t releasing_keys[KBD_SETTING_COL_PINS_MAX*KBD_SETTING_ROW_PINS_MAX];
 uint32_t keypress_bitmap[KBD_SETTING_ROW_PINS_MAX];
 keys_t keypress_status[PRESS_KEYS_MAX];
 uint8_t kc_release_next_tick[PRESS_KEYS_MAX];
@@ -365,6 +368,11 @@ void keypress(uint8_t row, uint8_t col, bool debouncing) {
     uint8_t i = 0;
     uint8_t kc;
     
+    if(releasing_keys[KBD_SETTING_COL_PINS_MAX*row+col]) {
+        releasing_keys[KBD_SETTING_COL_PINS_MAX*row+col] = 0;
+        keypress_bitmap[row] |= (1UL<<col);
+        return;
+    }
     for(; (keypress_status[i].kc||keypress_status[i].application) && i<PRESS_KEYS_MAX; i++) {
         if(keypress_status[i].col == col && keypress_status[i].row == row) {
             // already pressed.
@@ -383,6 +391,8 @@ void keypress(uint8_t row, uint8_t col, bool debouncing) {
     keypress_status[i].col = col;
     keypress_status[i].tick = 0;
     keypress_status[i].press = false;
+    
+    keypress_bitmap[row] |= (1UL<<col);
 #ifdef KEYBOARD_PERIPH
     send_place_ble(row,col,true);
 #endif
@@ -461,6 +471,14 @@ void register_kc_release_next_tick(uint8_t kc){
 
 void keyrelease(uint8_t row, uint8_t col, bool debouncing) {
     uint8_t removes_count = 0;
+    
+    if(releasing_keys[KBD_SETTING_COL_PINS_MAX*row+col]<RELEASING_KEY_TICKS) {
+        releasing_keys[KBD_SETTING_COL_PINS_MAX*row+col]++;
+        return;
+    }
+
+    keypress_bitmap[row] &= ~(1UL<<col);
+    releasing_keys[KBD_SETTING_COL_PINS_MAX*row+col] = 0;
     
     for(uint8_t i=0; i<PRESS_KEYS_MAX; i++) {
         if(keypress_status[i].kc==0x00 && keypress_status[i].application==0x00) {
