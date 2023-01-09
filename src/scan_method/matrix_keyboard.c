@@ -59,6 +59,7 @@ ret_code_t matrix_sleep_prepare(keyboard_type_t type, keyboard_definision_t ptr)
 
     if(defs.col2row) {
         for(uint8_t i=0; i<defs.row_pins_count; i++) {
+            nrf_gpio_cfg_output(defs.row_pins[i]);
             nrf_gpio_pin_clear(defs.row_pins[i]);
         }
 
