@@ -368,7 +368,7 @@ void keypress(uint8_t row, uint8_t col, bool debouncing) {
     uint8_t i = 0;
     uint8_t kc;
     
-    if(releasing_keys[KBD_SETTING_COL_PINS_MAX*row+col]) {
+    if( debouncing && releasing_keys[KBD_SETTING_COL_PINS_MAX*row+col] ) {
         releasing_keys[KBD_SETTING_COL_PINS_MAX*row+col] = 0;
         keypress_bitmap[row] |= (1UL<<col);
         return;
@@ -472,7 +472,7 @@ void register_kc_release_next_tick(uint8_t kc){
 void keyrelease(uint8_t row, uint8_t col, bool debouncing) {
     uint8_t removes_count = 0;
     
-    if(releasing_keys[KBD_SETTING_COL_PINS_MAX*row+col]<RELEASING_KEY_TICKS) {
+    if( debouncing && (releasing_keys[KBD_SETTING_COL_PINS_MAX*row+col]<RELEASING_KEY_TICKS) ) {
         releasing_keys[KBD_SETTING_COL_PINS_MAX*row+col]++;
         return;
     }
