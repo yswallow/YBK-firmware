@@ -336,7 +336,7 @@ static uint8_t ascii2num(char c) {
 }
 keypress_cache_t keypress_peripheral_cache[KEYPRESS_PERIPHERAL_CACHE_LEN];
 uint8_t keypress_cache_head;
-uint8_t keypress_cache_unexecuted_count;
+volatile uint8_t keypress_cache_unexecuted_count;
 
 void keypress_cache_init(void) {
     //memset(keypress_peripheral_cache, 2, sizeof(keypress_peripheral_cache));
@@ -354,15 +354,14 @@ void keypress_cache_append(uint8_t row, uint8_t col, uint8_t state) {
     keypress_peripheral_cache[i].col = col;
     keypress_peripheral_cache[i].row = row;
     keypress_peripheral_cache[i].state = state;
-    CRITICAL_REGION_ENTER();
     keypress_cache_unexecuted_count++;
-    CRITICAL_REGION_EXIT();
 }
 
 void cache_pop_central(void) {
     for( uint8_t i=0; i<keypress_cache_unexecuted_count; i++) {
         uint8_t j = (keypress_cache_head+i)%KEYPRESS_PERIPHERAL_CACHE_LEN;
         
+        any_keypress = true;
         if( keypress_peripheral_cache[j].state == 1 ) {
             keypress(keypress_peripheral_cache[j].row, keypress_peripheral_cache[j].col+my_keyboard.split_keyboard.central_cols_count, false);
             NRF_LOG_INFO("Press");
@@ -373,10 +372,8 @@ void cache_pop_central(void) {
             NRF_LOG_INFO("N/A");
         }
     }
-    CRITICAL_REGION_ENTER();
     keypress_cache_head = (keypress_cache_head+keypress_cache_unexecuted_count) % 10;
     keypress_cache_unexecuted_count = 0;
-    CRITICAL_REGION_EXIT();
 }
 
 static bool send_keycode_central(char* p_char) {

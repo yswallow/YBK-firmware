@@ -27,7 +27,6 @@
 #endif // NO_NEOPIXEL
 
 #define KEYCODE_PERIPH 0xFFFF
-#define DEBOUNCING_TICK_INVALID 0xFFFFFFFFUL
 #define KC_INVALID 0xFF
 #define SECOND_INCREMENT_TICKS 200
 
@@ -53,9 +52,18 @@ uint8_t m_clock_tick_count = 0;
 uint8_t m_second;
 uint8_t m_minute;
 uint8_t m_hour;
-
+volatile bool tick = false;
+volatile bool any_keypress = false;
+volatile uint32_t keypress_ticks = 0;
 
 keyboard_hid_functions_t hid_functions;
+
+#ifdef USE_INTERRUPT
+void GPIOTE_IRQHandler(void) {
+    any_keypress = true;
+    NRF_GPIOTE->EVENTS_PORT = 0;
+}
+#endif
 
 /**@brief Function for putting the chip into sleep mode.
  *
@@ -214,7 +222,12 @@ void press_key(keys_t *p_key) {
 
 debouncing_keys_t debouncing_keys[PRESS_KEYS_MAX];
 void kbd_tick_handler(void* p_context) {
+    tick = true;
+}
+
+void keyboard_tick(void) {
     //called every TAPPING_TERM_TICK_MS msecs
+    release_prev_tick_kc();
     for(uint8_t i=0; (keypress_status[i].kc||keypress_status[i].application) && i<PRESS_KEYS_MAX; i++) {
         if(! keypress_status[i].press) {
             keypress_status[i].tick++;
@@ -287,14 +300,20 @@ void kbd_tick_handler(void* p_context) {
 #endif
 }
 
+void debounce_init(void) {
+    memset(debouncing_bitmap, 0, sizeof(debouncing_bitmap));
+    for(uint8_t i=0; i<PRESS_KEYS_MAX; i++) {
+        debouncing_keys[i].tick = DEBOUNCING_TICK_INVALID;
+    }
+}
+
 void register_debounce(uint8_t row, uint8_t col, bool press) {
-    debouncing_bitmap[row] |= (1<<col);
-    
     for(uint8_t i=0; i<PRESS_KEYS_MAX; i++) {
         if( debouncing_keys[i].tick == DEBOUNCING_TICK_INVALID ) {
             debouncing_keys[i].row = row;
             debouncing_keys[i].col = col;
             debouncing_keys[i].tick = press ? 0 : 0;
+            debouncing_bitmap[row] |= (1<<col);
             break;
         }
     }
@@ -401,6 +420,7 @@ void keypress(uint8_t row, uint8_t col, bool debouncing) {
     restart_timeout_timer();
 #endif
 #endif
+    keypress_ticks = 0;
     if(debouncing) {
         register_debounce(row, col, true);
     }
@@ -587,16 +607,18 @@ void keyboard_scan(keyboard_t keyboard) {
 
 
 void release_prev_tick_kc(void){
-    for(uint8_t i=0;kc_release_next_tick[i]!=KC_INVALID;i++){
-        hid_functions.keycode_remove(kc_release_next_tick[i]);kc_release_next_tick[i]=KC_INVALID;
+    for(uint8_t i=0; kc_release_next_tick[i]!=KC_INVALID; i++){
+        hid_functions.keycode_remove(kc_release_next_tick[i]);
+        kc_release_next_tick[i] = KC_INVALID;
     }
 }
 
 void keyboard_init(keyboard_t keyboard) {
     memset(keypress_status, 0, sizeof(keypress_status));
     memset(keypress_bitmap, 0, sizeof(keypress_bitmap));
-    memset(debouncing_bitmap, 0, sizeof(debouncing_bitmap));
-    memset(kc_release_next_tick,KC_INVALID,PRESS_KEYS_MAX);
+    memset(kc_release_next_tick, KC_INVALID, PRESS_KEYS_MAX);
+    
+    debounce_init();
     heatmap_init();
 
 #ifndef NO_NEOPIXEL
@@ -609,7 +631,6 @@ void keyboard_init(keyboard_t keyboard) {
 
     current_layer = my_keyboard.default_layer;
     
-    (keyboard.init_method)(keyboard.keyboard_type,keyboard.keyboard_definision);
 #ifndef KEYBOARD_PERIPH
 #ifdef KEYBOARD_TIMEOUT
     timeout_timer_init();
@@ -622,5 +643,12 @@ void keyboard_init(keyboard_t keyboard) {
     }
 #ifdef DEBUG_52832
     nrf_gpio_cfg_output(19);
+#endif
+
+#ifdef USE_INTERRUPT
+    keyboard_sleep_prepare();
+    NVIC_EnableIRQ(GPIOTE_IRQn);
+#else
+    (keyboard.init_method)(keyboard.keyboard_type,keyboard.keyboard_definision);
 #endif
 }

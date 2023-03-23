@@ -39,14 +39,12 @@ void matrix_init(keyboard_type_t type, keyboard_definision_t ptr) {
     }
 
     if(defs.col2row) {
-        /*
         for(uint8_t i=0; i<defs.row_pins_count; i++) {
-            nrf_gpio_cfg_output(defs.row_pins[i]);
-            nrf_gpio_pin_set(defs.row_pins[i]);
+            nrf_gpio_cfg_input(defs.row_pins[i], NRF_GPIO_PIN_PULLUP);
         }
-        */
+        
         for(uint8_t i=0; i<defs.col_pins_count; i++) {
-            nrf_gpio_cfg_input(defs.col_pins[i],NRF_GPIO_PIN_PULLUP);
+            nrf_gpio_cfg_sense_input(defs.col_pins[i],NRF_GPIO_PIN_PULLUP,NRF_GPIO_PIN_NOSENSE);
         }
     }
 }
@@ -67,5 +65,8 @@ ret_code_t matrix_sleep_prepare(keyboard_type_t type, keyboard_definision_t ptr)
             nrf_gpio_cfg_sense_input(defs.col_pins[i],NRF_GPIO_PIN_PULLUP,NRF_GPIO_PIN_SENSE_LOW);
         }
     }
+#ifdef USE_INTERRUPT
+    NRF_GPIOTE->INTENSET = (1<<31);
+#endif
     return NRF_SUCCESS;
 }

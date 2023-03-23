@@ -19,7 +19,7 @@ typedef struct {
 typedef struct {
     uint8_t row;
     uint8_t col;
-    uint32_t tick;
+    uint8_t tick;
 } debouncing_keys_t;
 
 typedef struct {
@@ -84,13 +84,21 @@ void release_prev_tick_kc(void);
 void restart_timeout_timer(void);
 void sleep_mode_enter(void *ptr);
 void kbd_tick_handler(void* p_context);
+void keyboard_tick(void);
+void keyboard_tick_start(void);
+
+extern volatile bool tick;
+extern volatile bool any_keypress;
+extern volatile uint32_t keypress_ticks;
+extern volatile bool keyboard_running;
 
 #define PRESS_KEYS_MAX 10
-#define DEBOUNCING_DELAY_MS 30
+#define DEBOUNCING_TICK_INVALID 0xFF
 #define DEBOUNCING_TICKS 8
 #define TAPPING_TERM_TICK_MS 5
 #define MOUSE_MOVE_INTERVAL_TICKS ( MOUSE_MOVE_INTERVAL / TAPPING_TERM_TICK_MS )
 #define KEYBOARD_TIMEOUT_TICKS APP_TIMER_TICKS(600000)
+#define MATRIX_SCAN_TIMEOUT_TICKS (200*10)
 
 extern keyboard_hid_functions_t hid_functions;
 extern uint32_t keypress_bitmap[KBD_SETTING_ROW_PINS_MAX];

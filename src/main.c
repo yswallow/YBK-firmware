@@ -132,6 +132,8 @@ APP_TIMER_DEF(m_keyboard_job_timer);
 static bool m_usb_connected = false;
 #endif
 
+volatile bool keyboard_running = false;
+
 /** @brief Function for initializing the timer module. */
 static void timers_init(void)
 {
@@ -368,26 +370,18 @@ static void power_management_init(void)
     APP_ERROR_CHECK(err_code);
 }
 
-
-static void keyboard_job(void* ptr) {
-    release_prev_tick_kc();
-    keyboard_scan(my_keyboard);
-    
-    kbd_tick_handler(NULL);
-
-#ifdef KEYBOARD_CENTRAL
-    cache_pop_central();
-#elif KEYBOARD_PERIPH
-    cache_pop_peripheral();
-#endif
+void keyboard_tick_init(void) {
+    ret_code_t err_code = app_timer_create(&m_keyboard_job_timer, APP_TIMER_MODE_REPEATED, kbd_tick_handler);
+    APP_ERROR_CHECK(err_code);
 }
 
-
-void keyboard_job_timer_start(void) {
-    ret_code_t err_code;
-    err_code = app_timer_create(&m_keyboard_job_timer, APP_TIMER_MODE_REPEATED, keyboard_job);
+void keyboard_tick_start(void) {
+    ret_code_t err_code = app_timer_start(m_keyboard_job_timer, APP_TIMER_TICKS(5), NULL);
     APP_ERROR_CHECK(err_code);
-    err_code = app_timer_start(m_keyboard_job_timer, APP_TIMER_TICKS(5), NULL);
+}
+
+void keyboard_tick_stop(void) {
+    ret_code_t err_code = app_timer_stop(m_keyboard_job_timer);
     APP_ERROR_CHECK(err_code);
 }
 
@@ -470,8 +464,8 @@ int main(void)
     APP_ERROR_CHECK(ret);
 #endif
     keyboard_init(my_keyboard);
+    keyboard_tick_init();
     KEYBOARD_DEBUG_HID_INIT();
-    keyboard_job_timer_start();
     NRF_LOG_DEBUG_FLUSH("KEYBOARD INIT");
 
 #ifdef KEYBOARD_CENTRAL
@@ -484,6 +478,7 @@ int main(void)
 #endif  
 #endif
     NRF_LOG_DEBUG_FLUSH("Enter main loop");
+
     // Enter main loop.
     for (;;)
     {
@@ -493,8 +488,42 @@ int main(void)
             /* Nothing to do */
         }
 #endif
-        power_manage();
+
+#ifdef USE_INTERRUPT
+        if(any_keypress) {
+#else
+        if(1) {
+#endif
+            if(! keyboard_running) {
+                (my_keyboard.init_method)(my_keyboard.keyboard_type,my_keyboard.keyboard_definision);
+                keyboard_tick_start();
+                keyboard_running = true;
+            }
+
+            keyboard_scan(my_keyboard);
+        } else {
+            if(keyboard_running) {
+                keyboard_tick_stop();
+                keyboard_sleep_prepare();
+                sd_nvic_EnableIRQ(GPIOTE_IRQn);
+                keyboard_running = false;
+            }
+        }
+        if(tick) {
+            keyboard_tick();
+            if(++keypress_ticks>MATRIX_SCAN_TIMEOUT_TICKS) {
+                any_keypress = false;
+            }
+            tick = false;
+        }
+
+#ifdef KEYBOARD_CENTRAL
+        cache_pop_central();
+#elif KEYBOARD_PERIPH
+        cache_pop_peripheral();
+#endif
         NRF_LOG_PROCESS();
+        power_manage();
     }
 }
 
