@@ -26,11 +26,11 @@ enum {
     ID_SWITCH_MATRIX_STATE,
 };
 
-bool keymap_updated = false;
+static bool keymap_updated = false;
 
 // This is generalized so the layout options EEPROM usage can be
 // variable, between 1 and 4 bytes.
-uint32_t via_get_layout_options(void) {
+static uint32_t via_get_layout_options(void) {
     uint32_t value = 0;
     // Start at the most significant byte
     void *source = (void *)(VIA_EEPROM_LAYOUT_OPTIONS_ADDR);
@@ -42,7 +42,7 @@ uint32_t via_get_layout_options(void) {
     return value;
 }
 
-void via_set_layout_options(uint32_t value) {
+static void via_set_layout_options(uint32_t value) {
     // Start at the least significant byte
     void *target = (void *)(VIA_EEPROM_LAYOUT_OPTIONS_ADDR + VIA_EEPROM_LAYOUT_OPTIONS_SIZE - 1);
     for (uint8_t i = 0; i < VIA_EEPROM_LAYOUT_OPTIONS_SIZE; i++) {

@@ -72,12 +72,12 @@ typedef struct {
     ret_code_t (*sleep_prepare)(keyboard_type_t, keyboard_definision_t);
 } keyboard_t;
 
-void keyboard_scan(keyboard_t keyboard);
+void keyboard_scan(const keyboard_t keyboard);
 void keyboard_init(keyboard_t keyboard);
 ret_code_t keyboard_sleep_prepare(void);
 
-void keypress(uint8_t row, uint8_t col, bool debouncing);
-void keyrelease(uint8_t row, uint8_t col, bool debouncing);
+void keypress(const uint8_t row, const uint8_t col, const bool debouncing);
+void keyrelease(const uint8_t row, const uint8_t col, const bool debouncing);
 uint8_t get_active_layer(void);
 void release_prev_tick_kc(void);
 
@@ -104,6 +104,6 @@ extern keyboard_hid_functions_t hid_functions;
 extern uint32_t keypress_bitmap[KBD_SETTING_ROW_PINS_MAX];
 extern uint32_t debouncing_bitmap[KBD_SETTING_ROW_PINS_MAX];
 
-extern keys_t keypress_status[PRESS_KEYS_MAX];
+//extern keys_t keypress_status[PRESS_KEYS_MAX];
 
 #endif //__KEYBOARD_H

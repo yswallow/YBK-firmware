@@ -22,17 +22,8 @@
 static void hid_keyboard_ev_handler(app_usbd_class_inst_t const * p_inst,
                                 app_usbd_hid_user_event_t event);
 
-bool m_report_pending_kbd = false;
+//bool m_report_pending_kbd = false;
 uint8_t usb_keyboard_rep_buffer[USB_HID_KBD_REP_LEN];
-
-keyboard_hid_functions_t usb_hid_functions = {
-    .keycode_append = keycode_append_usb,
-    .keycode_remove = keycode_remove_usb,
-    .send_consumer = send_consumer_usb,
-    .reset = keyboard_reset_usb,
-    .handle_mouse = handle_keycode_mouse_usb,
-    .tick_handler_mouse = tick_handler_mouse_usb
-};
 
 #define USBD_HID_KBD_REPORT_DSC() {                                                    \
         0x05, 0x01,                    /* USAGE_PAGE (Generic Desktop)                   */\
@@ -84,7 +75,8 @@ APP_USBD_HID_GENERIC_GLOBAL_DEF(m_app_hid_kbd,
                                 APP_USBD_HID_SUBCLASS_BOOT,
                                 APP_USBD_HID_PROTO_KEYBOARD);
 
-ret_code_t keyboard_report_send_usb(void) {
+
+static ret_code_t keyboard_report_send_usb(void) {
     return app_usbd_hid_generic_in_report_set(
         &m_app_hid_kbd,
         usb_keyboard_rep_buffer,
@@ -105,14 +97,12 @@ static void hid_keyboard_ev_handler(app_usbd_class_inst_t const * p_inst,
     {
         case APP_USBD_HID_USER_EVT_OUT_REPORT_READY:
         {
-            
             break;
         }
         case APP_USBD_HID_USER_EVT_IN_REPORT_DONE:
         {
-            m_report_pending_kbd = false;
+            //m_report_pending_kbd = false;
             //hid_generic_keyboard_process_state();
-            //bsp_board_led_invert(LED_HID_REP_IN);
             break;
         }
         case APP_USBD_HID_USER_EVT_SET_BOOT_PROTO:
@@ -133,7 +123,7 @@ static void hid_keyboard_ev_handler(app_usbd_class_inst_t const * p_inst,
 }
 
 
-ret_code_t keycode_append_usb(uint8_t kc) {
+static ret_code_t keycode_append_usb(const uint8_t kc) {
     bool updated = false;
     if( (kc&0xF8) == 0xe0 ) {
         // modifiers
@@ -143,8 +133,7 @@ ret_code_t keycode_append_usb(uint8_t kc) {
             usb_keyboard_rep_buffer[USB_HID_KBD_MODS_INDEX] |= ( 1<<(kc-0xe0) );
             updated = true;
         }
-    } else
-    {
+    } else {
         for(uint8_t i = USB_HID_KBD_KEYS_START; i<USB_HID_KBD_REP_LEN; i++) {
             if(usb_keyboard_rep_buffer[i]==0x00) {
                 usb_keyboard_rep_buffer[i] = kc;
@@ -164,7 +153,7 @@ ret_code_t keycode_append_usb(uint8_t kc) {
     return NRF_SUCCESS;
 }
 
-ret_code_t keycode_remove_usb(uint8_t kc) {
+static ret_code_t keycode_remove_usb(const uint8_t kc) {
     bool after_kc = false;
     bool updated = false;
     if( (kc&0xF8) == 0xe0 ) {
@@ -173,8 +162,7 @@ ret_code_t keycode_remove_usb(uint8_t kc) {
             usb_keyboard_rep_buffer[USB_HID_KBD_MODS_INDEX] &= ~( 1<<(kc&0x07) );
             updated = true;
         }
-    }
-    else {
+    } else {
         for(uint8_t i = USB_HID_KBD_KEYS_START; i<USB_HID_KBD_REP_LEN; i++) {
             if(usb_keyboard_rep_buffer[i]==0x00) {
                 break;
@@ -192,13 +180,14 @@ ret_code_t keycode_remove_usb(uint8_t kc) {
             }
         }
     }
+
     if(updated) {
         keyboard_report_send_usb();
     }
     return NRF_SUCCESS;
 }
 
-ret_code_t keyboard_reset_usb(void) {
+static ret_code_t keyboard_reset_usb(void) {
     memset(usb_keyboard_rep_buffer, 0, sizeof(usb_keyboard_rep_buffer));
     keyboard_report_send_usb();
     return NRF_SUCCESS;
@@ -217,3 +206,19 @@ void usb_keyboard_init(void) {
     ret = app_usbd_class_append(class_inst_keyboard);
     APP_ERROR_CHECK(ret);
 }
+
+void usb_hid_init(void) {
+    usb_keyboard_init();
+    usb_hid_raw_init();
+    usb_mouse_init();
+    usb_hid_consumer_init();
+}
+
+const keyboard_hid_functions_t usb_hid_functions = {
+    .keycode_append = keycode_append_usb,
+    .keycode_remove = keycode_remove_usb,
+    .send_consumer = send_consumer_usb,
+    .reset = keyboard_reset_usb,
+    .handle_mouse = handle_keycode_mouse_usb,
+    .tick_handler_mouse = tick_handler_mouse_usb
+};

@@ -95,6 +95,7 @@
 #define KEYBOARD_CENTRAL_SCAN_TIMEOUT_TICKS   APP_TIMER_TICKS(60000)
 
 #define UART_CACHE_SIZE 16
+#define PM_PEER_LIST_SIZE 16
 
 BLE_NUS_C_DEF(m_ble_nus_c);                                             /**< BLE Nordic UART Service (NUS) client instance. */
 NRF_BLE_GATT_DEF(m_gatt_c);                                               /**< GATT module instance. */
@@ -178,7 +179,6 @@ static void scan_start(void)
     NRF_LOG_INFO("Start Scanning...");
 }
 
-#define PM_PEER_LIST_SIZE 16
 static void scan_turnoff_whitelist(void* ptr) {
     ret_code_t ret;
     ble_gap_scan_params_t param;
@@ -327,19 +327,19 @@ static void db_disc_handler(ble_db_discovery_evt_t * p_evt)
  * @details This function takes a list of characters of length data_len and prints the characters out on UART.
  *          If @ref ECHOBACK_BLE_UART_DATA is set, the data is sent back to sender.
  */
-static uint8_t ascii2num(char c) {
+static uint8_t ascii2num(const char c) {
     if( c<0x3A ) {
         return c-0x30;
     } else {
         return c-0x41+10;
     }
 }
-keypress_cache_t keypress_peripheral_cache[KEYPRESS_PERIPHERAL_CACHE_LEN];
-uint8_t keypress_cache_head;
-volatile uint8_t keypress_cache_unexecuted_count;
+
+static keypress_cache_t keypress_peripheral_cache[KEYPRESS_PERIPHERAL_CACHE_LEN];
+static uint8_t keypress_cache_head;
+static uint8_t keypress_cache_unexecuted_count;
 
 void keypress_cache_init(void) {
-    //memset(keypress_peripheral_cache, 2, sizeof(keypress_peripheral_cache));
     keypress_cache_head = 0;
     keypress_cache_unexecuted_count = 0;
 }
@@ -349,7 +349,7 @@ uint8_t get_keypress_cache_last(void) {
     return last%10;
 }
 
-void keypress_cache_append(uint8_t row, uint8_t col, uint8_t state) {
+void keypress_cache_append(const uint8_t row, const uint8_t col, const uint8_t state) {
     uint8_t i = get_keypress_cache_last();
     keypress_peripheral_cache[i].col = col;
     keypress_peripheral_cache[i].row = row;
@@ -376,9 +376,9 @@ void cache_pop_central(void) {
     keypress_cache_unexecuted_count = 0;
 }
 
-static bool send_keycode_central(char* p_char) {
-    uint8_t row = ascii2num(*(p_char+1));
-    uint8_t col = ascii2num(*(p_char+3));
+static bool send_keycode_central(const char* p_char) {
+    const uint8_t row = ascii2num(*(p_char+1));
+    const uint8_t col = ascii2num(*(p_char+3));
     if( *p_char == 'R' ) {
         //keyrelease(row,col+10,false);
         keypress_cache_append(row, col, 0);
@@ -395,43 +395,20 @@ static bool send_keycode_central(char* p_char) {
     }
 }
 
-static uint8_t periph_raw_rep_buffer[32];
-static bool uart_data_receive(char* p_data) {
+static bool uart_data_receive(const char* p_data) {
+    static uint8_t periph_raw_rep_buffer[32];
+
     if( p_data[0] != 'D' ) {
         return false;
     }
     uint8_t len = p_data[1];
-    p_data[3] += 0x80;
-    memcpy(periph_raw_rep_buffer, p_data+2, len>32? 32 : len);
-    raw_hid_send(periph_raw_rep_buffer, len>32? 32 : len);
+    memcpy(periph_raw_rep_buffer, p_data+2, len>32 ? 32 : len);
+    periph_raw_rep_buffer[1] += 0x80;
+    raw_hid_send(periph_raw_rep_buffer, len>32 ? 32 : len);
     return true;
 }
 
-
-static uint8_t uart_received_data[UART_CACHE_SIZE];
-static uint8_t uart_received_data_head = 0;
-static void ble_nus_chars_received_keyboard(uint8_t * p_data, uint16_t data_len);
-static void uart_join_central(uint8_t* p_data, uint16_t len) {
-    bool is_start = (*p_data >> 7) & 0x01;
-    bool is_end = (*p_data >> 6) & 0x01;
-    uint8_t data_size = *p_data & 0x3F;
-
-    if(is_start) {
-        memcpy(uart_received_data, p_data+1, data_size);
-        uart_received_data_head = data_size;
-    } else {
-        memcpy(uart_received_data+uart_received_data_head, p_data+1, data_size);
-        uart_received_data_head += data_size;
-    }
-
-    if(is_end) {
-        ble_nus_chars_received_keyboard(uart_received_data, uart_received_data_head);
-        uart_received_data_head = 0;
-    }
-}
-
-
-static void ble_nus_chars_received_keyboard(uint8_t * p_data, uint16_t data_len)
+static void ble_nus_chars_received_keyboard(const uint8_t * p_data, const uint16_t data_len)
 {
     NRF_LOG_DEBUG("Receiving data.");
     NRF_LOG_HEXDUMP_DEBUG(p_data, data_len);
@@ -440,6 +417,28 @@ static void ble_nus_chars_received_keyboard(uint8_t * p_data, uint16_t data_len)
         send_keycode_central((char*)p_data);
     } else if( *((char*)p_data) == 'D' ) {
         uart_data_receive((char*)p_data);
+    }
+}
+
+static void uart_join_central(const uint8_t* p_data, const uint16_t len) {
+    static uint8_t uart_received_data[UART_CACHE_SIZE];
+    static uint8_t uart_received_data_head = 0;
+    
+    const bool is_start = (*p_data >> 7) & 0x01;
+    const bool is_end = (*p_data >> 6) & 0x01;
+    const uint8_t data_size = *p_data & 0x3F;
+
+    if(is_start) {
+        memcpy(uart_received_data, p_data+1, data_size);
+        uart_received_data_head = data_size;
+    } else {
+        memcpy(uart_received_data_head+uart_received_data, p_data+1, data_size);
+        uart_received_data_head += data_size;
+    }
+
+    if(is_end) {
+        ble_nus_chars_received_keyboard(uart_received_data, uart_received_data_head);
+        uart_received_data_head = 0;
     }
 }
 
@@ -567,7 +566,7 @@ NRF_PWR_MGMT_HANDLER_REGISTER(shutdown_handler, APP_SHUTDOWN_HANDLER_PRIORITY);
  */
 
 
-bool ble_c_connected = false;
+static bool ble_c_connected = false;
 void ble_c_evt_handler(ble_evt_t const * p_ble_evt, void * p_context)
 {
     ret_code_t            err_code;
@@ -705,35 +704,6 @@ static void ble_stack_init(void)
 
 */
 
-/**@brief Function for handling events from the BSP module.
- *
- * @param[in] event  Event generated by button press.
- */
- /*
-void bsp_event_handler(bsp_event_t event)
-{
-    ret_code_t err_code;
-
-    switch (event)
-    {
-        case BSP_EVENT_SLEEP:
-            nrf_pwr_mgmt_shutdown(NRF_PWR_MGMT_SHUTDOWN_GOTO_SYSOFF);
-            break;
-
-        case BSP_EVENT_DISCONNECT:
-            err_code = sd_ble_gap_disconnect(m_ble_nus_c.conn_handle,
-                                             BLE_HCI_REMOTE_USER_TERMINATED_CONNECTION);
-            if (err_code != NRF_ERROR_INVALID_STATE)
-            {
-                APP_ERROR_CHECK(err_code);
-            }
-            break;
-
-        default:
-            break;
-    }
-}
-*/
 /**@brief Function for initializing the UART. */
 /*
 static void uart_init(void)
@@ -776,22 +746,6 @@ static void nus_c_init(void)
     APP_ERROR_CHECK(err_code);
 }
 
-
-/**@brief Function for initializing buttons and leds. */
-/*
-static void buttons_leds_init(void)
-{
-    ret_code_t err_code;
-    bsp_event_t startup_event;
-
-    err_code = bsp_init(BSP_INIT_LEDS, bsp_event_handler);
-    APP_ERROR_CHECK(err_code);
-
-    err_code = bsp_btn_ble_init(NULL, &startup_event);
-    APP_ERROR_CHECK(err_code);
-}
-*/
-
 /**@brief Function for initializing power management.
  */
  /*
@@ -831,13 +785,13 @@ static void idle_state_handle(void)
 }
  */
 
-void uart_send_central(uint8_t *p_data, uint8_t len) {
+void uart_send_central(const uint8_t *p_data, const uint8_t len) {
     ret_code_t ret;
     uint8_t head = 0;
     bool is_end = false;
     bool is_start = true;
     if( m_periph_connected ) {
-        for(uint8_t i=0;i<(len+UART_CACHE_SIZE-1)/UART_CACHE_SIZE;i++) {
+        for(uint8_t i=0; i<(len+UART_CACHE_SIZE-1)/UART_CACHE_SIZE; i++) {
             if( (len-head)>(UART_CACHE_SIZE-1) ) {
                 m_uart_send_len = UART_CACHE_SIZE-1;
             } else {
@@ -863,10 +817,8 @@ void ble_central_init(void)
 {
     // Initialize.
     memset(keypress_peripheral_cache, 0, sizeof(keypress_peripheral_cache));
-    //log_init();
     //timer_init();
     //uart_init();
-    //buttons_leds_init();
     db_discovery_init();
     //power_management_init();
     //ble_stack_init();
@@ -889,7 +841,7 @@ void ble_central_start(void)
 
 #define SETTING (*(data+1))
 
-raw_hid_receive_t raw_hid_receive_for_peripheral(uint8_t *data, uint8_t length) {
+raw_hid_receive_t raw_hid_receive_for_peripheral(uint8_t *data, const uint8_t length) {
     if( 0x84<=SETTING && SETTING<=0x87 ) {
         SETTING = SETTING - 0x80;
         uart_send_central(data, length);

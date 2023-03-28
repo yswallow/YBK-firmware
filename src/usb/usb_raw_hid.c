@@ -50,7 +50,7 @@
   0xC0 \
 }
 
-void hid_raw_ev_handler(app_usbd_class_inst_t const * p_inst,
+static void hid_raw_ev_handler(app_usbd_class_inst_t const * p_inst,
                                 app_usbd_hid_user_event_t event);
 
 APP_USBD_HID_GENERIC_SUBCLASS_REPORT_DESC(raw_desc, RAW_REPORT_DSC());
@@ -71,7 +71,7 @@ static ret_code_t idle_handle_raw(app_usbd_class_inst_t const * p_inst, uint8_t 
     return NRF_ERROR_NOT_SUPPORTED;
 }
 
-void hid_raw_ev_handler(app_usbd_class_inst_t const * p_inst,
+static void hid_raw_ev_handler(app_usbd_class_inst_t const * p_inst,
                                 app_usbd_hid_user_event_t event)
 {
     switch (event)
@@ -107,14 +107,14 @@ void hid_raw_ev_handler(app_usbd_class_inst_t const * p_inst,
     }
 }
 
-void raw_hid_send_usb(uint8_t *data, uint8_t length) {
+void raw_hid_send_usb(uint8_t *data, const uint8_t length) {
     app_usbd_hid_generic_in_report_set(
         &m_app_hid_raw,
         data,
         length);
 }
 
-void usb_hid_raw_init(void){
+void usb_hid_raw_init(void) {
     ret_code_t ret;
     app_usbd_class_inst_t const * class_inst_raw;
     class_inst_raw = app_usbd_hid_generic_class_inst_get(&m_app_hid_raw);

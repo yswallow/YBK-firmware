@@ -39,19 +39,23 @@ APP_TIMER_DEF(m_keyboard_timeout);
 #define RELEASING_KEY_TICKS 4
 
 uint32_t debouncing_bitmap[KBD_SETTING_ROW_PINS_MAX];
-int8_t releasing_keys[KBD_SETTING_COL_PINS_MAX*KBD_SETTING_ROW_PINS_MAX];
 uint32_t keypress_bitmap[KBD_SETTING_ROW_PINS_MAX];
-keys_t keypress_status[PRESS_KEYS_MAX];
-uint8_t kc_release_next_tick[PRESS_KEYS_MAX];
-uint8_t current_layer;
+static keys_t keypress_status[PRESS_KEYS_MAX];
 
-uint8_t m_neopixel_tick_count;
-uint8_t m_neopixel_pattern = 5;
-uint8_t m_neopixel_index;
-uint8_t m_clock_tick_count = 0;
-uint8_t m_second;
-uint8_t m_minute;
-uint8_t m_hour;
+static int8_t releasing_keys[KBD_SETTING_COL_PINS_MAX*KBD_SETTING_ROW_PINS_MAX];
+static uint8_t kc_release_next_tick[PRESS_KEYS_MAX];
+static uint8_t current_layer;
+
+#ifndef NO_NEOPIXEL
+static uint8_t m_neopixel_tick_count;
+static uint8_t m_neopixel_pattern = 5;
+static uint8_t m_neopixel_index;
+#endif
+
+static uint8_t m_clock_tick_count = 0;
+static uint8_t m_second;
+static uint8_t m_minute;
+static uint8_t m_hour;
 volatile bool tick = false;
 volatile bool any_keypress = false;
 volatile uint32_t keypress_ticks = 0;
@@ -112,7 +116,7 @@ void timeout_timer_init(void) {
 #endif
 #endif
 
-int8_t get_layer(uint8_t current) {
+static int8_t get_layer(const uint8_t current) {
     int8_t layer = -1;
     for(uint8_t i=0; (keypress_status[i].kc||keypress_status[i].application); i++) {
         switch(keypress_status[i].application & 0xF0) {
@@ -147,11 +151,11 @@ int8_t get_layer(uint8_t current) {
     return layer;
 }
 
-void layer_history_append(uint8_t layer) {
+void layer_history_append(const uint8_t layer) {
     current_layer = layer;
 }
 
-void layer_history_remove(uint8_t layer) {
+void layer_history_remove(const uint8_t layer) {
     NRF_LOG_INFO("removing layer:");
     NRF_LOG_HEXDUMP_INFO(&layer, 1);
     if( layer == get_active_layer() ) {
@@ -168,21 +172,22 @@ uint8_t get_active_layer(void) {
     return current_layer;
 }
 
-void tick_key(keys_t *p_key) {
+static void tick_key(keys_t *p_key) {
     if( p_key->kc>=0xF0 ) {
         hid_functions.tick_handler_mouse(p_key);
     }
 }
-
-void release_keycode(uint8_t kc) {
+/*
+static void release_keycode(const uint8_t kc) {
     if( kc<0xE8 ) {
         hid_functions.keycode_remove(kc);
     } else if( kc>=0xF0 ) {
         hid_functions.handle_mouse(kc, 0);
     }
 }
+*/
 
-void press_key(keys_t *p_key) {
+static void press_key(keys_t *p_key) {
     uint8_t action = p_key->application & 0x0F;
     switch(p_key->application & 0xF0) {
     case 0x00:
@@ -220,7 +225,8 @@ void press_key(keys_t *p_key) {
     }
 }
 
-debouncing_keys_t debouncing_keys[PRESS_KEYS_MAX];
+static debouncing_keys_t debouncing_keys[PRESS_KEYS_MAX];
+
 void kbd_tick_handler(void* p_context) {
     tick = true;
 }
@@ -307,7 +313,7 @@ void debounce_init(void) {
     }
 }
 
-void register_debounce(uint8_t row, uint8_t col, bool press) {
+static void register_debounce(const uint8_t row, const uint8_t col, const bool press) {
     for(uint8_t i=0; i<PRESS_KEYS_MAX; i++) {
         if( debouncing_keys[i].tick == DEBOUNCING_TICK_INVALID ) {
             debouncing_keys[i].row = row;
@@ -319,8 +325,8 @@ void register_debounce(uint8_t row, uint8_t col, bool press) {
     }
 }
 
-ret_code_t handle_keycode(uint16_t keycode, bool press) {
-    uint8_t kc = keycode & 0x00FF;
+static ret_code_t handle_keycode(const uint16_t keycode, const bool press) {
+    const uint8_t kc = keycode & 0x00FF;
     
     switch(kc) {
         case 0x66:
@@ -382,9 +388,8 @@ ret_code_t handle_keycode(uint16_t keycode, bool press) {
     }
 }
 
-void keypress(uint8_t row, uint8_t col, bool debouncing) {
-    uint16_t keycode;
-    uint8_t i = 0;
+void keypress(const uint8_t row, const uint8_t col, const bool debouncing) {
+    uint8_t insert_index = 0;
     uint8_t kc;
     
     if( debouncing && releasing_keys[KBD_SETTING_COL_PINS_MAX*row+col] ) {
@@ -392,24 +397,24 @@ void keypress(uint8_t row, uint8_t col, bool debouncing) {
         keypress_bitmap[row] |= (1UL<<col);
         return;
     }
-    for(; (keypress_status[i].kc||keypress_status[i].application) && i<PRESS_KEYS_MAX; i++) {
-        if(keypress_status[i].col == col && keypress_status[i].row == row) {
+    for(; (keypress_status[insert_index].kc||keypress_status[insert_index].application) && insert_index<PRESS_KEYS_MAX; insert_index++) {
+        if(keypress_status[insert_index].col == col && keypress_status[insert_index].row == row) {
             // already pressed.
             return;
         }
 
 #ifdef TAPPING_FORCE_HOLD
-        if(! (keypress_status[i].press)) {
-            press_key(&keypress_status[i]);
+        if(! (keypress_status[insert_index].press)) {
+            press_key(&keypress_status[insert_index]);
         }
 #endif
     }
     // new press
     m_heatmap[row][col]++;
-    keypress_status[i].row = row;
-    keypress_status[i].col = col;
-    keypress_status[i].tick = 0;
-    keypress_status[i].press = false;
+    keypress_status[insert_index].row = row;
+    keypress_status[insert_index].col = col;
+    keypress_status[insert_index].tick = 0;
+    keypress_status[insert_index].press = false;
     
     keypress_bitmap[row] |= (1UL<<col);
 #ifdef KEYBOARD_PERIPH
@@ -424,7 +429,7 @@ void keypress(uint8_t row, uint8_t col, bool debouncing) {
     if(debouncing) {
         register_debounce(row, col, true);
     }
-    keycode = dynamic_keymap_get_keycode(get_active_layer(),row,col);
+    uint16_t keycode = dynamic_keymap_get_keycode( get_active_layer(), row, col );
 #ifdef KEYBOARD_PERIPH
     if(!keycode) {
         keycode = KEYCODE_PERIPH;
@@ -432,20 +437,20 @@ void keypress(uint8_t row, uint8_t col, bool debouncing) {
 #else
     
 #endif
-    kc = keypress_status[i].kc = keycode & 0x00FF;
-    keypress_status[i].application = (keycode>>8) & 0x00FF ;
+    kc = keypress_status[insert_index].kc = keycode & 0x00FF;
+    keypress_status[insert_index].application = (keycode>>8) & 0x00FF ;
     
     
-    if( keypress_status[i].application ) {
-        uint8_t action = keypress_status[i].application & 0x0F;
-        switch(keypress_status[i].application & 0xF0) {
+    if( keypress_status[insert_index].application ) {
+        uint8_t action = keypress_status[insert_index].application & 0x0F;
+        switch(keypress_status[insert_index].application & 0xF0) {
         case 0x00:
             for(uint8_t j=0;j<4;j++) {
                 if(action & (1<<j)) {
                     hid_functions.keycode_append(j+0xe0);
                 }
             }
-            handle_keycode(keypress_status[i].kc,true);
+            handle_keycode(kc,true);
             break;
         case 0x10:
             for(uint8_t j=0;j<4;j++) {
@@ -453,17 +458,19 @@ void keypress(uint8_t row, uint8_t col, bool debouncing) {
                     hid_functions.keycode_append(j+0xe4);
                 }
             }
-            handle_keycode(keypress_status[i].kc, true);
+            handle_keycode(kc, true);
             break;
         case 0x50:
             if( action == 0x0C ) {
-                if( keypress_status[i].kc == 0x00 ) {
+                if( kc == 0x00 ) {
                     // RESET
                     keyboard_init(my_keyboard);
                     hid_functions.reset();
                     break;
                 } else if( (kc&0xF0)==0xD0 ) {
+#ifndef NO_NEOPIXEL
                     m_neopixel_pattern = kc & 0x0F;
+#endif
                     break;
                 }
                 break;
@@ -472,24 +479,25 @@ void keypress(uint8_t row, uint8_t col, bool debouncing) {
                 kbd_setting[0x50+KBD_SETTING_ADDITIONAL_DEFAULT_LAYER_INDEX] = kc;
                 save_kbd_setting();
             }
-            layer_history_append(keypress_status[i].kc);
+            layer_history_append(kc);
             
             break;
         }
     } else {
-        handle_keycode(keypress_status[i].kc, true);
+        handle_keycode(kc, true);
     }
 }
 
 
 void register_kc_release_next_tick(uint8_t kc){
     uint8_t i=0;
-    for(;kc_release_next_tick[i]!=KC_INVALID;i++){}
+    for(;kc_release_next_tick[i]!=KC_INVALID;i++)
+    {}
     kc_release_next_tick[i]=kc;
 }
 
 
-void keyrelease(uint8_t row, uint8_t col, bool debouncing) {
+void keyrelease(const uint8_t row, const uint8_t col, const bool debouncing) {
     uint8_t removes_count = 0;
     
     if( debouncing && (releasing_keys[KBD_SETTING_COL_PINS_MAX*row+col]<RELEASING_KEY_TICKS) ) {
@@ -601,7 +609,7 @@ void keyrelease(uint8_t row, uint8_t col, bool debouncing) {
     }
 }
 
-void keyboard_scan(keyboard_t keyboard) {
+void keyboard_scan(const keyboard_t keyboard) {
     (keyboard.scan_method)(keyboard.keyboard_type,keyboard.keyboard_definision);
 }
 

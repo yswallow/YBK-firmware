@@ -15,7 +15,7 @@
 static void hid_mouse_ev_handler(app_usbd_class_inst_t const * p_inst,
                                 app_usbd_hid_user_event_t event);
 
-bool m_report_pending_mouse = false;
+//static bool m_report_pending_mouse = false;
 APP_USBD_HID_MOUSE_GLOBAL_DEF(m_app_hid_mouse,
                                 HID_MOUSE_INTERFACE,
                                 HID_MOUSE_EPIN,
@@ -34,7 +34,7 @@ static void hid_mouse_ev_handler(app_usbd_class_inst_t const * p_inst,
         }
         case APP_USBD_HID_USER_EVT_IN_REPORT_DONE:
         {
-            m_report_pending_mouse = false;
+            //m_report_pending_mouse = false;
             break;
         }
         case APP_USBD_HID_USER_EVT_SET_BOOT_PROTO:
@@ -62,7 +62,7 @@ ret_code_t mouse_reset_usb(void) {
     return NRF_SUCCESS;
 }
 
-ret_code_t handle_keycode_mouse_usb(uint16_t keycode, bool press) {
+ret_code_t handle_keycode_mouse_usb(const uint16_t keycode, const bool press) {
     if( (keycode&0x00F0)!=0x00F0 ) {
         return NRF_ERROR_INVALID_PARAM;
     }

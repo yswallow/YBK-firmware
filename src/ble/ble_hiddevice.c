@@ -348,13 +348,13 @@ void hids_init(void)
 }
 
 
-ret_code_t ble_mouse_init(void) {
+static ret_code_t ble_mouse_init(void) {
     memset(&mouse_report_ble, 0, sizeof(mouse_report_ble));
     return NRF_SUCCESS;
 }
 
 
-ret_code_t raw_hid_send_ble(uint8_t *data, uint8_t length) {
+ret_code_t raw_hid_send_ble(uint8_t *data, const uint8_t length) {
     return ble_hids_inp_rep_send(&m_hids,
                                  INPUT_REPORT_RAW_INDEX,
                                  INPUT_REPORT_RAW_MAX_LEN,
@@ -362,7 +362,7 @@ ret_code_t raw_hid_send_ble(uint8_t *data, uint8_t length) {
                                  m_conn_handle);
 }
 
-ret_code_t keyboard_report_send_ble(void) {
+static ret_code_t keyboard_report_send_ble(void) {
     while(m_ble_hid_rep_pending) {};
     return ble_hids_inp_rep_send(&m_hids,
                                  INPUT_REPORT_KEYS_INDEX,
@@ -371,7 +371,7 @@ ret_code_t keyboard_report_send_ble(void) {
                                  m_conn_handle);
 }
 
-ret_code_t keycode_append_ble(uint8_t kc) {
+static ret_code_t keycode_append_ble(uint8_t kc) {
     bool updated = false;
     if( (kc&0xF8) == 0xe0 ) {
         // modifiers
@@ -402,7 +402,7 @@ ret_code_t keycode_append_ble(uint8_t kc) {
     return NRF_SUCCESS;
 }
 
-ret_code_t keycode_remove_ble(uint8_t kc) {
+static ret_code_t keycode_remove_ble(uint8_t kc) {
     bool after_kc = false;
     bool updated = false;
     if( (kc&0xF8) == 0xe0 ) {
@@ -437,14 +437,14 @@ ret_code_t keycode_remove_ble(uint8_t kc) {
     return NRF_SUCCESS;
 }
 
-ret_code_t keyboard_reset_ble(void) {
+static ret_code_t keyboard_reset_ble(void) {
     memset(ble_keyboard_rep_buffer, 0, sizeof(ble_keyboard_rep_buffer));
     keyboard_report_send_ble();
     return NRF_SUCCESS;
 }
 
-uint8_t ble_consumer_report[1];
-ret_code_t send_consumer_ble(uint8_t code, bool press) {
+static ret_code_t send_consumer_ble(const uint8_t code, const bool press) {
+    static uint8_t ble_consumer_report[1] =  {0x00};
     if(press) {
         switch(code) {
         case 0x30:
@@ -484,7 +484,7 @@ ret_code_t send_consumer_ble(uint8_t code, bool press) {
 
 
 // Mouse Functions
-ret_code_t mouse_report_send_ble(void) {
+static ret_code_t mouse_report_send_ble(void) {
     return ble_hids_inp_rep_send(&m_hids,
                                  INPUT_REPORT_MOUSE_INDEX,
                                  INPUT_REPORT_MOUSE_MAX_LEN,
@@ -500,7 +500,7 @@ ret_code_t mouse_reset_ble(void) {
 }
 
 
-ret_code_t handle_keycode_mouse_ble(uint16_t keycode, bool press) {
+static ret_code_t handle_keycode_mouse_ble(const uint16_t keycode, const bool press) {
     if( (keycode&0x00F0)!=0x00F0 ) {
         return NRF_ERROR_INVALID_PARAM;
     }
@@ -561,7 +561,7 @@ ret_code_t handle_keycode_mouse_ble(uint16_t keycode, bool press) {
 }
 
 
-ret_code_t tick_handler_mouse_ble(keys_t *p_key) {
+static ret_code_t tick_handler_mouse_ble(keys_t *p_key) {
     if( (p_key->kc&0x00F0)!=0x00F0 ) {
         return NRF_ERROR_INVALID_PARAM;
     }
@@ -578,7 +578,7 @@ void ble_keyboard_init(void) {
 }
 
 
-keyboard_hid_functions_t ble_hid_functions = {
+const keyboard_hid_functions_t ble_hid_functions = {
     .keycode_append = keycode_append_ble,
     .keycode_remove = keycode_remove_ble,
     .send_consumer = send_consumer_ble,
@@ -587,4 +587,4 @@ keyboard_hid_functions_t ble_hid_functions = {
     .tick_handler_mouse = tick_handler_mouse_ble
 };
 
-#endif // n KEYBOARD_PERIPH
+#endif // ifndef KEYBOARD_PERIPH

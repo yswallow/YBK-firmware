@@ -2,8 +2,8 @@
 #include "keyboard_config.h"
 #include "nrf_gpio.h"
 
-void matrix_scan(keyboard_type_t type, void* ptr) {
-    matrix_keyboard_t defs = *(matrix_keyboard_t*) ptr;
+void matrix_scan(const keyboard_type_t type, const void* ptr) {
+    const matrix_keyboard_t defs = *(matrix_keyboard_t*) ptr;
     if(type != KEYBOARD_TYPE_MATRIX) {
         return;
     }
@@ -32,7 +32,7 @@ void matrix_scan(keyboard_type_t type, void* ptr) {
     }
 }
 
-void matrix_init(keyboard_type_t type, keyboard_definision_t ptr) {
+void matrix_init(const keyboard_type_t type, const keyboard_definision_t ptr) {
     matrix_keyboard_t defs = *(matrix_keyboard_t*) ptr;
     if(type != KEYBOARD_TYPE_MATRIX) {
         return;
@@ -49,8 +49,8 @@ void matrix_init(keyboard_type_t type, keyboard_definision_t ptr) {
     }
 }
 
-ret_code_t matrix_sleep_prepare(keyboard_type_t type, keyboard_definision_t ptr) {
-    matrix_keyboard_t defs = *(matrix_keyboard_t*) ptr;
+ret_code_t matrix_sleep_prepare(const keyboard_type_t type, const keyboard_definision_t ptr) {
+    const matrix_keyboard_t defs = *(matrix_keyboard_t*) ptr;
     if(type != KEYBOARD_TYPE_MATRIX) {
         return NRF_ERROR_INVALID_PARAM;
     }

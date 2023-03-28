@@ -68,6 +68,7 @@
 
 static fds_record_desc_t eeprom_desc;
 static fds_record_desc_t setting_desc;
+static volatile bool m_fds_initialized = false;
 
 uint8_t eeprom[EEPROM_SIZE];
 uint8_t kbd_setting[KBD_SETTING_SIZE];
@@ -211,7 +212,6 @@ static void fds_evt_handler(fds_evt_t const * p_evt)
 }
 
 
-
 void update_fds_entry(fds_record_desc_t* p_desc, fds_record_t* p_record) {
     ret_code_t ret;
     if(p_desc->p_record==0) {
@@ -239,7 +239,7 @@ void update_fds_entry(fds_record_desc_t* p_desc, fds_record_t* p_record) {
         //fds_record_delete(p_desc);
         APP_ERROR_CHECK(ret);
     }
-    //fds_record_close(&desc);
+    fds_record_close(p_desc);
 }
 
 void save_keymap(void) {
@@ -270,7 +270,7 @@ void save_keymap(void) {
     {
         APP_ERROR_CHECK(ret);
     }
-    //fds_record_close(&desc);
+    fds_record_close(&eeprom_desc);
 }
 
 void apply_kbd_setting(void) {
@@ -432,7 +432,7 @@ void save_kbd_setting(void) {
     {
         APP_ERROR_CHECK(ret);
     }
-    //fds_record_close(&desc);
+    fds_record_close(&setting_desc);
 }
 
 
@@ -440,6 +440,7 @@ void save_kbd_setting(void) {
 // See raw_hid_receive() implementation.
 // DO NOT call raw_hid_send() in the override function.
 static bool kbd_setting_updated;
+
 void raw_hid_receive_kb(uint8_t *data, uint8_t length) {
     uint8_t *command_id = &(data[0]);
     uint8_t setting_id = data[1];

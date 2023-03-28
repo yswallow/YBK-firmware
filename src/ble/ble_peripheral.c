@@ -60,39 +60,38 @@ static void nus_data_handler(ble_nus_evt_t * p_evt)
     }
 }
 
-static uint8_t m_uart_send_buffer[UART_CACHE_SIZE];
-static uint16_t m_uart_send_len;
 
-void uart_send_peripheral(uint8_t *p_data, uint8_t len) {
+void uart_send_peripheral(const uint8_t *p_data, const uint8_t len) {
     ret_code_t ret;
     uint8_t head = 0;
     bool is_end = false;
     bool is_start = true;
-    //if( m_periph_connected ) {
-        for(uint8_t i=0;i<(len+UART_CACHE_SIZE-1)/UART_CACHE_SIZE;i++) {
-            if( (len-head)>(UART_CACHE_SIZE-1) ) {
-                m_uart_send_len = UART_CACHE_SIZE-1;
-            } else {
-                m_uart_send_len = len-head;
-            }
-
-            if( i==(len+UART_CACHE_SIZE-1)/UART_CACHE_SIZE ) {
-                is_end = true;
-            } 
-            m_uart_send_buffer[0] = ( is_start ? 0x80 : 0 ) | ( is_end ? 0x40 : 0 ) | m_uart_send_len;
-            memcpy(m_uart_send_buffer+1, p_data+head, m_uart_send_len);
-            NRF_LOG_DEBUG("Sending..");
-            NRF_LOG_HEXDUMP_DEBUG(m_uart_send_buffer, m_uart_send_len);
-            m_uart_send_len++;
-            ret = ble_nus_data_send(&m_nus,m_uart_send_buffer, &m_uart_send_len, m_conn_handle);
-            APP_ERROR_CHECK(ret);
-            is_start = false;
+    static uint16_t m_uart_send_len;
+    static uint8_t m_uart_send_buffer[UART_CACHE_SIZE];
+    
+    for(uint8_t i=0;i<(len+UART_CACHE_SIZE-1)/UART_CACHE_SIZE;i++) {
+        if( (len-head)>(UART_CACHE_SIZE-1) ) {
+            m_uart_send_len = UART_CACHE_SIZE-1;
+        } else {
+            m_uart_send_len = len-head;
         }
-    //}
+
+        if( i==(len+UART_CACHE_SIZE-1)/UART_CACHE_SIZE ) {
+            is_end = true;
+        } 
+        m_uart_send_buffer[0] = ( is_start ? 0x80 : 0 ) | ( is_end ? 0x40 : 0 ) | m_uart_send_len;
+        memcpy(m_uart_send_buffer+1, p_data+head, m_uart_send_len);
+        NRF_LOG_DEBUG("Sending..");
+        NRF_LOG_HEXDUMP_DEBUG(m_uart_send_buffer, m_uart_send_len);
+        m_uart_send_len++;
+        ret = ble_nus_data_send(&m_nus,m_uart_send_buffer, &m_uart_send_len, m_conn_handle);
+        APP_ERROR_CHECK(ret);
+        is_start = false;
+    }
 }
 
 
-void send_data_ble(uint8_t* data, uint8_t len) {
+void send_data_ble(const uint8_t* data, const uint8_t len) {
     uint8_t message[40];
     uint16_t message_sent = len+3;
     uint8_t i;
@@ -112,30 +111,7 @@ void send_data_ble(uint8_t* data, uint8_t len) {
     NRF_LOG_DEBUG("Data Sent");
 }
 
-static uint8_t uart_received_data[UART_CACHE_SIZE];
-static uint16_t uart_received_data_head = 0;
-static void uart_receive_peripheral(uint8_t* p_data, uint16_t len);
-
-static void uart_join_peripheral(uint8_t* p_data, uint16_t len) {
-    bool is_start = (*p_data >> 7) & 0x01;
-    bool is_end = (*p_data >> 6) & 0x01;
-    uint8_t data_size = *p_data & 0x3F;
-
-    if(is_start) {
-        memcpy(uart_received_data, p_data+1, data_size);
-        uart_received_data_head = data_size;
-    } else {
-        memcpy(uart_received_data+uart_received_data_head, p_data+1, data_size);
-        uart_received_data_head += data_size;
-    }
-
-    if(is_end) {
-        uart_receive_peripheral(uart_received_data, uart_received_data_head);
-        uart_received_data_head = 0;
-    }
-}
-
-static void uart_receive_peripheral(uint8_t* p_data, uint16_t len) {
+static void uart_receive_peripheral(uint8_t* p_data, const uint16_t len) {
     NRF_LOG_HEXDUMP_DEBUG(p_data,len)
 
     switch(p_data[0]) {
@@ -176,6 +152,27 @@ static void uart_receive_peripheral(uint8_t* p_data, uint16_t len) {
     }
 }
 
+static void uart_join_peripheral(uint8_t* p_data, uint16_t len) {
+    static uint8_t uart_received_data[UART_CACHE_SIZE];
+    static uint16_t uart_received_data_head = 0;
+
+    bool is_start = (*p_data >> 7) & 0x01;
+    bool is_end = (*p_data >> 6) & 0x01;
+    uint8_t data_size = *p_data & 0x3F;
+
+    if(is_start) {
+        memcpy(uart_received_data, p_data+1, data_size);
+        uart_received_data_head = data_size;
+    } else {
+        memcpy(uart_received_data+uart_received_data_head, p_data+1, data_size);
+        uart_received_data_head += data_size;
+    }
+
+    if(is_end) {
+        uart_receive_peripheral(uart_received_data, uart_received_data_head);
+        uart_received_data_head = 0;
+    }
+}
 
 void cache_pop_peripheral(void) {
     uint8_t data[UART_CACHE_SIZE];
@@ -208,12 +205,12 @@ void periph_nus_init(void) {
 }
 
 
-char num2ascii(uint8_t n) {
+static char num2ascii(uint8_t n) {
     return n<10 ? 0x30+n : 0x41+n-10;
 }
 
 
-void send_place_ble(uint8_t row, uint8_t col, bool press) {
+void send_place_ble(const uint8_t row, const uint8_t col, const bool press) {
     char message[8];
     uint16_t message_sent = 8;
     uint8_t i = 0;

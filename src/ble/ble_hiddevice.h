@@ -61,7 +61,7 @@
 
 // variables
 
-extern keyboard_hid_functions_t ble_hid_functions;
+extern const keyboard_hid_functions_t ble_hid_functions;
 extern uint8_t ble_keyboard_rep_buffer[BLE_HID_KBD_REP_LEN];
 extern bool m_ble_hid_rep_pending;
 
@@ -77,16 +77,7 @@ typedef struct {
 void hids_init(void);
 void ble_keyboard_init(void);
 
-ret_code_t keycode_append_ble(uint8_t kc);
-ret_code_t keycode_remove_ble(uint8_t kc);
-ret_code_t keyboard_reset_ble(void);
-
 ret_code_t mouse_reset_ble(void);
-ret_code_t handle_keycode_mouse_ble(uint16_t keycode, bool press);
-ret_code_t tick_handler_mouse_ble(keys_t *p_key);
-ret_code_t ble_mouse_init(void);
-
-ret_code_t raw_hid_send_ble(uint8_t *data, uint8_t length);
-ret_code_t send_consumer_ble(uint8_t code, bool press);
+ret_code_t raw_hid_send_ble(uint8_t *data, const uint8_t length);
 
 #endif // __BLE_HIDDEVICE_H

@@ -27,7 +27,6 @@ enum {
 typedef bool raw_hid_receive_t;
 typedef uint8_t matrix_row_t;
 
-static volatile bool m_fds_initialized;
 extern uint8_t kbd_setting[KBD_SETTING_SIZE];
 
 void create_fds_new_entry(fds_record_desc_t* p_desc, fds_record_t* p_record);

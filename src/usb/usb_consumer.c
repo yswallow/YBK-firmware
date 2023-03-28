@@ -42,7 +42,7 @@ static const app_usbd_hid_subclass_desc_t * consumer_reps[] = {&consumer_desc};
 static void hid_consumer_ev_handler(app_usbd_class_inst_t const * p_inst,
                                 app_usbd_hid_user_event_t event);
 
-bool m_report_pending_consumer = false;
+//static bool m_report_pending_consumer = false;
 
 uint8_t usb_consumer_report[USB_CONSUMER_REPORT_LEN];
 
@@ -76,7 +76,7 @@ static void hid_consumer_ev_handler(app_usbd_class_inst_t const * p_inst,
         }
         case APP_USBD_HID_USER_EVT_IN_REPORT_DONE:
         {
-            m_report_pending_consumer = false;
+            //m_report_pending_consumer = false;
             break;
         }
         case APP_USBD_HID_USER_EVT_SET_BOOT_PROTO:
