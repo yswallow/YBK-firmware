@@ -495,6 +495,7 @@ int main(void)
         if(1) {
 #endif
             if(! keyboard_running) {
+                sd_clock_hfclk_request();
                 (my_keyboard.init_method)(my_keyboard.keyboard_type,my_keyboard.keyboard_definision);
                 keyboard_tick_start();
                 keyboard_running = true;
@@ -506,6 +507,7 @@ int main(void)
                 keyboard_tick_stop();
                 keyboard_sleep_prepare();
                 sd_nvic_EnableIRQ(GPIOTE_IRQn);
+                sd_clock_hfclk_release();
                 keyboard_running = false;
             }
         }
