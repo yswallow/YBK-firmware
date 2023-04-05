@@ -80,6 +80,7 @@ void keypress(const uint8_t row, const uint8_t col, const bool debouncing);
 void keyrelease(const uint8_t row, const uint8_t col, const bool debouncing);
 uint8_t get_active_layer(void);
 void release_prev_tick_kc(void);
+bool no_key_pressed(void);
 
 void restart_timeout_timer(void);
 void sleep_mode_enter(void *ptr);

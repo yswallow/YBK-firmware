@@ -513,7 +513,8 @@ int main(void)
         }
         if(tick) {
             keyboard_tick();
-            if(++keypress_ticks>MATRIX_SCAN_TIMEOUT_TICKS) {
+            if( (++keypress_ticks>MATRIX_SCAN_TIMEOUT_TICKS)
+                && no_key_pressed() ) {
                 any_keypress = false;
             }
             tick = false;

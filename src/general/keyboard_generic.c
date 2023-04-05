@@ -306,6 +306,10 @@ void keyboard_tick(void) {
 #endif
 }
 
+bool no_key_pressed(void) {
+    return (keypress_status[0].kc == 0) && (keypress_status[0].application == 0);
+}
+
 void debounce_init(void) {
     memset(debouncing_bitmap, 0, sizeof(debouncing_bitmap));
     for(uint8_t i=0; i<PRESS_KEYS_MAX; i++) {
